@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema path="/org/zzrough/gs-extensions/drop-down-terminal/" id="org.zzrough.gs-extensions.drop-down-terminal">
+    <key name="toggle-terminal" type="as">
+      <default><![CDATA[['Above_Tab']]]></default>
+      <summary>Key used to toggle the terminal</summary>
+      <description>
+        Key used to open and close the terminal.
+      </description>
+    </key>
+  </schema>
+</schemalist>
