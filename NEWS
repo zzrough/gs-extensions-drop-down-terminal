@@ -4,10 +4,9 @@ v1 (2012-09-05)
 - initial, basic version
 
 v2 (2012-09-22)
-- support for 3.5.92
+- support for 3.5.92 (3.6 was already targetd in v1)
 
 v3 (2012-10-06)
-- support for 3.6
 
 - added an animation
 - added a border to mimick the shell style
