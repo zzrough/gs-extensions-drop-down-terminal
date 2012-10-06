@@ -1,11 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema path="/org/zzrough/gs-extensions/drop-down-terminal/" id="org.zzrough.gs-extensions.drop-down-terminal">
-    <key name="toggle-terminal" type="as">
-      <default><![CDATA[['Above_Tab']]]></default>
-      <summary>Key used to toggle the terminal</summary>
+    <key name="enable-animation" type="b">
+      <default>true</default>
+      <summary>Enable the animation</summary>
       <description>
-        Key used to open and close the terminal.
+        Whether to enable or disable the opening/closing animation.
+      </description>
+    </key>
+
+    <key name="window-height" type="s">
+      <default><![CDATA['400px']]></default>
+      <summary>The terminal window height</summary>
+      <description>
+        The terminal window height in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="shortcut-type" type="s">
+      <default><![CDATA['default']]></default>
+      <choices>
+        <choice value="default"/>
+        <choice value="other"/>
+      </choices>
+      <summary>The shortcut type 'default' or 'other'</summary>
+      <description>
+        The type of shortcut used to open and close the terminal. If 'other' is set, the definition must be set
+        in the 'other-shortcut' key.
+      </description>
+    </key>
+
+    <key name="other-shortcut" type="as">
+      <default><![CDATA[['F12']]]></default>
+      <summary>The manual shortcut used to toggle the terminal</summary>
+      <description>
+        The shortcut used to open and close the terminal if shortcut-type is 'other'.
+      </description>
+    </key>
+
+    <key name="real-shortcut" type="as">
+      <default><![CDATA[['Above_Tab']]]></default>
+      <summary>An internal key that must not be changed manually</summary>
+      <description>
+        'Above_Tab' is displayed as 'Disabled' in a GtkCellRendererAccel and that really looks bad.
+        This is why there is this special key which is the final, real shortcut used, and which is not displayed
+        in the preferences UI.
       </description>
     </key>
   </schema>

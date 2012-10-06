@@ -1,0 +1,21 @@
+ROADMAP:
+
+v3
+- feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
+- feature: copy/paste via popupmenu + shortcuts (ctrl-shift'ed) + dnd
+- feature: multi tabs
+- feature: detect active pid and ask before exiting the shell? (or detach it?)
+- feature: test on multihead: global.screen.connect('monitors-changed', ...)
+
+- code: switch to window-manager for window handling?
+- code: investigate if the inner-border can be retrieved
+- code: investigate argb colors not working
+- code review
+
+v4
+- feature: more preferences (early fork?, other term options?)
+- bugfix: investigate the focus issue preventing using the BLOCK cursor
+
+v5
+- feature: pause the child process if term closed and no active pid (for powersaving, maybe an additional pref?)
+

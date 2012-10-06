@@ -16,7 +16,6 @@
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
 const Lang = imports.lang;
-const System = imports.system;
 const Gettext = imports.gettext.domain('drop-down-terminal');
 
 const Gio = imports.gi.Gio;
@@ -25,20 +24,42 @@ const Gdk = imports.gi.Gdk;
 const GdkX11 = imports.gi.GdkX11;
 const Gtk = imports.gi.Gtk;
 const Vte = imports.gi.Vte;
+const Tweener = imports.ui.tweener;
+const Cogl = imports.gi.Cogl;
 const Clutter = imports.gi.Clutter;
 const Meta = imports.gi.Meta;
 const Main = imports.ui.main;
 
 const _ = Gettext.gettext;
 const Config = imports.misc.config;
+const ExtensionSystem = imports.ui.extensionSystem;
+const ExtensionUtils = imports.misc.extensionUtils;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
+
+
+// constants
+const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
+    'window-open-animation-rotate-in@mengzhuo.org',
+    'window-open-animation-slide-in@mengzhuo.org',
+    'window-open-animation-scale-in@mengzhuo.org'
+];
+
+const ANIMATION_TIME_IN_MS = 0.25;
+const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
+const WINDOW_HEIGHT_SETTING_KEY = "window-height";
+const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
+const DEBUG = false;
 
 
 // dbus interface
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
+        <property name="Pid" type="i" access="read"/>
+        <method name="SetHeight"><arg name="height" type="i" direction="in"/></method>
+        <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
+        <method name="Focus"/>
         <method name="Quit"/>
         <signal name="Failure">
             <arg type="s" name="name"/>
@@ -47,13 +68,27 @@ const DropDownTerminalIface =
     </interface>;
 
 
-// constants
-const TOGGLE_TERMINAL_KEYBINDING_KEY = "toggle-terminal";
-const DEBUG = false;
-
-
 // helper to only log in debug mode
 function debug(text) { DEBUG && log("[DDT] " + text); }
+
+
+// window border effect class
+const GraySouthBorderEffect = new Lang.Class({
+    Name: 'GraySouthBorderEffect',
+    Extends: Clutter.Effect,
+
+    vfunc_paint: function() {
+        let actor = this.get_actor();
+        actor.continue_paint();
+
+        let color = new Cogl.Color();
+        color.init_from_4ub(0x80, 0x80, 0x80, 0xff);
+        Cogl.set_source_color(color);
+
+        let geom = actor.get_allocation_geometry();
+        Cogl.rectangle(0, geom.height, geom.width - 2, geom.height - 2);
+    },
+});
 
 
 // extension class
@@ -61,30 +96,66 @@ const DropDownTerminalExtension = new Lang.Class({
     Name: 'DropDownTerminalExtension',
 
     _init: function() {
-        // initializes the child pid member early
+        // retrieves the settings
+        this._settings = Convenience.getSettings(Me.path, Me.metadata.id);
+
+        // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
         this._childPid = null;
+
+        // initializes other members used to toggle the terminal
+        this._busProxy = null;
+        this._windowActor = null;
+        this._firstDisplay = true;
+
+        // initializes if we should toggle on bus name appearance 
+        this._toggleOnBusNameAppearance = false;
+
+        // id of the timeout used to delay the window height setting application
+        this._windowHeightDelayTimeoutId = null;
     },
 
     enable: function() {
-        // binds the key to open/close the terminal
-        let settings = Convenience.getSettings(Me.path, Me.metadata.id);
+        // animation setup
+        this._display = global.screen.get_display();
+        this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
 
-        this._bindKey(settings);
+        // applies the settings initially
+        this._animationEnabledSettingChanged();
+        this._windowHeightSettingChanged();
+        this._bindShortcut();
 
-        // rebinds the key on dynamic changes
-        settings.connect("changed::" + TOGGLE_TERMINAL_KEYBINDING_KEY, Lang.bind(this, function() {
-            this._unbindKey();
-            this._bindKey(settings);
-        }));
+        // honours setting changes
+        this._settingChangedHandlerIds = [
+            this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._animationEnabledSettingChanged)),
+
+            this._settings.connect("changed::" + WINDOW_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
+                Convenience.throttle(250, this._windowHeightSettingChanged, this); // throttles 1s (it's an "heavy weight" setting)
+            })),
+
+            this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
+                this._unbindShortcut();
+                this._bindShortcut();
+            }))
+        ];
+
+        // registers the bus name watch
+        this._busWatchId = Gio.DBus.session.watch_name('org.zzrough.GsExtensions.DropDownTerminal',
+                                                        Gio.BusNameWatcherFlags.NONE,
+                                                        Lang.bind(this, this._busNameAppeared),
+                                                        Lang.bind(this, this._busNameVanished),
+                                                        null, null);
     },
 
     disable: function() {
+        // unbinds the shortcut
+        this._unbindShortcut();
+
         // quit and/or kill the child process if it exists
         if (this._childPid !== null) {
             try {
                 // starts by asking to quit gracefully
                 this._quitingChild = true;
-                this._dbusProxy.QuitRemote();
+                this._busProxy.QuitRemote();
 
                 // if the remote call succeeded, we forget about this process
                 this._childPid = null;
@@ -97,12 +168,22 @@ const DropDownTerminalExtension = new Lang.Class({
             }
         }
 
-        // destroys the dbus proxy aggressively
-        delete this._dbusProxy;
-        this._dbusProxy = null;
+        // unregister the bus name watch
+        Gio.DBus.session.unwatch_name(this._busWatchId);
+        this._busWatchId = null;
 
-        // unbinds the shortcut key
-        this._unbindKey();
+        // disconnects the setting listeners
+        for (let i in this._settingChangedHandlerIds) {
+            this._settings.disconnect(this._settingChangedHandlerIds[i]);
+        }
+
+        this._settingChangedHandlerIds = null;
+
+        // disconnects the window creation signal and clears the related stuff
+        this._display.disconnect(this._windowCreatedHandlerId);
+        this._windowCreatedHandlerId = null;
+        this._windowActor = null;
+        this._display = null;
     },
 
     _toggle: function() {
@@ -110,37 +191,102 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // checks if there is not an instance of a previous child, mainly because it survived a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
-        //
-        // Note: we use pgrep since the shell itself uses pkill and mention it being somewhat portable
-        //       and this is easier than letting a pidfile in XDG_RUNTIME_DIR
-        if (this._childPid === null) {
-            let forkedCommandArgs = this._getForkCommandArgs();
-            let args = ["pgrep",
-                        "-P", "" + System.getpid(),
-                        "-n", "-f",
-                        forkedCommandArgs.join(' ')];               
-
-            try {
-                let [success, stdout, stderr, exitCode] = GLib.spawn_sync(null, args, null, GLib.SpawnFlags.SEARCH_PATH, null, null);
-
-                if (success && exitCode == 0) {
-                    this._childPid = parseInt(stdout);
-                    this._connectToChildDBus();
-                }
-            } catch (e) {
-                debug("could not check if a previous terminal is running (" + e.name + " - " + e.message + ")");
-            }
+        if (this._childPid === null && this._busProxy !== null) {
+            this._childPid = this._busProxy['Pid'];
         }
 
         // forks if the child does not exist (never started or killed)
         if (this._childPid === null) {
             debug("forking and connecting to the terminal dbus interface");
+
+            this._toggleOnBusNameAppearance = true;
             this._forkChild();
-            this._connectToChildDBus();
+
+            return; // we need to wait for the bus name appearance
         }
 
-        // calls the toggling command on the interface
-        this._dbusProxy.ToggleRemote();
+        // the bus proxy might not be ready, in this case we will be called later once the bus name appears
+        if (this._busProxy !== null) {
+
+            // if animation is supported and the terminal is opened, we animate the closing sequence
+            if (this._shouldAnimateWindow() && this._windowActor !== null && this._busProxy.IsOpenedSync()) {
+                let [targetX, targetY] = [this._windowActor.x, -this._windowActor.height];
+
+                Tweener.addTween(this._windowActor, {
+                    y: targetY,
+                    time: ANIMATION_TIME_IN_MS,
+                    transition: "easeInExpo",
+                    onComplete: this._busProxy.ToggleRemote,
+                    onCompleteScope: this._busProxy
+                });
+            } else {
+                this._busProxy.ToggleRemote();
+            }
+        }
+    },
+
+    _animationEnabledSettingChanged: function() {
+        this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
+    },
+
+    _windowHeightSettingChanged: function() {
+        // computes and keep the window height for use when the terminal will be spawn (if not already)
+        let heightSpec = this._settings.get_string(WINDOW_HEIGHT_SETTING_KEY);
+        this._windowHeight = this._computeWindowHeight(heightSpec);
+
+        // applies the change dynamically if the terminal is already spawn
+        if (this._busProxy !== null && this._windowHeight !== null) {
+            this._busProxy.SetHeightRemote(this._windowHeight);
+        }
+
+        return false;
+    },
+
+    _bindShortcut: function() {
+        global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+                                      Lang.bind(this, this._toggle));
+    },
+
+    _unbindShortcut: function() {
+        global.display.remove_keybinding(REAL_SHORTCUT_SETTING_KEY);
+    },
+
+    _windowCreated: function(display, window) {
+        // filter out the terminal window using its wmclass
+        if (window.get_wm_class() != "DropDownTerminalWindow") {
+            return;
+        }
+
+        // adds a gray border on south of the actor to mimick the shell borders 
+        this._windowActor = window.get_compositor_private();
+        this._windowActor.clear_effects();
+        this._windowActor.add_effect(new GraySouthBorderEffect());
+
+        // a lambda to request focus
+        let requestFocusAsync = function(proxy) {
+            if (proxy !== null) {
+                proxy.FocusRemote();
+            }
+        };
+
+        // animate the opening sequence if animation is supported
+        if (this._shouldAnimateWindow()) {
+            let [sourceX, sourceY] = [this._windowActor.x, -this._windowActor.height];
+            let [targetX, targetY] = [sourceX, Main.layoutManager.panelBox.height];
+
+            this._windowActor.set_position(sourceX, sourceY);
+
+            Tweener.addTween(this._windowActor, {
+                y: targetY,
+                time: ANIMATION_TIME_IN_MS,
+                transition: "easeOutExpo",
+                onComplete: requestFocusAsync,
+                onCompleteParams: [this._busProxy],
+                onCompleteScope: this
+            });
+        } else {
+            requestFocusAsync(this._busProxy);
+        }
     },
 
     _forkChild: function() {
@@ -149,7 +295,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._killingChild = false;
 
         // finds the forking arguments
-        let args = this._getForkCommandArgs();
+        let args = ["gjs", GLib.build_filenamev([Me.path, "terminal.js"])];
 
         // forks the process
         debug("forking '" + args.join(" ") + "'");
@@ -187,26 +333,6 @@ const DropDownTerminalExtension = new Lang.Class({
         GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid, Lang.bind(this, this._childExited), null);
     },
 
-    _connectToChildDBus: function() {
-        // creates a dbus proxy on the interface exported by the child process
-        let DropDownTerminalDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalIface);
-
-        this._dbusProxy = new DropDownTerminalDBusProxy(Gio.DBus.session, 'org.zzrough.GsExtensions.DropDownTerminal', '/org/zzrough/GsExtensions/DropDownTerminal');
-
-        // connects to the Failure signal to report errors
-        this._dbusProxy.connectSignal('Failure', Lang.bind(this, function(proxy, sender, [name, cause]) {
-            debug("failure reported by the terminal: " + cause);
-
-            if (name == "ForkUserShellFailed") {
-                Main.notifyError(_("Drop Down Terminal failed to start"),
-                                 _("The user shell could not be spawn in the terminal.") + "\n\n" + _("You can activate the debug mode to nail down the issue"));
-            } else {
-                Main.notifyError(_("An error occured in the Drop Down Terminal"),
-                                 cause + "\n\n" + _("You can activate the debug mode to nail down the issue"));
-            }
-        }));
-    },
-
     _killChild: function() {
         if (this._childPid !== null) {
             // we are killing the child ourself, so set the flag telling this is intended
@@ -235,25 +361,94 @@ const DropDownTerminalExtension = new Lang.Class({
             Main.notifyError(_("Drop Down Terminal ended abruptly"), _("You can activate the debug mode to nail down the issue"));
         }
 
-        // resets the child pid
-        this._childPid = null;
+        // forgets the child and the bus proxy
+        this._forgetChild();
+    },
 
+    _busNameAppeared: function(connection, name, nameOwner) {
+        // creates a dbus proxy on the interface exported by the child process
+        let DropDownTerminalDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalIface);
+
+        this._busProxy = new DropDownTerminalDBusProxy(Gio.DBus.session, 'org.zzrough.GsExtensions.DropDownTerminal', '/org/zzrough/GsExtensions/DropDownTerminal');
+
+        // connects to the Failure signal to report errors
+        this._busProxy.connectSignal('Failure', Lang.bind(this, function(proxy, sender, [name, cause]) {
+            debug("failure reported by the terminal: " + cause);
+
+            if (name == "ForkUserShellFailed") {
+                Main.notifyError(_("Drop Down Terminal failed to start"),
+                                 _("The user shell could not be spawn in the terminal.") + "\n\n" + _("You can activate the debug mode to nail down the issue"));
+            } else {
+                Main.notifyError(_("An error occured in the Drop Down Terminal"),
+                                 cause + "\n\n" + _("You can activate the debug mode to nail down the issue"));
+            }
+        }));
+
+        // applies the eventual window height change
+        if (this._windowHeight !== null) {
+            this._busProxy.SetHeightSync(this._windowHeight);
+        }
+
+        // initial toggling if explicitely asked to, since we we can also be called on a shell restart
+        // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
+        if (this._toggleOnBusNameAppearance) {
+            this._toggle();
+            this._toggleOnBusAppearance = false;
+        }
+    },
+
+    _busNameVanished: function(connection, name) {
+        // forgets the bus proxy and the child entirely since they will be automatically picked
+        // up again once available, even if that means spawning the child again if necessary
+        this._forgetChild();
+    },
+
+    _forgetChild: function() {
         // destroys the dbus proxy aggressively
-        delete this._dbusProxy;
-        this._dbusProxy = null;
+        delete this._busProxy;
+        this._busProxy = null;
+
+        // forgets about the child pid too, it will be find out again at the next toggle if the bus is
+        // activated meanwhile
+        this._childPid = null; 
     },
 
-    _bindKey: function(settings) {
-        global.display.add_keybinding(TOGGLE_TERMINAL_KEYBINDING_KEY, settings, Meta.KeyBindingFlags.NONE,
-                                      Lang.bind(this, this._toggle));
+    _computeWindowHeight: function(heightSpec) {
+        // updates the height from the height spec, so it's picked 
+        let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
+
+        if (match === null) {
+            return null;
+        }
+
+        let value = parseInt(match[1]);
+        let type = match[2];
+
+        if (type.toLowerCase() == "px") {
+            return (value > 0) ? value : null;
+        } else {
+            if (value <= 0 || value > 100) {
+                return null;
+            }
+
+            let panelHeight = Main.layoutManager.panelBox.height;
+
+            return parseInt((global.screen.get_size()[1] - panelHeight) * value / 100.0);
+        }
     },
 
-    _unbindKey: function() {
-        global.display.remove_keybinding(TOGGLE_TERMINAL_KEYBINDING_KEY);
-    },
+    _shouldAnimateWindow: function() {
+        if (!this._animationEnabled || !Main.wm._shouldAnimate()) {
+            return false;
+        }
 
-    _getForkCommandArgs: function() {
-        return ["gjs", GLib.build_filenamev([Me.path, "terminal.js"])];
+        for (var ext in ExtensionUtils.extensions) {
+            if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
+                return false;
+            }
+        }
+
+        return true;
     }
 });
 

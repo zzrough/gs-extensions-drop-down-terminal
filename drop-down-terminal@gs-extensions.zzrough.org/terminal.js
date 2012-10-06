@@ -16,6 +16,7 @@
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
 const Lang = imports.lang;
+const System = imports.system;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Gdk = imports.gi.Gdk;
@@ -27,7 +28,11 @@ const Vte = imports.gi.Vte;
 // dbus interface
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
+        <property name="Pid" type="i" access="read"/>
+        <method name="SetHeight"><arg name="height" type="i" direction="in"/></method>
+        <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
+        <method name="Focus"/>
         <method name="Quit"/>
         <signal name="Failure">
             <arg type="s" name="name"/>
@@ -131,24 +136,49 @@ const DropDownTerminal = new Lang.Class({
         this._bus = Gio.DBusExportedObject.wrapJSObject(DropDownTerminalIface, this);
         this._bus.export(Gio.DBus.session, "/org/zzrough/GsExtensions/DropDownTerminal");
 
-        // forks the user shell
+        // forks the user shell early to detect a potential startup error
         this._forkUserShell();
+    },
 
-        // initial toggling to show the terminal
-        this.Toggle();
+    get Pid() {
+        return System.getpid();
+    },
+
+    SetHeight: function(height) {
+        // update the window height in the UI thread since this callback happens in the gdbus thread
+        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+            this._window.resize(Gdk.Screen.get_default().get_width(), height);
+        }));
+    },
+
+    IsOpened: function() {
+        return this._window.visible;
     },
 
     Toggle: function() {
         // update the window visibility in the UI thread since this callback happens in the gdbus thread
         Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
-            if (this._window.visible) {
-                this._window.hide();
-            } else {
-                this._window.show_all();
-                this._window.present();
-            }
+            this._window.visible ? this._window.hide()
+                                 : this._window.show_all();
 
             return false;
+        }));
+    },
+
+    Focus: function() {
+        // present the window in the UI thread since this callback happens in the gdbus thread
+        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+            if (this._window.visible) {
+                let time = 0;
+
+                try {
+                    time = GdkX11.x11_get_server_time(this._window.window);
+                } catch (e) {
+                    log("could not get x11 server time (cause: " + e + ")"); // not using logError as this is more an information than a real error
+                }
+
+                this._window.present_with_time(time);
+            }
         }));
     },
 
@@ -174,31 +204,29 @@ const DropDownTerminal = new Lang.Class({
 
         terminal.connect("eof", Lang.bind(this, this._forkUserShell));
         terminal.connect("child-exited", Lang.bind(this, this._forkUserShell));
-        terminal.connect("button-press-event", Lang.bind(this, this._terminalButtonPressed));
+        terminal.connect("button-release-event", Lang.bind(this, this._terminalButtonReleased));
         terminal.connect("refresh-window", Lang.bind(this, this._refreshWindow));
 
         // FIXME: we get weird colors when we apply tango colors
         //
         // terminal.set_colors_rgba(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
 
-        // FIXME: the default (BLOCK) is better but incorrectly shows the terminal being unfocused if:
+        // FIXME: the default (BLOCK) is better but incorrectly shows the terminal being unfocused from time to time
+        //        (still better with the focus enhancements in v2)
         //
-        //          - the user hover mouse on the terminal when opened (without even clicking it)
-        //          - close and reopened it
-        //          - the cursor looks like the "unfocused block" (a rectangle not filled up)
+        // It might be a regression from vte3/gtk3 since we configure/use the terminal+window
+        // the same as guake (gtk2) which always draws the focus correctly.
         //
-        //        It might be a regression from vte3/gtk3 since we configure/use the terminal+window
-        //        the same as guake (gtk2) which always draws the focus correctly.
+        // The internal "has_focus" flag of the terminal is not correctly updated, because in this
+        // no "focus-[in|out]-event" is emitted.
         //
-        //        The internal "has_focus" flag of the terminal is not correctly updated, because in this
-        //        very case no "focus-[in|out]-event" is emitted.
+        // Certainly related: when cursor blink mode is on and the mouse is hover on the terminal,
+        // blinking stops!
         //
-        //        Certainly related: when cursor blink mode is on and the mouse is hover on the terminal,
-        //        blinking stops!
+        // Maybe it is https://bugzilla.gnome.org/show_bug.cgi?id=623406#c5
         //
-        //        Maybe it is https://bugzilla.gnome.org/show_bug.cgi?id=623406#c5
-        //
-        //        But it does not seem to impact g-t, so this might be because we hide our own window?
+        // But it does not seem to impact g-t, so this might be because we hide our own window?
+        // Or maybe this is because I have the global gtk cursor blink to off to save some milliwatts? ;)
         terminal.set_cursor_shape(Vte.TerminalCursorShape.IBEAM);
 
         return terminal;
@@ -209,17 +237,18 @@ const DropDownTerminal = new Lang.Class({
 
         window.set_title("Drop Down Terminal");
         window.set_icon_name("utilities-terminal");
+        window.set_wmclass("Drop Down Terminal", "DropDownTerminalWindow");
         window.set_decorated(false);
         window.set_skip_taskbar_hint(true);
         window.set_skip_pager_hint(true);
-        window.set_resizable(false);
+        window.set_resizable(true);
         window.set_keep_above(true);
         window.set_accept_focus(true);
         window.set_deletable(false);
         window.stick();
-        window.move(0, 27);
-        window.set_size_request(Gdk.Screen.get_default().get_width(), 400);
-        window.resize(Gdk.Screen.get_default().get_width(), 400);
+        window.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU);
+        // window.set_size_request(Gdk.Screen.get_default().get_width(), 100);
+        window.set_default_size(Gdk.Screen.get_default().get_width(), 100);
         window.set_visual(Gdk.Screen.get_default().get_rgba_visual());
         window.set_opacity(0.95);
 
@@ -238,7 +267,7 @@ const DropDownTerminal = new Lang.Class({
 
         this._terminal.reset(false, true);
 
-        var sucess, pid;
+        var success, pid;
 
         try {
             [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, null, args, null, 
@@ -266,10 +295,12 @@ const DropDownTerminal = new Lang.Class({
         this._window.window.invalidate_rect(rect, true);
     },
 
-    _terminalButtonPressed: function(terminal, event) {
+    _terminalButtonReleased: function(terminal, event) {
+        let [has_state, state] = event.get_state();
         let [is_button, button] = event.get_button();
 
-        if (is_button && button == 1) { // left button
+        // handles a left button release
+        if (is_button && button == 1 && (state & Gdk.ModifierType.CONTROL_MASK)) {
             let [preserved, x, y] = event.get_coords();
 
             // FIXME: could not get the inner-border (the gvalue should be a returned value)
@@ -289,8 +320,7 @@ const DropDownTerminal = new Lang.Class({
 
             if (match) {
                 let properties = this._uriHandlingPropertiesbyTag[tag];
-
-                self._openUri(event.get_screen(), match, properties.flavor, event.get_time());
+                this._openUri(match, properties.flavor, event.get_screen(), event.get_time());
             }
         }
 

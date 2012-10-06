@@ -15,6 +15,9 @@
 
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
+const Lang = imports.lang;
+const MainLoop = imports.mainloop;
+
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -33,6 +36,32 @@ function getSettings(extensionPath, extensionId) {
 
     return new Gio.Settings({
         settings_schema: schema
+    });
+}
+
+
+/*
+ * Throttles a function call in the mainloop.
+ *
+ * This delays the call of the function @func and compresses calls to a maximum of one in the
+ * given @interval.
+ *
+ * This is especially useful to delay the application of a setting.
+ *
+ * @interval: the application interval in milliseconds
+ * @func: the delegate function to call in the mainloop
+ * @funcScope: the execution scope of the function
+ */
+function throttle(interval, func, funcScope) {
+    if (func._throttlingId !== undefined) {
+        MainLoop.source_remove(func._throttlingId);
+    }
+
+    func._throttlingId = MainLoop.timeout_add(interval, function() {
+        Lang.bind(funcScope, func)();
+        delete func._throttlingId;
+
+        return false;
     });
 }
 
