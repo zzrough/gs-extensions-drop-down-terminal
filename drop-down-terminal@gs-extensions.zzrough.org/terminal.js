@@ -247,8 +247,7 @@ const DropDownTerminal = new Lang.Class({
         window.set_deletable(false);
         window.stick();
         window.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU);
-        // window.set_size_request(Gdk.Screen.get_default().get_width(), 100);
-        window.set_default_size(Gdk.Screen.get_default().get_width(), 100);
+        window.set_default_size(Gdk.Screen.get_default().get_width(), 400);
         window.set_visual(Gdk.Screen.get_default().get_rgba_visual());
         window.set_opacity(0.95);
 

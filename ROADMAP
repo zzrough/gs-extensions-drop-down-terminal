@@ -1,6 +1,8 @@
 ROADMAP:
 
 v4
+TODO: tag back v2 (rewrite history with NEWS date)
+
 - feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: copy/paste via popupmenu + shortcuts (ctrl-shift'ed) + dnd
 - feature: multi tabs
