@@ -1,6 +1,6 @@
 ROADMAP:
 
-v3
+v4
 - feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: copy/paste via popupmenu + shortcuts (ctrl-shift'ed) + dnd
 - feature: multi tabs
@@ -12,10 +12,10 @@ v3
 - code: investigate argb colors not working
 - code review
 
-v4
+v5
 - feature: more preferences (early fork?, other term options?)
 - bugfix: investigate the focus issue preventing using the BLOCK cursor
 
-v5
+v6
 - feature: pause the child process if term closed and no active pid (for powersaving, maybe an additional pref?)
 
