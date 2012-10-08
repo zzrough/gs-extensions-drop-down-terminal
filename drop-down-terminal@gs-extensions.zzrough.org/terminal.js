@@ -29,7 +29,10 @@ const Vte = imports.gi.Vte;
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
-        <method name="SetHeight"><arg name="height" type="i" direction="in"/></method>
+        <method name="SetSize">
+		<arg name="width" type="i" direction="in"/>
+		<arg name="height" type="i" direction="in"/>
+	</method>
         <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
@@ -144,10 +147,10 @@ const DropDownTerminal = new Lang.Class({
         return System.getpid();
     },
 
-    SetHeight: function(height) {
+    SetSize: function(width, height) {
         // update the window height in the UI thread since this callback happens in the gdbus thread
         Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
-            this._window.resize(Gdk.Screen.get_default().get_width(), height);
+            this._window.resize(width, height);
         }));
     },
 
@@ -247,10 +250,9 @@ const DropDownTerminal = new Lang.Class({
         window.set_deletable(false);
         window.stick();
         window.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU);
-        window.set_default_size(Gdk.Screen.get_default().get_width(), 400);
+        window.set_default_size(Gdk.Screen.get_default().get_monitor_geometry(0).width, 400);
         window.set_visual(Gdk.Screen.get_default().get_rgba_visual());
         window.set_opacity(0.95);
-
         window.connect("delete-event", function() { window.hide(); return true; });
         window.connect("destroy", Gtk.main_quit);
 

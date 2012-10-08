@@ -3,11 +3,11 @@ ROADMAP:
 v4
 TODO: tag back v2 (rewrite history with NEWS date)
 
+- feature: open prefs on first start
 - feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: copy/paste via popupmenu + shortcuts (ctrl-shift'ed) + dnd
 - feature: multi tabs
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
-- feature: test on multihead: global.screen.connect('monitors-changed', ...)
 
 - code: switch to window-manager for window handling?
 - code: investigate if the inner-border can be retrieved

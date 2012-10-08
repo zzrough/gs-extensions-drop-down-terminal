@@ -7,7 +7,6 @@ v2 (2012-09-22)
 - support for 3.5.92 (3.6 was already targetd in v1)
 
 v3 (2012-10-06)
-
 - added an animation
 - added a border to mimick the shell style
 - added preferences (animation, height, shortcut)
@@ -19,3 +18,5 @@ v3 (2012-10-06)
 - stop opening directly the terminal in the child process by watching the bus name appearance.
   this simplifies shell restart survival a lot
 
+v4 (????-??-??)
+- feature: always open on the primary monitor on multihead (this is where the panelBox is)

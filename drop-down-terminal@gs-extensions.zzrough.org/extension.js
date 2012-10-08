@@ -56,7 +56,10 @@ const DEBUG = false;
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
-        <method name="SetHeight"><arg name="height" type="i" direction="in"/></method>
+        <method name="SetSize">
+                <arg name="width" type="i" direction="in"/>
+                <arg name="height" type="i" direction="in"/>
+        </method>
         <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
@@ -118,10 +121,11 @@ const DropDownTerminalExtension = new Lang.Class({
         // animation setup
         this._display = global.screen.get_display();
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
+        this._monitorsChangedHandlerId = global.screen.connect("monitors-changed", Lang.bind(this, this._updateWindowSize));
 
         // applies the settings initially
         this._animationEnabledSettingChanged();
-        this._windowHeightSettingChanged();
+        this._updateWindowSize();
         this._bindShortcut();
 
         // honours setting changes
@@ -129,7 +133,7 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._animationEnabledSettingChanged)),
 
             this._settings.connect("changed::" + WINDOW_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
-                Convenience.throttle(250, this._windowHeightSettingChanged, this); // throttles 1s (it's an "heavy weight" setting)
+                Convenience.throttle(250, this._updateWindowSize, this); // throttles 1s (it's an "heavy weight" setting)
             })),
 
             this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
@@ -180,7 +184,9 @@ const DropDownTerminalExtension = new Lang.Class({
         this._settingChangedHandlerIds = null;
 
         // disconnects the window creation signal and clears the related stuff
+        global.screen.disconnect(this._monitorsChangedHandlerId);
         this._display.disconnect(this._windowCreatedHandlerId);
+        this._monitorsChangedHandlerId = null;
         this._windowCreatedHandlerId = null;
         this._windowActor = null;
         this._display = null;
@@ -229,14 +235,14 @@ const DropDownTerminalExtension = new Lang.Class({
         this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
     },
 
-    _windowHeightSettingChanged: function() {
+    _updateWindowSize: function() {
         // computes and keep the window height for use when the terminal will be spawn (if not already)
         let heightSpec = this._settings.get_string(WINDOW_HEIGHT_SETTING_KEY);
         this._windowHeight = this._computeWindowHeight(heightSpec);
 
         // applies the change dynamically if the terminal is already spawn
         if (this._busProxy !== null && this._windowHeight !== null) {
-            this._busProxy.SetHeightRemote(this._windowHeight);
+            this._busProxy.SetSizeRemote(Main.layoutManager.primaryMonitor.width, this._windowHeight);
         }
 
         return false;
@@ -386,7 +392,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // applies the eventual window height change
         if (this._windowHeight !== null) {
-            this._busProxy.SetHeightSync(this._windowHeight);
+            this._busProxy.SetSizeSync(Main.layoutManager.primaryMonitor.width, this._windowHeight);
         }
 
         // initial toggling if explicitely asked to, since we we can also be called on a shell restart
