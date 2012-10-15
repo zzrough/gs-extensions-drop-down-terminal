@@ -30,9 +30,10 @@ const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
         <method name="SetSize">
-		<arg name="width" type="i" direction="in"/>
-		<arg name="height" type="i" direction="in"/>
-	</method>
+		    <arg name="width" type="i" direction="in"/>
+		    <arg name="height" type="i" direction="in"/>
+    	</method>
+    	<method name="SetFont"><arg type="s" direction="in"/></method>
         <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
@@ -148,10 +149,21 @@ const DropDownTerminal = new Lang.Class({
     },
 
     SetSize: function(width, height) {
-        // update the window height in the UI thread since this callback happens in the gdbus thread
-        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
-            this._window.resize(width, height);
-        }));
+        let [currentWidth, currentHeight] = this._window.get_size();
+
+        if (width != currentWidth || height != currentHeight) {
+            Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+                this._window.resize(width, height);
+            }));
+        }
+    },
+
+    SetFont: function(font) {
+        if (font != this._terminal.get_font().to_string()) {
+            Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+                this._terminal.set_font_from_string(font);
+            }));
+        }
     },
 
     IsOpened: function() {

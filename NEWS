@@ -19,4 +19,5 @@ v3 (2012-10-06)
   this simplifies shell restart survival a lot
 
 v4 (????-??-??)
-- feature: always open on the primary monitor on multihead (this is where the panelBox is)
+- feature: always open on the primary monitor on multihead (this is where the panelBox is) (github #1)
+- bugfix: use the system monospace font (github #3)

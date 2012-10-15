@@ -49,6 +49,7 @@ const ANIMATION_TIME_IN_MS = 0.25;
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const WINDOW_HEIGHT_SETTING_KEY = "window-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
+const FONT_NAME_SETTING_KEY = "monospace-font-name";
 const DEBUG = false;
 
 
@@ -60,6 +61,7 @@ const DropDownTerminalIface =
                 <arg name="width" type="i" direction="in"/>
                 <arg name="height" type="i" direction="in"/>
         </method>
+        <method name="SetFont"><arg type="s" direction="in"/></method>
         <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
@@ -101,6 +103,9 @@ const DropDownTerminalExtension = new Lang.Class({
     _init: function() {
         // retrieves the settings
         this._settings = Convenience.getSettings(Me.path, Me.metadata.id);
+        this._interfaceSettings = new Gio.Settings({
+            settings_schema: Gio.SettingsSchemaSource.get_default().lookup("org.gnome.desktop.interface", false)
+        });
 
         // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
         this._childPid = null;
@@ -112,9 +117,6 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // initializes if we should toggle on bus name appearance 
         this._toggleOnBusNameAppearance = false;
-
-        // id of the timeout used to delay the window height setting application
-        this._windowHeightDelayTimeoutId = null;
     },
 
     enable: function() {
@@ -126,6 +128,7 @@ const DropDownTerminalExtension = new Lang.Class({
         // applies the settings initially
         this._animationEnabledSettingChanged();
         this._updateWindowSize();
+        this._updateFont();
         this._bindShortcut();
 
         // honours setting changes
@@ -133,12 +136,16 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._animationEnabledSettingChanged)),
 
             this._settings.connect("changed::" + WINDOW_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
-                Convenience.throttle(250, this._updateWindowSize, this); // throttles 1s (it's an "heavy weight" setting)
+                Convenience.throttle(200, this._updateWindowSize, this); // throttles 200ms (it's an "heavy weight" setting)
             })),
 
             this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
                 this._unbindShortcut();
                 this._bindShortcut();
+            })),
+
+            this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
+                Convenience.throttle(200, this._updateFont, this); // throttles 200ms (it's an "heavy weight" setting)
             }))
         ];
 
@@ -243,6 +250,17 @@ const DropDownTerminalExtension = new Lang.Class({
         // applies the change dynamically if the terminal is already spawn
         if (this._busProxy !== null && this._windowHeight !== null) {
             this._busProxy.SetSizeRemote(Main.layoutManager.primaryMonitor.width, this._windowHeight);
+        }
+
+        return false;
+    },
+
+    _updateFont: function() {
+        this._fontName = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
+        
+        // applies the change dynamically if the terminal is already spawn
+        if (this._busProxy !== null && this._fontName !== null) {
+            this._busProxy.SetFontRemote(this._fontName);
         }
 
         return false;
@@ -390,10 +408,15 @@ const DropDownTerminalExtension = new Lang.Class({
             }
         }));
 
-        // applies the eventual window height change
+        // applies the possible window height change
         if (this._windowHeight !== null) {
             this._busProxy.SetSizeSync(Main.layoutManager.primaryMonitor.width, this._windowHeight);
         }
+
+        // applies the possible font name
+        if (this._fontName !== null) {
+            this._busProxy.SetFontSync(this._fontName);
+        } 
 
         // initial toggling if explicitely asked to, since we we can also be called on a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
