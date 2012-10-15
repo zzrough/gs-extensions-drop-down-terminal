@@ -263,7 +263,7 @@ const DropDownTerminal = new Lang.Class({
         let [parsed, args] = GLib.shell_parse_argv(Vte.get_user_shell());
 
         if (!parsed) {
-            args = ["/bin/bash"];
+            args = ["/bin/sh"];
         }
 
         this._terminal.reset(false, true);
@@ -271,10 +271,9 @@ const DropDownTerminal = new Lang.Class({
         var success, pid;
 
         try {
-            [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, null, args, null, 
-                GLib.SpawnFlags.CHILD_INHERITS_STDIN | GLib.SpawnFlags.SEARCH_PATH
-                                                     | GLib.SpawnFlags.FILE_AND_ARGV_ZERO,
-                null, null, null);
+            [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, null, 
+                                                              GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.FILE_AND_ARGV_ZERO,
+                                                              null);
         } catch (e) {
             let cause = e.name + " - " + e.message;
 
