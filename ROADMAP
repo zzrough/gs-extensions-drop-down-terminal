@@ -1,22 +1,25 @@
 ROADMAP:
 
 v4
-- feature: copy/paste via popupmenu + shortcuts (ctrl-shift'ed) + dnd
+- feature: copy/paste via popupmenu + shortcuts (ctrl-shift'ed)
+
+v5
+- feature: autohide (asked by step-2)
+- feature: dnd
 - feature: multi tabs
 - feature: open prefs on first start
 - feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
-- bugfix: ZSH (github #2)
 
 - code: switch to window-manager for window handling?
 - code: investigate if the inner-border can be retrieved
 - code: investigate argb colors not working
 - code review
 
-v5
+v6
 - feature: more preferences (early fork?, other term options?)
 - bugfix: investigate the focus issue preventing using the BLOCK cursor
 
-v6
+v7
 - feature: pause the child process if term closed and no active pid (for powersaving, maybe an additional pref?)
 
