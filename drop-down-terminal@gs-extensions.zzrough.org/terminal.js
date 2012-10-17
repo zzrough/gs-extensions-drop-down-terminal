@@ -284,8 +284,7 @@ const DropDownTerminal = new Lang.Class({
 
         try {
             [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, null, 
-                                                              GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.FILE_AND_ARGV_ZERO,
-                                                              null);
+                                                              GLib.SpawnFlags.SEARCH_PATH, null);
         } catch (e) {
             let cause = e.name + " - " + e.message;
 
