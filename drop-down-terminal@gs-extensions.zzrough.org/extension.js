@@ -87,11 +87,11 @@ const GraySouthBorderEffect = new Lang.Class({
         actor.continue_paint();
 
         let color = new Cogl.Color();
-        color.init_from_4ub(0x80, 0x80, 0x80, 0xff);
+        color.init_from_4ub(0xa5, 0xa5, 0xa5, 0xff);
         Cogl.set_source_color(color);
 
         let geom = actor.get_allocation_geometry();
-        Cogl.rectangle(0, geom.height, geom.width - 2, geom.height - 2);
+        Cogl.rectangle(0, geom.height, geom.width, geom.height - 2);
     },
 });
 
