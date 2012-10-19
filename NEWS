@@ -18,7 +18,10 @@ v3 (2012-10-06)
 - stop opening directly the terminal in the child process by watching the bus name appearance.
   this simplifies shell restart survival a lot
 
-v4 (????-??-??)
+v4 (2012-10-19)
 - feature: multihead support, always open on the primary monitor (github #1)
+- feature: copy/paste via popupmenu + shortcuts (ctrl-shift-C/V)
+- feature: show preferences on first startup
 - bugfix: use the system monospace font (github #3)
 - bugfix: ZSH (github #2)
+

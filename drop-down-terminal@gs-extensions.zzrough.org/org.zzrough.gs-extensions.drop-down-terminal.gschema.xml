@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema path="/org/zzrough/gs-extensions/drop-down-terminal/" id="org.zzrough.gs-extensions.drop-down-terminal">
+    <key name="first-start" type="b">
+      <default>true</default>
+      <summary>An internal key that must not be changed manually</summary>
+      <description>
+        Whether this is the first start of the extension or not. It is used to display a welcome message
+        and/or open preferences.
+      </description>
+    </key>
+
     <key name="enable-animation" type="b">
       <default>true</default>
       <summary>Enable the animation</summary>

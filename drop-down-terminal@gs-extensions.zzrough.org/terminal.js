@@ -45,6 +45,17 @@ const DropDownTerminalIface =
     </interface>;
 
 
+// uimanager popup information
+const PopupUi =
+    <ui>
+        <popup name="TerminalPopup">
+            <menuitem action="Copy"/>
+            <menuitem action="Paste"/>
+        </popup>
+    </ui>.toXMLString();
+
+
+
 // helper function that simply calls #parse on a new Gdk.RGBA instance
 // to easily create an Gdk.RGBA color
 function parseRgbaColor(spec) { col = new Gdk.RGBA(); col.parse(spec); return col; }
@@ -113,8 +124,10 @@ const DropDownTerminal = new Lang.Class({
 
     _init: function() {
         // creates the UI
+        this._actionGroup = new Gtk.ActionGroup({name: "Main"});
         this._terminal = this._createTerminal();
         this._window = this._createWindow();
+        this._popup = this._createPopupAndActions(this._window, this._actionGroup);
         this._window.add(this._terminal);
 
         // adds the uri matchers
@@ -271,6 +284,26 @@ const DropDownTerminal = new Lang.Class({
         return window;
     },
 
+    _createPopupAndActions: function() {
+        // get some shortcuts
+        let term = this._terminal;
+        let group = this._actionGroup;
+
+        // creates the actions and fills the action group
+        this._createAction("Copy", "Copy", Gtk.STOCK_COPY, "<shift><control>C", group, Lang.bind(term, term.copy_clipboard));
+        this._createAction("Paste", "Paste", Gtk.STOCK_PASTE, "<shift><control>V", group, Lang.bind(term, term.paste_clipboard));
+
+        // creates the UI manager
+        let uiManager = new Gtk.UIManager();
+        uiManager.add_ui_from_string(PopupUi, PopupUi.length);
+        uiManager.insert_action_group(group, 0);
+
+        // hooks the accel group up
+        this._window.add_accel_group(uiManager.get_accel_group());
+
+        return uiManager.get_widget("/TerminalPopup");
+    },
+
     _forkUserShell: function() {
         let [parsed, args] = GLib.shell_parse_argv(Vte.get_user_shell());
 
@@ -310,8 +343,8 @@ const DropDownTerminal = new Lang.Class({
         let [has_state, state] = event.get_state();
         let [is_button, button] = event.get_button();
 
-        // handles a left button release
-        if (is_button && button == 1 && (state & Gdk.ModifierType.CONTROL_MASK)) {
+        // opens hovered link on ctrl+left-click
+        if (is_button && button == Gdk.BUTTON_PRIMARY && (state & Gdk.ModifierType.CONTROL_MASK)) {
             let [preserved, x, y] = event.get_coords();
 
             // FIXME: could not get the inner-border (the gvalue should be a returned value)
@@ -333,6 +366,18 @@ const DropDownTerminal = new Lang.Class({
                 let properties = this._uriHandlingPropertiesbyTag[tag];
                 this._openUri(match, properties.flavor, event.get_screen(), event.get_time());
             }
+
+            return true;
+        }
+
+        // opens the popup menu on right click (not using event.triggers_context_menu to avoid eating
+        // Shift-F10 for Midnight Commander or an app like that)
+        //
+        // Note: we do not update the paste sensitivity as this requires API not available (Gdk.Atom and SELECTION_CLIPBOARD)
+        //       thus we do not handle copy sensitivity either (this makes more sense and is less code) 
+        if (is_button && button == Gdk.BUTTON_SECONDARY) {
+            this._popup.popup(null, null, null, button, event.get_time());
+            return true;
         }
 
         return false;
@@ -346,6 +391,14 @@ const DropDownTerminal = new Lang.Class({
         }
 
         Gtk.show_uri(screen, uri, time);
+    },
+
+    _createAction: function(name, label, stockId, accel, actionGroup, callback) {
+        let action = new Gtk.Action({name: name, label: label, stock_id: stockId});
+        action.connect("activate", callback);
+        actionGroup.add_action_with_accel(action, accel);
+
+        return action;
     }
 });
 

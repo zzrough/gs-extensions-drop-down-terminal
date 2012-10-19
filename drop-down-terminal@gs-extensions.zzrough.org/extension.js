@@ -46,6 +46,7 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
 ];
 
 const ANIMATION_TIME_IN_MS = 0.25;
+const FIRST_START_SETTING_KEY = "first-start";
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const WINDOW_HEIGHT_SETTING_KEY = "window-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
@@ -155,6 +156,9 @@ const DropDownTerminalExtension = new Lang.Class({
                                                         Lang.bind(this, this._busNameAppeared),
                                                         Lang.bind(this, this._busNameVanished),
                                                         null, null);
+
+        // handles the first start
+        this._handleFirstStart();
     },
 
     disable: function() {
@@ -478,6 +482,24 @@ const DropDownTerminalExtension = new Lang.Class({
         }
 
         return true;
+    },
+
+    _handleFirstStart: function() {
+        // checks the first start key
+        if (!this._settings.get_boolean(FIRST_START_SETTING_KEY)) {
+            return;
+        }
+
+        // opens the preferences up
+        try {
+            GLib.spawn_command_line_async("gnome-shell-extension-prefs " + Me.uuid);
+        } catch (err) {
+            logError(err, "Could not start gnome-shell-extension-prefs");
+            Main.notifyError(_("Error while opening the preferences"), _("gnome-shell-extension-prefs could not be started, check your session log for more details"));
+        }
+
+        // updates the first start key
+        this._settings.set_boolean(FIRST_START_SETTING_KEY, false);
     }
 });
 
