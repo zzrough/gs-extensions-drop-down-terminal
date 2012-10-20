@@ -4,7 +4,6 @@ v5
 - feature: autohide (asked by step-2)
 - feature: dnd
 - feature: multi tabs
-- feature: open prefs on first start
 - feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
 

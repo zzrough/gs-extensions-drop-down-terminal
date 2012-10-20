@@ -104,9 +104,7 @@ const DropDownTerminalExtension = new Lang.Class({
     _init: function() {
         // retrieves the settings
         this._settings = Convenience.getSettings(Me.path, Me.metadata.id);
-        this._interfaceSettings = new Gio.Settings({
-            settings_schema: Gio.SettingsSchemaSource.get_default().lookup("org.gnome.desktop.interface", false)
-        });
+        this._interfaceSettings = new Gio.Settings({schema: "org.gnome.desktop.interface"});
 
         // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
         this._childPid = null;
