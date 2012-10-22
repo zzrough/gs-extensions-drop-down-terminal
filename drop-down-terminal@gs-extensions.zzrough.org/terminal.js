@@ -347,18 +347,11 @@ const DropDownTerminal = new Lang.Class({
         if (is_button && button == Gdk.BUTTON_PRIMARY && (state & Gdk.ModifierType.CONTROL_MASK)) {
             let [preserved, x, y] = event.get_coords();
 
-            // FIXME: could not get the inner-border (the gvalue should be a returned value)
-            //        to mimick gnome-terminal (term.get_padding is deprecated)
-            //
-            // let innerBorder = term.style_get_property('inner-border');
-            // let paddingTop = (innerBorder ? innerBorder.top : 0);
-            // let paddingLeft = (innerBorder ? innerBorder.left : 0);
+            let border = new Gtk.Border();
+            terminal.style_get_property("inner-border", border);
 
-            let paddingTop = 0;
-            let paddingLeft = 0;
-
-            let column = (x - paddingLeft) / terminal.get_char_width();
-            let row = (y - paddingTop) / terminal.get_char_height();
+            let column = (x - border.left) / terminal.get_char_width();
+            let row = (y - border.top) / terminal.get_char_height();
 
             let [match, tag] = terminal.match_check(column, row);
 

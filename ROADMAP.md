@@ -19,5 +19,4 @@ v7
 
 v8
 - feature: pause the child process if term closed and no active pid (for powersaving, maybe an additional pref?)
-- code: investigate if the inner-border can be retrieved
 - code: global review

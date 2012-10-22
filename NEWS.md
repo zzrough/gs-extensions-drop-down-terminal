@@ -21,3 +21,5 @@ v4 (2012-10-19)
 - bugfix: [use the system monospace font (github #3)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/3)
 - bugfix: [ZSH (github #2)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/2)
 
+v5 (????-??-??)
+- code: investigate if the inner-border can be retrieved
