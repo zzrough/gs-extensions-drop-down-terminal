@@ -1,13 +1,14 @@
 v5
+- feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
 - feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
 - feature (maybe?): custom command (asked by sequentious)
 - bugfix: [terminal lost after screen is locked (github #6)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/6)
+- bugfix: the window is at the wrong location when the animation starts
 
 v6
 - feature: autohide (asked by step-2)
 - bugfix: [when switching Workspaces DD Terminal flashes in and out (github #4)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/4)
-- bugfix: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
 - bugfix: [no focus given on ctrl-alt-tab (github #8)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/8)
 - code: switch to window-manager for window handling?
 

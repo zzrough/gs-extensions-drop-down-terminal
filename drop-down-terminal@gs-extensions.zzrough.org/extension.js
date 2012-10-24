@@ -58,10 +58,12 @@ const DEBUG = false;
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
-        <method name="SetSize">
-                <arg name="width" type="i" direction="in"/>
-                <arg name="height" type="i" direction="in"/>
-        </method>
+        <method name="SetGeometry">
+		    <arg name="x" type="i" direction="in"/>
+		    <arg name="y" type="i" direction="in"/>
+		    <arg name="width" type="i" direction="in"/>
+		    <arg name="height" type="i" direction="in"/>
+    	</method>
         <method name="SetFont"><arg type="s" direction="in"/></method>
         <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
@@ -122,11 +124,11 @@ const DropDownTerminalExtension = new Lang.Class({
         // animation setup
         this._display = global.screen.get_display();
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
-        this._monitorsChangedHandlerId = global.screen.connect("monitors-changed", Lang.bind(this, this._updateWindowSize));
+        this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
 
         // applies the settings initially
         this._animationEnabledSettingChanged();
-        this._updateWindowSize();
+        this._updateWindowGeometry();
         this._updateFont();
         this._bindShortcut();
 
@@ -135,7 +137,7 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._animationEnabledSettingChanged)),
 
             this._settings.connect("changed::" + WINDOW_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
-                Convenience.throttle(200, this._updateWindowSize, this); // throttles 200ms (it's an "heavy weight" setting)
+                Convenience.throttle(200, this._updateWindowGeometry, this); // throttles 200ms (it's an "heavy weight" setting)
             })),
 
             this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
@@ -192,8 +194,8 @@ const DropDownTerminalExtension = new Lang.Class({
 
         this._settingChangedHandlerIds = null;
 
-        // disconnects the window creation signal and clears the related stuff
-        global.screen.disconnect(this._monitorsChangedHandlerId);
+        // disconnects signals and clears refs related to screen handling
+        Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
         this._display.disconnect(this._windowCreatedHandlerId);
         this._monitorsChangedHandlerId = null;
         this._windowCreatedHandlerId = null;
@@ -244,14 +246,20 @@ const DropDownTerminalExtension = new Lang.Class({
         this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
     },
 
-    _updateWindowSize: function() {
-        // computes and keep the window height for use when the terminal will be spawn (if not already)
+    _updateWindowGeometry: function() {
+        // computes the window geometry except the height
+        let panelBox = Main.layoutManager.panelBox;
+        this._windowX = panelBox.x;
+        this._windowY = panelBox.y + panelBox.height;
+        this._windowWidth = panelBox.width;
+
+        // computes and keep the window height for use when the terminal will be spawn (if it is not already)
         let heightSpec = this._settings.get_string(WINDOW_HEIGHT_SETTING_KEY);
         this._windowHeight = this._computeWindowHeight(heightSpec);
 
         // applies the change dynamically if the terminal is already spawn
         if (this._busProxy !== null && this._windowHeight !== null) {
-            this._busProxy.SetSizeRemote(Main.layoutManager.primaryMonitor.width, this._windowHeight);
+            this._busProxy.SetGeometryRemote(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
         }
 
         return false;
@@ -261,7 +269,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._fontName = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
         
         // applies the change dynamically if the terminal is already spawn
-        if (this._busProxy !== null && this._fontName !== null) {
+        if (this._busProxy !== null) {
             this._busProxy.SetFontRemote(this._fontName);
         }
 
@@ -295,20 +303,16 @@ const DropDownTerminalExtension = new Lang.Class({
             }
         };
 
-        // animate the opening sequence if animation is supported
+        // animate the opening sequence (if animation is supported) and requests the focus on completion
         if (this._shouldAnimateWindow()) {
-            let [sourceX, sourceY] = [this._windowActor.x, -this._windowActor.height];
-            let [targetX, targetY] = [sourceX, Main.layoutManager.panelBox.height];
-
-            this._windowActor.set_position(sourceX, sourceY);
+            this._windowActor.set_position(this._windowX, -this._windowActor.height);
 
             Tweener.addTween(this._windowActor, {
-                y: targetY,
+                y: this._windowY,
                 time: ANIMATION_TIME_IN_MS,
                 transition: "easeOutExpo",
                 onComplete: requestFocusAsync,
-                onCompleteParams: [this._busProxy],
-                onCompleteScope: this
+                onCompleteParams: [this._busProxy]
             });
         } else {
             requestFocusAsync(this._busProxy);
@@ -410,15 +414,13 @@ const DropDownTerminalExtension = new Lang.Class({
             }
         }));
 
-        // applies the possible window height change
+        // applies the geometry if applicable
         if (this._windowHeight !== null) {
-            this._busProxy.SetSizeSync(Main.layoutManager.primaryMonitor.width, this._windowHeight);
+            this._busProxy.SetGeometrySync(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
         }
 
-        // applies the possible font name
-        if (this._fontName !== null) {
-            this._busProxy.SetFontSync(this._fontName);
-        } 
+        // applies the font name
+        this._busProxy.SetFontSync(this._fontName);
 
         // initial toggling if explicitely asked to, since we we can also be called on a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
@@ -462,9 +464,10 @@ const DropDownTerminalExtension = new Lang.Class({
                 return null;
             }
 
+            let monitorHeight = Main.layoutManager.primaryMonitor.height;
             let panelHeight = Main.layoutManager.panelBox.height;
 
-            return parseInt((global.screen.get_size()[1] - panelHeight) * value / 100.0);
+            return parseInt((monitorHeight - panelHeight) * value / 100.0);
         }
     },
 

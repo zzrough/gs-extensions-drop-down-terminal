@@ -29,7 +29,9 @@ const Vte = imports.gi.Vte;
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
-        <method name="SetSize">
+        <method name="SetGeometry">
+		    <arg name="x" type="i" direction="in"/>
+		    <arg name="y" type="i" direction="in"/>
 		    <arg name="width" type="i" direction="in"/>
 		    <arg name="height" type="i" direction="in"/>
     	</method>
@@ -161,14 +163,19 @@ const DropDownTerminal = new Lang.Class({
         return System.getpid();
     },
 
-    SetSize: function(width, height) {
+    SetGeometry: function(x, y, width, height) {
+        let [currentX, currentY] = this._window.get_position();
         let [currentWidth, currentHeight] = this._window.get_size();
 
-        if (width != currentWidth || height != currentHeight) {
-            Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+            if (x != currentX || y != currentY) {
+                this._window.move(x, y);
+            }
+
+            if (width != currentWidth || height != currentHeight) {
                 this._window.resize(width, height);
-            }));
-        }
+            }
+        }));
     },
 
     SetFont: function(font) {
@@ -261,6 +268,7 @@ const DropDownTerminal = new Lang.Class({
     },
 
     _createWindow: function() {
+        let screen = Gdk.Screen.get_default();
         let window = new Gtk.Window({type : Gtk.WindowType.TOPLEVEL});
 
         window.set_title("Drop Down Terminal");
@@ -275,8 +283,8 @@ const DropDownTerminal = new Lang.Class({
         window.set_deletable(false);
         window.stick();
         window.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU);
-        window.set_default_size(Gdk.Screen.get_default().get_monitor_geometry(0).width, 400);
-        window.set_visual(Gdk.Screen.get_default().get_rgba_visual());
+        window.set_default_size(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400);
+        window.set_visual(screen.get_rgba_visual());
         window.set_opacity(0.95);
         window.connect("delete-event", function() { window.hide(); return true; });
         window.connect("destroy", Gtk.main_quit);

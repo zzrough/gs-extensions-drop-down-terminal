@@ -23,3 +23,5 @@ v4 (2012-10-19)
 
 v5 (????-??-??)
 - code: investigate if the inner-border can be retrieved
+- bugfix: [terminal on wrong monitor (github #10)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/10)
+
