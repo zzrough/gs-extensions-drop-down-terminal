@@ -227,10 +227,14 @@ const DropDownTerminalExtension = new Lang.Class({
 
             // if animation is supported and the terminal is opened, we animate the closing sequence
             if (this._shouldAnimateWindow() && this._windowActor !== null && this._busProxy.IsOpenedSync()) {
-                let [targetX, targetY] = [this._windowActor.x, -this._windowActor.height];
+                let monitorAbove = this._hasMonitorAbove();
+
+                let targetY = monitorAbove ? this._windowActor.y : -this._windowActor.height;
+                let targetScaleY = monitorAbove ? 0.0 : 1.0;
 
                 Tweener.addTween(this._windowActor, {
                     y: targetY,
+                    scale_y: targetScaleY,
                     time: ANIMATION_TIME_IN_MS,
                     transition: "easeInExpo",
                     onComplete: this._busProxy.ToggleRemote,
@@ -305,10 +309,15 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // animate the opening sequence (if animation is supported) and requests the focus on completion
         if (this._shouldAnimateWindow()) {
-            this._windowActor.set_position(this._windowX, -this._windowActor.height);
+            if (this._hasMonitorAbove()) {
+                this._windowActor.scale_y = 0.0;
+            } else {
+                this._windowActor.set_position(this._windowX, -this._windowActor.height);
+            }
 
             Tweener.addTween(this._windowActor, {
                 y: this._windowY,
+                scale_y: 1.0,
                 time: ANIMATION_TIME_IN_MS,
                 transition: "easeOutExpo",
                 onComplete: requestFocusAsync,
@@ -469,6 +478,10 @@ const DropDownTerminalExtension = new Lang.Class({
 
             return parseInt((monitorHeight - panelHeight) * value / 100.0);
         }
+    },
+
+    _hasMonitorAbove: function() {
+        return Main.layoutManager.panelBox.y > 0;
     },
 
     _shouldAnimateWindow: function() {
