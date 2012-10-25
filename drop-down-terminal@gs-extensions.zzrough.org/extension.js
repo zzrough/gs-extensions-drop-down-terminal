@@ -90,16 +90,22 @@ const GraySouthBorderEffect = new Lang.Class({
     Name: "GraySouthBorderEffect",
     Extends: Clutter.Effect,
 
+    _init: function() {
+        this.parent();
+
+        this._width = 2;
+        this._color = new Cogl.Color();
+        this._color.init_from_4ub(0xa5, 0xa5, 0xa5, 0xff);
+    },
+
     vfunc_paint: function() {
         let actor = this.get_actor();
+        let geom = actor.get_allocation_geometry();
+
         actor.continue_paint();
 
-        let color = new Cogl.Color();
-        color.init_from_4ub(0xa5, 0xa5, 0xa5, 0xff);
-        Cogl.set_source_color(color);
-
-        let geom = actor.get_allocation_geometry();
-        Cogl.rectangle(0, geom.height, geom.width, geom.height - 2);
+        Cogl.set_source_color(this._color);
+        Cogl.rectangle(0, geom.height, geom.width, geom.height - this._width);
     },
 });
 
