@@ -231,6 +231,12 @@ const DropDownTerminalExtension = new Lang.Class({
         // unbinds the shortcut
         this._unbindShortcut();
 
+        // checks if there is not an instance of a previous child, mainly because it survived a shell restart
+        // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
+        if (this._childPid === null && this._busProxy !== null) {
+            this._childPid = this._busProxy["Pid"];
+        }
+
         // quit and/or kill the child process if it exists
         if (this._childPid !== null) {
             try {
