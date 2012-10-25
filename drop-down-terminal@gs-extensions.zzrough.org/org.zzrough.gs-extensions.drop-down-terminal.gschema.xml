@@ -56,5 +56,22 @@
         in the preferences UI.
       </description>
     </key>
+
+    <key name="run-custom-command" type="b">
+      <default>false</default>
+      <summary>Whether to run a custom command or the default</summary>
+      <description>
+        Whether to use the custom command set in the 'custom-command' key or not (the user shell is used instead).
+      </description>
+    </key>
+
+    <key name="custom-command" type="s">
+      <default>''</default>
+      <summary>The custom command to launch</summary>
+      <description>
+        The custom command to launch in the terminal, only used if the 'run-custom-command' key value is 'true'.
+      </description>
+    </key>
   </schema>
 </schemalist>
+

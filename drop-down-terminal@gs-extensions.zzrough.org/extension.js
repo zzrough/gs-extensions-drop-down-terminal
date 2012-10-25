@@ -56,6 +56,8 @@ const FIRST_START_SETTING_KEY = "first-start";
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const WINDOW_HEIGHT_SETTING_KEY = "window-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
+const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
+const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 const FONT_NAME_SETTING_KEY = "monospace-font-name";
 
 
@@ -63,6 +65,7 @@ const FONT_NAME_SETTING_KEY = "monospace-font-name";
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
+        <method name="SetCustomCommand"><arg type="s" direction="in"/></method>
         <method name="SetGeometry">
 		    <arg name="x" type="i" direction="in"/>
 		    <arg name="y" type="i" direction="in"/>
@@ -187,6 +190,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // applies the settings initially
         this._animationEnabledSettingChanged();
+        this._updateCustomCommand();
         this._updateWindowGeometry();
         this._updateFont();
         this._bindShortcut();
@@ -203,6 +207,9 @@ const DropDownTerminalExtension = new Lang.Class({
                 this._unbindShortcut();
                 this._bindShortcut();
             })),
+
+            this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
+            this._settings.connect("changed::" + CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
 
             this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
                 Convenience.throttle(200, this._updateFont, this); // throttles 200ms (it's an "heavy weight" setting)
@@ -311,6 +318,18 @@ const DropDownTerminalExtension = new Lang.Class({
         this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
     },
 
+    _updateCustomCommand: function() {
+        if (this._settings.get_boolean(RUN_CUSTOM_COMMAND_SETTING_KEY)) {
+            this._customCommand = this._settings.get_string(CUSTOM_COMMAND_SETTING_KEY).trim();
+        } else {
+            this._customCommand = "";
+        }
+
+        if (this._busProxy !== null) {
+            this._busProxy.SetCustomCommandRemote(this._customCommand);
+        }
+    },
+
     _updateWindowGeometry: function() {
         // computes the window geometry except the height
         let panelBox = Main.layoutManager.panelBox;
@@ -412,10 +431,14 @@ const DropDownTerminalExtension = new Lang.Class({
         // finds the forking arguments
         let args = ["gjs", GLib.build_filenamev([Me.path, "terminal.js"])];
 
+        if (this._customCommand) {
+            args = args.concat(this._customCommand.split(/\s+/));
+        }
+
         // forks the process
         debug("forking '" + args.join(" ") + "'");
 
-        var success, pid;
+        let success, pid;
 
         try {
             [success, pid] = GLib.spawn_async(null, args, null,
@@ -565,7 +588,7 @@ const DropDownTerminalExtension = new Lang.Class({
             return false;
         }
 
-        for (var ext in ExtensionUtils.extensions) {
+        for (let ext in ExtensionUtils.extensions) {
             if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
                 return false;
             }

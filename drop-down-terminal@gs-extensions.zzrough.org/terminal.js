@@ -29,6 +29,7 @@ const Vte = imports.gi.Vte;
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
+        <method name="SetCustomCommand"><arg type="s" direction="in"/></method>
         <method name="SetGeometry">
 		    <arg name="x" type="i" direction="in"/>
 		    <arg name="y" type="i" direction="in"/>
@@ -156,11 +157,23 @@ const DropDownTerminal = new Lang.Class({
         this._bus.export(Gio.DBus.session, "/org/zzrough/GsExtensions/DropDownTerminal");
 
         // forks the user shell early to detect a potential startup error
+        this._customCommandArgs = ARGV;
         this._forkUserShell();
     },
 
     get Pid() {
         return System.getpid();
+    },
+
+    SetCustomCommand: function(command) {
+        // parses the command line
+        this._customCommandArgs = command ? command.split(/\s+/) : [];
+
+        // tries to fork the shell again if it fails last time (the user might be trying different values,
+        // we do not want the terminal to get stuck)
+        if (this._lastForkFailed) {
+            this._forkUserShell();
+        }
     },
 
     SetGeometry: function(x, y, width, height) {
@@ -313,20 +326,18 @@ const DropDownTerminal = new Lang.Class({
     },
 
     _forkUserShell: function() {
-        let [parsed, args] = GLib.shell_parse_argv(Vte.get_user_shell());
-
-        if (!parsed) {
-            args = ["/bin/sh"];
-        }
-
         this._terminal.reset(false, true);
 
-        var success, pid;
+        let args = this._getCommandArgs();
+        let success, pid;
 
         try {
             [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, null, 
                                                               GLib.SpawnFlags.SEARCH_PATH, null);
+            this._lastForkFailed = false;
         } catch (e) {
+            this._lastForkFailed = true;
+
             let cause = e.name + " - " + e.message;
 
             this._bus.emit_signal("Failure",
@@ -392,6 +403,27 @@ const DropDownTerminal = new Lang.Class({
         }
 
         Gtk.show_uri(screen, uri, time);
+    },
+
+    _getCommandArgs: function() {
+        // custom command
+        if (this._customCommandArgs.length > 0) {
+            return this._customCommandArgs;
+        }
+
+        // user shell
+        try {
+            let [parsed, args] = GLib.shell_parse_argv(Vte.get_user_shell());
+
+            if (parsed) {
+                return args;
+            }
+        } catch (e) {
+            // nothing: we continue silently as this is totally expected
+        }
+
+        // falls back to the classic Bourne shell
+        return ["/bin/sh"];
     },
 
     _createAction: function(name, label, stockId, accel, actionGroup, callback) {

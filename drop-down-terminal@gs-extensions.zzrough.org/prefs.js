@@ -18,6 +18,7 @@
 const Lang = imports.lang;
 const Gettext = imports.gettext.domain('drop-down-terminal');
 
+const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
@@ -33,6 +34,8 @@ const WINDOW_HEIGHT_SETTING_KEY = "window-height";
 const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
+const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
+const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
 // shortcut tree view columns
 const SHORTCUT_COLUMN_KEY  = 0;
@@ -77,6 +80,9 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
             this._otherShortcutTreeView = builder.get_object("other-shortcut-treeview");
             this._otherShortcutListStore = builder.get_object("other-shortcut-liststore");
+            this._runCustomCommandCheckButton = builder.get_object("run-custom-command-checkbutton");
+            this._customCommandBox = builder.get_object("custom-command-box");
+            this._customCommandEntry = builder.get_object("custom-command-entry");
 
             // packs the main table
             this.pack_start(mainTable, true, true, 0);
@@ -109,7 +115,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._settings.bind(WINDOW_HEIGHT_SETTING_KEY, windowHeightEntry, "text", Gio.SettingsBindFlags.DEFAULT);
             windowHeightResetButton.connect("clicked", Lang.bind(this, function() { this._settings.reset(WINDOW_HEIGHT_SETTING_KEY); }));
 
-            // binds the other shortcut setting
+            // binds the custom shortcut setting
             this._otherShortcutSettingChanged();
             this._settings.connect("changed::" + OTHER_SHORTCUT_SETTING_KEY, Lang.bind(this, this._otherShortcutSettingChanged));
 
@@ -121,6 +127,16 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
                 this._settings.set_string(SHORTCUT_TYPE_SETTING_KEY, this._otherShortcutRadioButton["active"] ? "other" : "default");
                 this._shortcutTypeSettingChanged();
             }));
+
+            // binds the custom command settings
+            this._settings.bind(RUN_CUSTOM_COMMAND_SETTING_KEY, this._runCustomCommandCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
+            this._settings.bind(CUSTOM_COMMAND_SETTING_KEY, this._customCommandEntry, "text", Gio.SettingsBindFlags.DEFAULT);
+
+            this._runCustomCommandCheckButtonToggled();
+            this._checkCustomCommandEntry();
+
+            this._runCustomCommandCheckButton.connect("notify::active", Lang.bind(this, this._runCustomCommandCheckButtonToggled));
+            this._customCommandEntry.connect("changed", Lang.bind(this, this._checkCustomCommandEntry));
         }
     },
 
@@ -178,6 +194,33 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
     _updateOtherShortcutRow: function(accel) {
         let [key, mods] = (accel !== null) ? Gtk.accelerator_parse(accel) : [0, 0];
         this._otherShortcutListStore.set(this._otherShortcutRowIter, [SHORTCUT_COLUMN_KEY, SHORTCUT_COLUMN_MODS], [key, mods]);
+    },
+
+    _runCustomCommandCheckButtonToggled: function() {
+        this._customCommandBox.set_sensitive(this._runCustomCommandCheckButton.get_active());
+        this._checkCustomCommandEntry();
+    },
+
+    _checkCustomCommandEntry: function() {
+        let runCustomCommand = this._runCustomCommandCheckButton.get_active();
+        let error = null;
+
+        if (runCustomCommand) {
+            let customCommand = this._customCommandEntry.get_text().trim();
+
+            try {
+                let [parsed, args] = GLib.shell_parse_argv(customCommand);
+
+                if (!parsed) {
+                    error = _("no argument found");
+                }
+            } catch (e) {
+                error = e.message;
+            }
+        }
+
+        this._customCommandEntry["secondary-icon-name"] = error ? "dialog-warning-symbolic" : null;
+        this._customCommandEntry["secondary-icon-tooltip-text"] = error ? _("Error parsing command: %s").format(error) : null;
     }
 });
 

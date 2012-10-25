@@ -1,7 +1,6 @@
 v5
 - feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
-- feature (maybe?): custom command (asked by sequentious)
 - bugfix: [terminal lost after screen is locked (github #6)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/6)
 
 v6
