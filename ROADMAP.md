@@ -1,6 +1,5 @@
 v5
 - feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
-- feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
 - feature (maybe?): custom command (asked by sequentious)
 - bugfix: [terminal lost after screen is locked (github #6)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/6)

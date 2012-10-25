@@ -122,7 +122,7 @@ const UriHandlingProperties = [
 
 // terminal class
 const DropDownTerminal = new Lang.Class({
-    Name: 'DropDownTerminal',
+    Name: "DropDownTerminal",
 
     _init: function() {
         // creates the UI
@@ -145,7 +145,7 @@ const DropDownTerminal = new Lang.Class({
         }));
 
         // asks the session bus to own the interface name
-        Gio.DBus.session.own_name('org.zzrough.GsExtensions.DropDownTerminal',
+        Gio.DBus.session.own_name("org.zzrough.GsExtensions.DropDownTerminal",
             Gio.BusNameOwnerFlags.NONE,
             null,
             null

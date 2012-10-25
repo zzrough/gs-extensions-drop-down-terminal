@@ -22,7 +22,9 @@ v4 (2012-10-19)
 - bugfix: [ZSH (github #2)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/2)
 
 v5 (????-??-??)
-- code: investigate if the inner-border can be retrieved
+- feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - bugfix: [terminal on wrong monitor (github #10)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/10)
 - bugfix: better animation depending on monitor position (animate the height instead of the position if there is a monitor above the primary one)
 - bugfix: glitch at animation startup (the window can be briefly seen at the wrong location)
+- code: investigate if the inner-border can be retrieved
+

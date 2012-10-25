@@ -16,19 +16,22 @@
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
 const Lang = imports.lang;
-const Gettext = imports.gettext.domain('drop-down-terminal');
+const Gettext = imports.gettext.domain("drop-down-terminal");
+const Mainloop = imports.mainloop;
 
-const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
 const Gdk = imports.gi.Gdk;
 const GdkX11 = imports.gi.GdkX11;
+const Pango = imports.gi.Pango;
 const Gtk = imports.gi.Gtk;
-const Vte = imports.gi.Vte;
-const Tweener = imports.ui.tweener;
 const Cogl = imports.gi.Cogl;
 const Clutter = imports.gi.Clutter;
+const St = imports.gi.St;
 const Meta = imports.gi.Meta;
 const Main = imports.ui.main;
+const ModalDialog = imports.ui.modalDialog;
+const Tweener = imports.ui.tweener;
 
 const _ = Gettext.gettext;
 const Config = imports.misc.config;
@@ -40,9 +43,9 @@ const Convenience = Me.imports.convenience;
 
 // constants
 const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
-    'window-open-animation-rotate-in@mengzhuo.org',
-    'window-open-animation-slide-in@mengzhuo.org',
-    'window-open-animation-scale-in@mengzhuo.org'
+    "window-open-animation-rotate-in@mengzhuo.org",
+    "window-open-animation-slide-in@mengzhuo.org",
+    "window-open-animation-scale-in@mengzhuo.org"
 ];
 
 const TERMINAL_WINDOW_WM_CLASS = "DropDownTerminalWindow";
@@ -83,7 +86,7 @@ function debug(text) { DEBUG && log("[DDT] " + text); }
 
 // window border effect class
 const GraySouthBorderEffect = new Lang.Class({
-    Name: 'GraySouthBorderEffect',
+    Name: "GraySouthBorderEffect",
     Extends: Clutter.Effect,
 
     vfunc_paint: function() {
@@ -100,9 +103,53 @@ const GraySouthBorderEffect = new Lang.Class({
 });
 
 
+// missing dependencies dialog
+const MissingVteDialog = new Lang.Class({
+    Name: "MissingDepsDialog",
+    Extends: ModalDialog.ModalDialog,
+
+    _init: function() {
+        this.parent({styleClass: "modal-dialog"});
+
+        this.setButtons([{ label:   _("Close"),
+                           action:  Lang.bind(this, this.close),
+                           key:     Clutter.Escape,
+                           default: true
+                        }]);
+
+        let errorIcon = new St.Icon({ icon_name: "dialog-error-symbolic",
+                                      icon_size: 24,
+                                      style_class: "run-dialog-error-icon" });
+
+        let titleLabel = new St.Label({ text: _("Vte library missing") });
+        let messageLabel = new St.Label({ text:  _("The 'Drop Down Terminal' extension requires the Vte library (version >= 0.31) and its gir typelib.\n" +
+                                                   "\n" +
+                                                   "Please install:\n" +
+                                                   "    - on Fedora/Arch: the 'vte3' package (you certainly uninstalled it)\n" +
+                                                   "    - on Debian/Ubuntu: the 'gir-1.2-vte-2.90' package (not installed by default)\n" +
+                                                   "\n" +
+                                                   "Then, log out.") });
+        messageLabel.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
+        messageLabel.clutter_text.line_wrap = true;
+
+        let titleBox = new St.BoxLayout();
+        titleBox.add(errorIcon);
+        titleBox.add(new St.Label({ text: '  ' }));
+        titleBox.add(titleLabel, { x_fill: true });
+
+        let box = new St.BoxLayout({ vertical: true });
+        box.add(titleBox);
+        box.add(new St.Label({ text: '  ' }));
+        box.add(messageLabel);
+
+        this.contentLayout.add(box);
+    }
+});
+
+
 // extension class
 const DropDownTerminalExtension = new Lang.Class({
-    Name: 'DropDownTerminalExtension',
+    Name: "DropDownTerminalExtension",
 
     _init: function() {
         // retrieves the settings
@@ -122,6 +169,9 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     enable: function() {
+        // check dependencies
+        this._checkDependencies();
+
         // animation setup
         this._display = global.screen.get_display();
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
@@ -153,7 +203,7 @@ const DropDownTerminalExtension = new Lang.Class({
         ];
 
         // registers the bus name watch
-        this._busWatchId = Gio.DBus.session.watch_name('org.zzrough.GsExtensions.DropDownTerminal',
+        this._busWatchId = Gio.DBus.session.watch_name("org.zzrough.GsExtensions.DropDownTerminal",
                                                         Gio.BusNameWatcherFlags.NONE,
                                                         Lang.bind(this, this._busNameAppeared),
                                                         Lang.bind(this, this._busNameVanished),
@@ -213,7 +263,7 @@ const DropDownTerminalExtension = new Lang.Class({
         // checks if there is not an instance of a previous child, mainly because it survived a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
         if (this._childPid === null && this._busProxy !== null) {
-            this._childPid = this._busProxy['Pid'];
+            this._childPid = this._busProxy["Pid"];
         }
 
         // forks if the child does not exist (never started or killed)
@@ -427,10 +477,10 @@ const DropDownTerminalExtension = new Lang.Class({
         // creates a dbus proxy on the interface exported by the child process
         let DropDownTerminalDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalIface);
 
-        this._busProxy = new DropDownTerminalDBusProxy(Gio.DBus.session, 'org.zzrough.GsExtensions.DropDownTerminal', '/org/zzrough/GsExtensions/DropDownTerminal');
+        this._busProxy = new DropDownTerminalDBusProxy(Gio.DBus.session, "org.zzrough.GsExtensions.DropDownTerminal", "/org/zzrough/GsExtensions/DropDownTerminal");
 
         // connects to the Failure signal to report errors
-        this._busProxy.connectSignal('Failure', Lang.bind(this, function(proxy, sender, [name, cause]) {
+        this._busProxy.connectSignal("Failure", Lang.bind(this, function(proxy, sender, [name, cause]) {
             debug("failure reported by the terminal: " + cause);
 
             if (name == "ForkUserShellFailed") {
@@ -533,6 +583,21 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // updates the first start key
         this._settings.set_boolean(FIRST_START_SETTING_KEY, false);
+    },
+
+    _checkDependencies: function() {
+        try {
+            imports.gi.Vte;
+        } catch (e) {
+            // creates and opens the dialog after 1 second 
+            Mainloop.timeout_add_seconds(1, function() {
+                new MissingVteDialog().open();            
+                return false;
+            });
+
+            logError(e, "Vte could not be imported");
+            throw e;
+        }
     }
 });
 
