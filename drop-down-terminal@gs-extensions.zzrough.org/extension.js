@@ -45,7 +45,8 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
     'window-open-animation-scale-in@mengzhuo.org'
 ];
 
-const ANIMATION_TIME_IN_MS = 0.25;
+const TERMINAL_WINDOW_WM_CLASS = "DropDownTerminalWindow";
+const ANIMATION_TIME_IN_SEC = 0.25;
 const FIRST_START_SETTING_KEY = "first-start";
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const WINDOW_HEIGHT_SETTING_KEY = "window-height";
@@ -124,6 +125,7 @@ const DropDownTerminalExtension = new Lang.Class({
         // animation setup
         this._display = global.screen.get_display();
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
+        this._actorMappedHandlerId = global.window_manager.connect("map", Lang.bind(this, this._actorMapped));
         this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
 
         // applies the settings initially
@@ -195,8 +197,10 @@ const DropDownTerminalExtension = new Lang.Class({
         this._settingChangedHandlerIds = null;
 
         // disconnects signals and clears refs related to screen handling
+        global.window_manager.disconnect(this._actorMappedHandlerId);
         Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
         this._display.disconnect(this._windowCreatedHandlerId);
+        this._actorMappedHandlerId = null;
         this._monitorsChangedHandlerId = null;
         this._windowCreatedHandlerId = null;
         this._windowActor = null;
@@ -235,7 +239,7 @@ const DropDownTerminalExtension = new Lang.Class({
                 Tweener.addTween(this._windowActor, {
                     y: targetY,
                     scale_y: targetScaleY,
-                    time: ANIMATION_TIME_IN_MS,
+                    time: ANIMATION_TIME_IN_SEC,
                     transition: "easeInExpo",
                     onComplete: this._busProxy.ToggleRemote,
                     onCompleteScope: this._busProxy
@@ -291,7 +295,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
     _windowCreated: function(display, window) {
         // filter out the terminal window using its wmclass
-        if (window.get_wm_class() != "DropDownTerminalWindow") {
+        if (window.get_wm_class() != TERMINAL_WINDOW_WM_CLASS) {
             return;
         }
 
@@ -299,6 +303,9 @@ const DropDownTerminalExtension = new Lang.Class({
         this._windowActor = window.get_compositor_private();
         this._windowActor.clear_effects();
         this._windowActor.add_effect(new GraySouthBorderEffect());
+
+        // sets a distinctive name for the actor
+        this._windowActor.set_name(TERMINAL_WINDOW_WM_CLASS);
 
         // a lambda to request focus
         let requestFocusAsync = function(proxy) {
@@ -309,22 +316,34 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // animate the opening sequence (if animation is supported) and requests the focus on completion
         if (this._shouldAnimateWindow()) {
-            if (this._hasMonitorAbove()) {
-                this._windowActor.scale_y = 0.0;
-            } else {
-                this._windowActor.set_position(this._windowX, -this._windowActor.height);
-            }
-
             Tweener.addTween(this._windowActor, {
                 y: this._windowY,
                 scale_y: 1.0,
-                time: ANIMATION_TIME_IN_MS,
+                time: ANIMATION_TIME_IN_SEC,
                 transition: "easeOutExpo",
+                onStart: this._initWindowAnimation,
+                onStartScope: this,
                 onComplete: requestFocusAsync,
                 onCompleteParams: [this._busProxy]
             });
         } else {
             requestFocusAsync(this._busProxy);
+        }
+    },
+
+    _actorMapped: function(wm, actor) {
+        // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
+        // we initialize the animation at actor mapping time (so the window is not yet visible and can be placed out of the screen)
+        if (actor.get_name() == TERMINAL_WINDOW_WM_CLASS && this._shouldAnimateWindow()) {
+            this._initWindowAnimation();
+        }
+    },
+
+    _initWindowAnimation: function() {
+        if (this._hasMonitorAbove()) {
+            this._windowActor.scale_y = 0.0;
+        } else {
+            this._windowActor.set_position(this._windowX, -this._windowActor.height);
         }
     },
 
