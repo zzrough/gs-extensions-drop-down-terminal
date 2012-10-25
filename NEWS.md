@@ -21,7 +21,7 @@ v4 (2012-10-19)
 - bugfix: [use the system monospace font (github #3)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/3)
 - bugfix: [ZSH (github #2)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/2)
 
-v5 (????-??-??)
+v5 (2012-10-25)
 - feature: check for dependencies at startup (asked by l300lvl -- Debian distributes gir files in their own packages)
 - feature: custom command (suggested by sequentious, to be able to always run 'mutt' or 'screen' for instance)
 - bugfix: [terminal on wrong monitor (github #10)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/10)
