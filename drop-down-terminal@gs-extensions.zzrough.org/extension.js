@@ -48,14 +48,15 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
     "window-open-animation-scale-in@mengzhuo.org"
 ];
 
-const TERMINAL_WINDOW_WM_CLASS = "DropDownTerminalWindow";
+const TERMINAL_WINDOW_ACTOR_NAME = "dropDownTerminalWindow";
 const ANIMATION_TIME_IN_SEC = 0.25;
+const DEBUG = false;
+
 const FIRST_START_SETTING_KEY = "first-start";
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const WINDOW_HEIGHT_SETTING_KEY = "window-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 const FONT_NAME_SETTING_KEY = "monospace-font-name";
-const DEBUG = false;
 
 
 // dbus interface
@@ -345,7 +346,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
     _windowCreated: function(display, window) {
         // filter out the terminal window using its wmclass
-        if (window.get_wm_class() != TERMINAL_WINDOW_WM_CLASS) {
+        if (window.get_wm_class() != "DropDownTerminalWindow") {
             return;
         }
 
@@ -355,7 +356,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._windowActor.add_effect(new GraySouthBorderEffect());
 
         // sets a distinctive name for the actor
-        this._windowActor.set_name(TERMINAL_WINDOW_WM_CLASS);
+        this._windowActor.set_name(TERMINAL_WINDOW_ACTOR_NAME);
 
         // a lambda to request focus
         let requestFocusAsync = function(proxy) {
@@ -384,7 +385,7 @@ const DropDownTerminalExtension = new Lang.Class({
     _actorMapped: function(wm, actor) {
         // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
         // we initialize the animation at actor mapping time (so the window is not yet visible and can be placed out of the screen)
-        if (actor.get_name() == TERMINAL_WINDOW_WM_CLASS && this._shouldAnimateWindow()) {
+        if (actor.get_name() == TERMINAL_WINDOW_ACTOR_NAME && this._shouldAnimateWindow()) {
             this._initWindowAnimation();
         }
     },
