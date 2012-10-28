@@ -4,6 +4,7 @@ v6
 v7
 - feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
+- bugfix: [use gnome shell style context menu (github #11)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/11)
 - code: investigate argb colors not working
 
 v8
