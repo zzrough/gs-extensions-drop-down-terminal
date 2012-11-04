@@ -29,3 +29,5 @@ v5 (2012-10-25)
 - bugfix: glitch at animation startup (the window can be briefly seen at the wrong location)
 - code: investigate if the inner-border can be retrieved
 
+v6 (2012-11-05)
+- support for 3.7.1
