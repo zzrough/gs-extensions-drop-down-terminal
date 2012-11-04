@@ -1,6 +1,3 @@
-v6
-- bugfix: [terminal lost after screen is locked (github #6)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/6)
-
 v7
 - feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
 - feature: [opaque terminal (github #12)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/12)
