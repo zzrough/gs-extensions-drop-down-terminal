@@ -182,25 +182,6 @@ const DropDownTerminalExtension = new Lang.Class({
         // check dependencies
         this._checkDependencies();
 
-        // issue #6: Terminal lost after screen is locked
-        //
-        // gnome-shell 3.6 introduces a new screen shield that disables all extensions: this is not a problem
-        // for almost all extensions but this is a real killer for this one as the terminal must quit on disable!
-        //
-        // the extension already rebinds with the terminal on enable, so we just need not to quit the terminal
-        // at disable time if the screen is locked
-        this._lockingScreen = false;
-        this._sessionModeEmitFunc = Main.sessionMode.emit;
-
-        Main.sessionMode.emit = Lang.bind(this, function(signal) {
-            if (signal == "updated" && Main.sessionMode.currentMode == "unlock-dialog") { // unlock-dialog == shield/curtain
-                this._lockingScreen = true;
-            }
-
-            let args = [signal].concat(Array.prototype.slice.call(arguments, 1));
-            this._sessionModeEmitFunc.apply(Main.sessionMode, args);
-        });
-
         // animation setup
         this._display = global.screen.get_display();
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
@@ -247,8 +228,14 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     disable: function() {
-        // restores the extension system monkeypatched functions
-        Main.sessionMode.emit = this._sessionModeEmitFunc;
+        // issue #6: Terminal lost after screen is locked
+        //
+        // gnome-shell 3.6 introduces a new screen shield that disables all extensions: this is not a problem
+        // for almost all extensions but this is a real killer for this one as the terminal must quit on disable!
+        //
+        // the extension already rebinds with the terminal on enable, so we just need not to quit the terminal
+        // if the screen is getting locked
+        let lockingScreen = (Main.sessionMode.currentMode == "unlock-dialog"); // unlock-dialog == shield/curtain
 
         // unbinds the shortcut
         this._unbindShortcut();
@@ -261,7 +248,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // quit and/or kill the child process if it exists, except if we are going to the lock
         // screen, as the user will obviously unlock and he expects his terminal back
-        if (!this._lockingScreen && this._childPid !== null) {
+        if (!lockingScreen && this._childPid !== null) {
             try {
                 // starts by asking to quit gracefully
                 this._quitingChild = true;
