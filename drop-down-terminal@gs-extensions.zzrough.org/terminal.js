@@ -239,7 +239,6 @@ const DropDownTerminal = new Lang.Class({
 
         terminal.set_can_focus(true);
         terminal.set_background_transparent(false);
-        terminal.set_opacity(0.95 * 0xffff);
         terminal.set_allow_bold(true);
         terminal.set_scroll_on_output(true);
         terminal.set_scroll_on_keystroke(true);
@@ -249,7 +248,6 @@ const DropDownTerminal = new Lang.Class({
         terminal.set_delete_binding(Vte.TerminalEraseBinding.DELETE_SEQUENCE);
         terminal.set_word_chars("-A-Za-z0-9_$.+!*(),;:@&=?/~#%");
         terminal.set_encoding("UTF-8");
-
         terminal.connect("eof", Lang.bind(this, this._forkUserShell));
         terminal.connect("child-exited", Lang.bind(this, this._forkUserShell));
         terminal.connect("button-release-event", Lang.bind(this, this._terminalButtonReleased));
