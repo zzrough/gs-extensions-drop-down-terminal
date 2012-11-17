@@ -243,6 +243,7 @@ const DropDownTerminal = new Lang.Class({
 
         terminal.set_can_focus(true);
         terminal.set_background_transparent(false);
+        terminal.set_opacity(0xe666); // ~0.9
         terminal.set_allow_bold(true);
         terminal.set_scroll_on_output(true);
         terminal.set_scroll_on_keystroke(true);
@@ -300,7 +301,6 @@ const DropDownTerminal = new Lang.Class({
         window.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU);
         window.set_default_size(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400);
         window.set_visual(screen.get_rgba_visual());
-        window.set_opacity(0.95);
         window.connect("delete-event", function() { window.hide(); return true; });
         window.connect("destroy", Gtk.main_quit);
 
