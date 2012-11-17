@@ -360,12 +360,21 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _bindShortcut: function() {
-        global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
-                                      Lang.bind(this, this._toggle));
+        if (Main.wm.addKeybinding) // introduced in 3.7.2
+            Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+                                  Main.KeybindingMode.NORMAL | Main.KeybindingMode.MESSAGE_TRAY,
+                                  Lang.bind(this, this._toggle));
+        else
+            global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+                                          Lang.bind(this, this._toggle));
+
     },
 
     _unbindShortcut: function() {
-        global.display.remove_keybinding(REAL_SHORTCUT_SETTING_KEY);
+        if (Main.wm.removeKeybinding) // introduced in 3.7.2
+            Main.wm.removeKeybinding(REAL_SHORTCUT_SETTING_KEY);
+        else
+            global.display.remove_keybinding(REAL_SHORTCUT_SETTING_KEY);
     },
 
     _windowCreated: function(display, window) {
