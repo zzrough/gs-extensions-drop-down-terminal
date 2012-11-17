@@ -5,7 +5,7 @@ v7
 - feature: use settings from gnome-terminal
 - feature: option to show the scrollbar, suggested by bhaveekdesai)
 - bugfix: [use gnome shell style context menu (github #11)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/11)
-- code: use the settings directly in the terminal app (especially the font)
+- bugfix: set the opacity of the terminal instead of the window to improve text readibility
 - code: investigate argb colors not working
 
 v8
@@ -16,7 +16,9 @@ v8
 
 v9
 - feature (maybe): autohide (asked by step-2)
-- feature (maybe): multi tabs (2 votes for, 2 votes against, andyfitz: tabs would just clutter it up)
+- feature (maybe): multi tabs (3 votes for, 6 votes against)
+- feature (maybe): allow custom width (suggested by Dreamsorcerer)
+- feature (maybe): dnd (already tried, not that simple)
 - bugfix: investigate the focus issue preventing using the BLOCK cursor
 - bugfix (maybe): [add icon/name to panel (github #7)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/7)
 

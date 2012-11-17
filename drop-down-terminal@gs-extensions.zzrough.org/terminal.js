@@ -17,12 +17,15 @@
 
 const Lang = imports.lang;
 const System = imports.system;
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
+
 const Gdk = imports.gi.Gdk;
 const GdkX11 = imports.gi.GdkX11;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const Vte = imports.gi.Vte;
+
+const Convenience = imports.convenience;
 
 
 // dbus interface
@@ -36,7 +39,6 @@ const DropDownTerminalIface =
 		    <arg name="width" type="i" direction="in"/>
 		    <arg name="height" type="i" direction="in"/>
     	</method>
-    	<method name="SetFont"><arg type="s" direction="in"/></method>
         <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
@@ -64,8 +66,8 @@ const PopupUi =
 function parseRgbaColor(spec) { col = new Gdk.RGBA(); col.parse(spec); return col; }
 
 
-// constants for the keybinding
-const ToggleTerminalKeybindingId = "toggle-terminal";
+// constants for the settings
+const FONT_NAME_SETTING_KEY = "monospace-font-name";
 
 
 // constants borrowed from gnome-terminal
@@ -126,6 +128,9 @@ const DropDownTerminal = new Lang.Class({
     Name: "DropDownTerminal",
 
     _init: function() {
+        // gets the settings early to simplify setup
+        this._interfaceSettings = new Gio.Settings({schema: "org.gnome.desktop.interface"});
+
         // creates the UI
         this._actionGroup = new Gtk.ActionGroup({name: "Main"});
         this._terminal = this._createTerminal();
@@ -159,6 +164,13 @@ const DropDownTerminal = new Lang.Class({
         // forks the user shell early to detect a potential startup error
         this._customCommandArgs = ARGV;
         this._forkUserShell();
+
+        // connect to settings changes
+        this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
+            Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, function() {
+                this._terminal.set_font_from_string(this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY));
+            })));
+        }));
     },
 
     get Pid() {
@@ -189,14 +201,6 @@ const DropDownTerminal = new Lang.Class({
                 this._window.resize(width, height);
             }
         }));
-    },
-
-    SetFont: function(font) {
-        if (font != this._terminal.get_font().to_string()) {
-            Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
-                this._terminal.set_font_from_string(font);
-            }));
-        }
     },
 
     IsOpened: function() {
@@ -242,7 +246,7 @@ const DropDownTerminal = new Lang.Class({
         terminal.set_allow_bold(true);
         terminal.set_scroll_on_output(true);
         terminal.set_scroll_on_keystroke(true);
-        terminal.set_font_from_string("Monospace 10");
+        terminal.set_font_from_string(this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY));
         terminal.set_scrollback_lines(1024);
         terminal.set_backspace_binding(Vte.TerminalEraseBinding.ASCII_DELETE);
         terminal.set_delete_binding(Vte.TerminalEraseBinding.DELETE_SEQUENCE);
@@ -330,7 +334,7 @@ const DropDownTerminal = new Lang.Class({
         let success, pid;
 
         try {
-            [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, null, 
+            [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
                                                               GLib.SpawnFlags.SEARCH_PATH, null);
             this._lastForkFailed = false;
         } catch (e) {
@@ -422,6 +426,30 @@ const DropDownTerminal = new Lang.Class({
 
         // falls back to the classic Bourne shell
         return ["/bin/sh"];
+    },
+
+    _getCommandEnv: function() {
+        // builds the environment
+        let env = {};
+
+        GLib.listenv().forEach(function(name) {
+            env[name] = GLib.getenv(name);
+        });
+
+        delete env["COLUMNS"];
+        delete env["LINES"];
+        delete env["GNOME_DESKTOP_ICON"];
+
+        env["COLORTERM"] = "drop-down-terminal";
+
+        // gets an array of key=value pairs
+        let envArray = [];
+
+        for (let key in env) {
+            envArray.push(key + "=" + (env[key] ? env[key] : ""));
+        }
+
+        return envArray;
     },
 
     _createAction: function(name, label, stockId, accel, actionGroup, callback) {

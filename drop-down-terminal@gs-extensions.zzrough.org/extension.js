@@ -19,16 +19,17 @@ const Lang = imports.lang;
 const Gettext = imports.gettext.domain("drop-down-terminal");
 const Mainloop = imports.mainloop;
 
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
+const Clutter = imports.gi.Clutter;
+const Cogl = imports.gi.Cogl;
 const Gdk = imports.gi.Gdk;
 const GdkX11 = imports.gi.GdkX11;
-const Pango = imports.gi.Pango;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
-const Cogl = imports.gi.Cogl;
-const Clutter = imports.gi.Clutter;
-const St = imports.gi.St;
 const Meta = imports.gi.Meta;
+const Pango = imports.gi.Pango;
+const St = imports.gi.St;
+
 const Main = imports.ui.main;
 const ModalDialog = imports.ui.modalDialog;
 const Tweener = imports.ui.tweener;
@@ -58,7 +59,6 @@ const WINDOW_HEIGHT_SETTING_KEY = "window-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
-const FONT_NAME_SETTING_KEY = "monospace-font-name";
 
 
 // dbus interface
@@ -72,7 +72,6 @@ const DropDownTerminalIface =
 		    <arg name="width" type="i" direction="in"/>
 		    <arg name="height" type="i" direction="in"/>
     	</method>
-        <method name="SetFont"><arg type="s" direction="in"/></method>
         <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
@@ -164,7 +163,6 @@ const DropDownTerminalExtension = new Lang.Class({
     _init: function() {
         // retrieves the settings
         this._settings = Convenience.getSettings(Me.path, Me.metadata.id);
-        this._interfaceSettings = new Gio.Settings({schema: "org.gnome.desktop.interface"});
 
         // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
         this._childPid = null;
@@ -192,7 +190,6 @@ const DropDownTerminalExtension = new Lang.Class({
         this._animationEnabledSettingChanged();
         this._updateCustomCommand();
         this._updateWindowGeometry();
-        this._updateFont();
         this._bindShortcut();
 
         // honours setting changes
@@ -200,7 +197,7 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._animationEnabledSettingChanged)),
 
             this._settings.connect("changed::" + WINDOW_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
-                Convenience.throttle(200, this._updateWindowGeometry, this); // throttles 200ms (it's an "heavy weight" setting)
+                Convenience.throttle(200, this, this._updateWindowGeometry); // throttles 200ms (it's an "heavy weight" setting)
             })),
 
             this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
@@ -210,10 +207,6 @@ const DropDownTerminalExtension = new Lang.Class({
 
             this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
             this._settings.connect("changed::" + CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
-
-            this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
-                Convenience.throttle(200, this._updateFont, this); // throttles 200ms (it's an "heavy weight" setting)
-            }))
         ];
 
         // registers the bus name watch
@@ -366,17 +359,6 @@ const DropDownTerminalExtension = new Lang.Class({
         return false;
     },
 
-    _updateFont: function() {
-        this._fontName = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
-        
-        // applies the change dynamically if the terminal is already spawn
-        if (this._busProxy !== null) {
-            this._busProxy.SetFontRemote(this._fontName);
-        }
-
-        return false;
-    },
-
     _bindShortcut: function() {
         global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
                                       Lang.bind(this, this._toggle));
@@ -458,7 +440,7 @@ const DropDownTerminalExtension = new Lang.Class({
         let success, pid;
 
         try {
-            [success, pid] = GLib.spawn_async(null, args, null,
+            [success, pid] = GLib.spawn_async(null, args, this._getCommandEnv(),
                                               GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                                               null);
         } catch (err) {
@@ -544,9 +526,6 @@ const DropDownTerminalExtension = new Lang.Class({
             this._busProxy.SetGeometrySync(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
         }
 
-        // applies the font name
-        this._busProxy.SetFontSync(this._fontName);
-
         // initial toggling if explicitely asked to, since we we can also be called on a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
         if (this._toggleOnBusNameAppearance) {
@@ -612,6 +591,26 @@ const DropDownTerminalExtension = new Lang.Class({
         }
 
         return true;
+    },
+
+    _getCommandEnv: function() {
+        // builds the environment
+        let env = {};
+
+        GLib.listenv().forEach(function(name) {
+            env[name] = GLib.getenv(name);
+        });
+
+        env["GJS_PATH"] = Me.path;
+
+        // gets an array of key=value pairs
+        let envArray = [];
+
+        for (let key in env) {
+            envArray.push(key + "=" + (env[key] ? env[key] : ""));
+        }
+
+        return envArray;
     },
 
     _handleFirstStart: function() {

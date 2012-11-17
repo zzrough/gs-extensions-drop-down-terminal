@@ -18,9 +18,9 @@
 const Lang = imports.lang;
 const MainLoop = imports.mainloop;
 
+const Gdk = imports.gi.Gdk;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
-const ExtensionUtils = imports.misc.extensionUtils;
 
 
 function getSettings(extensionPath, extensionId) {
@@ -49,19 +49,31 @@ function getSettings(extensionPath, extensionId) {
  * This is especially useful to delay the application of a setting.
  *
  * @interval: the application interval in milliseconds
+ * @scope: the execution scope of the function
  * @func: the delegate function to call in the mainloop
- * @funcScope: the execution scope of the function
  */
-function throttle(interval, func, funcScope) {
+function throttle(interval, scope, func) {
     if (func._throttlingId !== undefined) {
         MainLoop.source_remove(func._throttlingId);
     }
 
     func._throttlingId = MainLoop.timeout_add(interval, function() {
-        Lang.bind(funcScope, func)();
+        Lang.bind(scope, func)();
         delete func._throttlingId;
 
         return false;
     });
+}
+
+
+/**
+ * Creates a runner used to execute a function in the GDK thread.
+ *
+ * @func: the function to execute within the GDK lock
+ */
+function gdkRunner(func) {
+    return function() {
+        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, func);
+    };
 }
 
