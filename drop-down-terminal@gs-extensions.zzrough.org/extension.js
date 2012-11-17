@@ -235,7 +235,8 @@ const DropDownTerminalExtension = new Lang.Class({
         //
         // the extension already rebinds with the terminal on enable, so we just need not to quit the terminal
         // if the screen is getting locked
-        let lockingScreen = (Main.sessionMode.currentMode == "unlock-dialog"); // unlock-dialog == shield/curtain
+        let lockingScreen = (Main.sessionMode.currentMode == "unlock-dialog"    // unlock-dialog == shield/curtain (before lock-screen w/ gdm)
+                             || Main.sessionMode.currentMode == "lock-screen"); // lock-screen == lock screen (after unlock-dialog or w/o gdm)
 
         // unbinds the shortcut
         this._unbindShortcut();
