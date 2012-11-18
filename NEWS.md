@@ -34,4 +34,4 @@ v6 (2012-11-05)
 - feature: [opaque terminal (github #12)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/12)
 - bugfix: [terminal lost after screen is locked (github #6)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/6)
 - bugfix: set the opacity of the terminal instead of the window to improve text readibility
-- code: use font settings directly instead of the dbus API
+- code: use settings directly instead of the dbus API

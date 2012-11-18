@@ -32,7 +32,6 @@ const Convenience = imports.convenience;
 const DropDownTerminalIface =
     <interface name="org.zzrough.GsExtensions.DropDownTerminal">
         <property name="Pid" type="i" access="read"/>
-        <method name="SetCustomCommand"><arg type="s" direction="in"/></method>
         <method name="SetGeometry">
 		    <arg name="x" type="i" direction="in"/>
 		    <arg name="y" type="i" direction="in"/>
@@ -75,6 +74,8 @@ const EXTENSION_PATH = ARGV[0] || GLib.get_home_dir() + "/" + EXTENSION_UUID;
 // constants for the settings
 const FONT_NAME_SETTING_KEY = "monospace-font-name";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
+const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
+const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
 
 // constants borrowed from gnome-terminal
@@ -135,6 +136,10 @@ const DropDownTerminal = new Lang.Class({
     Name: "DropDownTerminal",
 
     _init: function() {
+        // initializes the state
+        this._customCommandArgs = [];
+        this._lastForkFailed = false;
+
         // creates the UI
         this._actionGroup = new Gtk.ActionGroup({name: "Main"});
         this._terminal = this._createTerminal();
@@ -149,6 +154,7 @@ const DropDownTerminal = new Lang.Class({
         // applies the settings initially
         this._updateFont();
         this._updateOpacity();
+        this._updateCustomCommand();
 
         // connect to the settings changes
         this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
@@ -158,6 +164,9 @@ const DropDownTerminal = new Lang.Class({
         this._settings.connect("changed::" + TRANSPARENT_TERMINAL_SETTING_KEY, Lang.bind(this, function() {
             Convenience.runInGdk(Lang.bind(this, this._updateOpacity));
         }));
+
+        this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
+        this._settings.connect("changed::" + CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
 
         // adds the uri matchers
         this._uriHandlingPropertiesbyTag = {};
@@ -183,23 +192,11 @@ const DropDownTerminal = new Lang.Class({
         this._bus.export(Gio.DBus.session, "/org/zzrough/GsExtensions/DropDownTerminal");
 
         // forks the user shell early to detect a potential startup error
-        this._customCommandArgs = ARGV.splice(1);
         this._forkUserShell();
     },
 
     get Pid() {
         return System.getpid();
-    },
-
-    SetCustomCommand: function(command) {
-        // parses the command line
-        this._customCommandArgs = command ? command.split(/\s+/) : [];
-
-        // tries to fork the shell again if it fails last time (the user might be trying different values,
-        // we do not want the terminal to get stuck)
-        if (this._lastForkFailed) {
-            this._forkUserShell();
-        }
     },
 
     SetGeometry: function(x, y, width, height) {
@@ -381,6 +378,26 @@ const DropDownTerminal = new Lang.Class({
 
         this._terminal.set_background_image(null); // required to update the opacity after realize
         this._terminal.set_opacity((transparent ? 0.95 : 1.0) * 0xffff);
+    },
+
+    _updateCustomCommand: function() {
+        // get the custom command
+        let command;
+
+        if (this._settings.get_boolean(RUN_CUSTOM_COMMAND_SETTING_KEY)) {
+            command = this._settings.get_string(CUSTOM_COMMAND_SETTING_KEY).trim();
+        } else {
+            command = "";
+        }
+
+        // parses the command line
+        this._customCommandArgs = command ? command.split(/\s+/) : [];
+
+        // tries to fork the shell again if it fails last time (the user might be trying different values,
+        // we do not want the terminal to get stuck)
+        if (this._lastForkFailed) {
+            this._forkUserShell();
+        }
     },
 
     _terminalButtonReleased: function(terminal, event) {
