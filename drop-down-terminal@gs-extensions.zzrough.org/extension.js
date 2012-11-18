@@ -55,7 +55,7 @@ const DEBUG = false;
 
 const FIRST_START_SETTING_KEY = "first-start";
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
-const WINDOW_HEIGHT_SETTING_KEY = "window-height";
+const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
@@ -187,16 +187,16 @@ const DropDownTerminalExtension = new Lang.Class({
         this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
 
         // applies the settings initially
-        this._animationEnabledSettingChanged();
+        this._updateAnimationEnabled();
         this._updateCustomCommand();
         this._updateWindowGeometry();
         this._bindShortcut();
 
         // honours setting changes
         this._settingChangedHandlerIds = [
-            this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._animationEnabledSettingChanged)),
+            this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationEnabled)),
 
-            this._settings.connect("changed::" + WINDOW_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
+            this._settings.connect("changed::" + TERMINAL_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
                 Convenience.throttle(200, this, this._updateWindowGeometry); // throttles 200ms (it's an "heavy weight" setting)
             })),
 
@@ -324,7 +324,7 @@ const DropDownTerminalExtension = new Lang.Class({
         }
     },
 
-    _animationEnabledSettingChanged: function() {
+    _updateAnimationEnabled: function() {
         this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
     },
 
@@ -348,7 +348,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._windowWidth = panelBox.width;
 
         // computes and keep the window height for use when the terminal will be spawn (if it is not already)
-        let heightSpec = this._settings.get_string(WINDOW_HEIGHT_SETTING_KEY);
+        let heightSpec = this._settings.get_string(TERMINAL_HEIGHT_SETTING_KEY);
         this._windowHeight = this._computeWindowHeight(heightSpec);
 
         // applies the change dynamically if the terminal is already spawn
@@ -437,7 +437,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._killingChild = false;
 
         // finds the forking arguments
-        let args = ["gjs", GLib.build_filenamev([Me.path, "terminal.js"])];
+        let args = ["gjs", GLib.build_filenamev([Me.path, "terminal.js"]), Me.path];
 
         if (this._customCommand) {
             args = args.concat(this._customCommand.split(/\s+/));

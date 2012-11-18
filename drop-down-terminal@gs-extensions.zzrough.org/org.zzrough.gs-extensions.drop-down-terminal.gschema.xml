@@ -18,7 +18,15 @@
       </description>
     </key>
 
-    <key name="window-height" type="s">
+    <key name="transparent-terminal" type="b">
+      <default>true</default>
+      <summary>Enable the terminal window transparency</summary>
+      <description>
+        Whether to enable terminal transparency (true) or keep the terminal opaque (false).
+      </description>
+    </key>
+
+    <key name="terminal-height" type="s">
       <default><![CDATA['400px']]></default>
       <summary>The terminal window height</summary>
       <description>

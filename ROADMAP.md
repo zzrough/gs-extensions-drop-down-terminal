@@ -1,6 +1,5 @@
 v7
 - feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
-- feature: [opaque terminal (github #12)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/12)
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
 - feature: use settings from gnome-terminal
 - feature: option to show the scrollbar, suggested by bhaveekdesai)

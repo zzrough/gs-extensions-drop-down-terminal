@@ -67,13 +67,24 @@ function throttle(interval, scope, func) {
 
 
 /**
+ * Adds the specified idle function to be processed by the GDK thread, with
+ * the default priority (GLib.PRIORITY_DEFAULT_IDLE).
+ *
+ * @func: the function to execute within the GDK lock
+ */
+function runInGdk(func) {
+    Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, func);
+}
+
+
+/**
  * Creates a runner used to execute a function in the GDK thread.
  *
  * @func: the function to execute within the GDK lock
  */
 function gdkRunner(func) {
     return function() {
-        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, func);
+        runInGdk(func);
     };
 }
 

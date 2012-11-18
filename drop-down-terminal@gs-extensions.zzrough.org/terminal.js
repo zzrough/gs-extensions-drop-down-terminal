@@ -66,8 +66,15 @@ const PopupUi =
 function parseRgbaColor(spec) { col = new Gdk.RGBA(); col.parse(spec); return col; }
 
 
+// constants for the location of the extension
+const EXTENSION_ID = "drop-down-terminal";
+const EXTENSION_UUID = EXTENSION_ID + "@gs-extensions.zzrough.org";
+const EXTENSION_PATH = ARGV[0] || GLib.get_home_dir() + "/" + EXTENSION_UUID;
+
+
 // constants for the settings
 const FONT_NAME_SETTING_KEY = "monospace-font-name";
+const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
 
 
 // constants borrowed from gnome-terminal
@@ -128,15 +135,29 @@ const DropDownTerminal = new Lang.Class({
     Name: "DropDownTerminal",
 
     _init: function() {
-        // gets the settings early to simplify setup
-        this._interfaceSettings = new Gio.Settings({schema: "org.gnome.desktop.interface"});
-
         // creates the UI
         this._actionGroup = new Gtk.ActionGroup({name: "Main"});
         this._terminal = this._createTerminal();
         this._window = this._createWindow();
         this._popup = this._createPopupAndActions(this._window, this._actionGroup);
         this._window.add(this._terminal);
+
+        // gets the settings
+        this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
+        this._interfaceSettings = new Gio.Settings({schema: "org.gnome.desktop.interface"});
+
+        // applies the settings initially
+        this._updateFont();
+        this._updateOpacity();
+
+        // connect to the settings changes
+        this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
+            Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, this._updateFont)));
+        }));
+
+        this._settings.connect("changed::" + TRANSPARENT_TERMINAL_SETTING_KEY, Lang.bind(this, function() {
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacity));
+        }));
 
         // adds the uri matchers
         this._uriHandlingPropertiesbyTag = {};
@@ -162,15 +183,8 @@ const DropDownTerminal = new Lang.Class({
         this._bus.export(Gio.DBus.session, "/org/zzrough/GsExtensions/DropDownTerminal");
 
         // forks the user shell early to detect a potential startup error
-        this._customCommandArgs = ARGV;
+        this._customCommandArgs = ARGV.splice(1);
         this._forkUserShell();
-
-        // connect to settings changes
-        this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, function() {
-                this._terminal.set_font_from_string(this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY));
-            })));
-        }));
     },
 
     get Pid() {
@@ -243,11 +257,9 @@ const DropDownTerminal = new Lang.Class({
 
         terminal.set_can_focus(true);
         terminal.set_background_transparent(false);
-        terminal.set_opacity(0xe666); // ~0.9
         terminal.set_allow_bold(true);
         terminal.set_scroll_on_output(true);
         terminal.set_scroll_on_keystroke(true);
-        terminal.set_font_from_string(this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY));
         terminal.set_scrollback_lines(1024);
         terminal.set_backspace_binding(Vte.TerminalEraseBinding.ASCII_DELETE);
         terminal.set_delete_binding(Vte.TerminalEraseBinding.DELETE_SEQUENCE);
@@ -358,6 +370,17 @@ const DropDownTerminal = new Lang.Class({
     _refreshWindow: function() {
         let rect = this._window.window.get_frame_extents();
         this._window.window.invalidate_rect(rect, true);
+    },
+
+    _updateFont: function() {
+        this._terminal.set_font_from_string(this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY));
+    },
+
+    _updateOpacity: function() {
+        let transparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
+
+        this._terminal.set_background_image(null); // required to update the opacity after realize
+        this._terminal.set_opacity((transparent ? 0.95 : 1.0) * 0xffff);
     },
 
     _terminalButtonReleased: function(terminal, event) {

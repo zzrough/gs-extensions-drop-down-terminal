@@ -30,7 +30,8 @@ const Convenience = Me.imports.convenience;
 
 // setting keys
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
-const WINDOW_HEIGHT_SETTING_KEY = "window-height";
+const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
+const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
@@ -74,8 +75,9 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             // gets the interesting builder objects
             let mainTable = builder.get_object("main-table");
             let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
-            let windowHeightEntry = builder.get_object("window-height-entry");
-            let windowHeightResetButton = builder.get_object("window-height-reset-button");
+            let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
+            let terminalHeightEntry = builder.get_object("terminal-height-entry");
+            let terminalHeightResetButton = builder.get_object("terminal-height-reset-button");
             let defaultShortcutRadioButton = builder.get_object("default-shortcut-radiobutton");
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
             this._otherShortcutTreeView = builder.get_object("other-shortcut-treeview");
@@ -88,8 +90,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this.pack_start(mainTable, true, true, 0);
 
             // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-            windowHeightEntry.connect("changed", Lang.bind(this, function() {
-                let match = windowHeightEntry.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i);
+            terminalHeightEntry.connect("changed", Lang.bind(this, function() {
+                let match = terminalHeightEntry.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i);
                 let valid = (match !== null)
 
                 if (valid) {
@@ -100,8 +102,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
                                                          : (value > 0 && value <= 100);
                 }
 
-                windowHeightEntry["secondary-icon-name"] = valid ? null : "dialog-warning-symbolic";
-                windowHeightEntry["secondary-icon-tooltip-text"] = valid ? null : _("Invalid syntax or range");
+                terminalHeightEntry["secondary-icon-name"] = valid ? null : "dialog-warning-symbolic";
+                terminalHeightEntry["secondary-icon-tooltip-text"] = valid ? null : _("Invalid syntax or range");
             }));
 
             // configure the tree view column and creates the unique row of the model
@@ -111,9 +113,12 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             // binds the animation enablement setting
             this._settings.bind(ENABLE_ANIMATION_SETTING_KEY, enableAnimationCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
 
-            // binds the window height setting
-            this._settings.bind(WINDOW_HEIGHT_SETTING_KEY, windowHeightEntry, "text", Gio.SettingsBindFlags.DEFAULT);
-            windowHeightResetButton.connect("clicked", Lang.bind(this, function() { this._settings.reset(WINDOW_HEIGHT_SETTING_KEY); }));
+            // binds the terminal transparency setting
+            this._settings.bind(TRANSPARENT_TERMINAL_SETTING_KEY, transparentTerminalCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
+
+            // binds the terminal height setting
+            this._settings.bind(TERMINAL_HEIGHT_SETTING_KEY, terminalHeightEntry, "text", Gio.SettingsBindFlags.DEFAULT);
+            terminalHeightResetButton.connect("clicked", Lang.bind(this, function() { this._settings.reset(TERMINAL_HEIGHT_SETTING_KEY); }));
 
             // binds the custom shortcut setting
             this._otherShortcutSettingChanged();
