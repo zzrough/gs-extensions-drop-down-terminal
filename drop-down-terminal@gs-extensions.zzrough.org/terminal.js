@@ -203,7 +203,7 @@ const DropDownTerminal = new Lang.Class({
         let [currentX, currentY] = this._window.get_position();
         let [currentWidth, currentHeight] = this._window.get_size();
 
-        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+        Convenience.runInGdk(Lang.bind(this, function() {
             if (x != currentX || y != currentY) {
                 this._window.move(x, y);
             }
@@ -220,7 +220,7 @@ const DropDownTerminal = new Lang.Class({
 
     Toggle: function() {
         // update the window visibility in the UI thread since this callback happens in the gdbus thread
-        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+        Convenience.runInGdk(Lang.bind(this, function() {
             this._window.visible ? this._window.hide()
                                  : this._window.show_all();
 
@@ -230,7 +230,7 @@ const DropDownTerminal = new Lang.Class({
 
     Focus: function() {
         // present the window in the UI thread since this callback happens in the gdbus thread
-        Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, Lang.bind(this, function() {
+        Convenience.runInGdk(Lang.bind(this, function() {
             if (this._window.visible) {
                 let time = 0;
 
