@@ -74,6 +74,7 @@ const EXTENSION_PATH = ARGV[0] || GLib.get_home_dir() + "/" + EXTENSION_UUID;
 // constants for the settings
 const FONT_NAME_SETTING_KEY = "monospace-font-name";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
+const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
@@ -145,12 +146,21 @@ const DropDownTerminal = new Lang.Class({
         provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk.css"));
         Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-        // creates the UI
+        // creates the widgets and lays them out
         this._actionGroup = new Gtk.ActionGroup({name: "Main"});
         this._terminal = this._createTerminal();
+        this._terminalBox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
+        this._terminalScrollbar = new Gtk.Scrollbar({ orientation: Gtk.Orientation.VERTICAL,
+                                                      adjustment: this._terminal.get_vadjustment() });
         this._window = this._createWindow();
         this._popup = this._createPopupAndActions(this._window, this._actionGroup);
-        this._window.add(this._terminal);
+
+        this._terminalBox.pack_start(this._terminal, true, true, 0);
+        this._terminalBox.pack_end(this._terminalScrollbar, false, false, 0);
+        this._window.add(this._terminalBox);
+
+        this._terminal.show();
+        this._terminalBox.show();
 
         // gets the settings
         this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
@@ -158,7 +168,7 @@ const DropDownTerminal = new Lang.Class({
 
         // applies the settings initially
         this._updateFont();
-        this._updateOpacity();
+        this._updateOpacityAndScrollbar();
         this._updateCustomCommand();
 
         // connect to the settings changes
@@ -166,8 +176,12 @@ const DropDownTerminal = new Lang.Class({
             Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, this._updateFont)));
         }));
 
+        this._settings.connect("changed::" + SCROLLBAR_VISIBLE_SETTING_KEY, Lang.bind(this, function() {
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+        }));
+
         this._settings.connect("changed::" + TRANSPARENT_TERMINAL_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacity));
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
         }));
 
         this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
@@ -227,7 +241,7 @@ const DropDownTerminal = new Lang.Class({
         // update the window visibility in the UI thread since this callback happens in the gdbus thread
         Convenience.runInGdk(Lang.bind(this, function() {
             this._window.visible ? this._window.hide()
-                                 : this._window.show_all();
+                                 : this._window.show();
 
             return false;
         }));
@@ -378,11 +392,21 @@ const DropDownTerminal = new Lang.Class({
         this._terminal.set_font_from_string(this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY));
     },
 
-    _updateOpacity: function() {
-        let transparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
+    _updateOpacityAndScrollbar: function() {
+        let isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
+        let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
 
         this._terminal.set_background_image(null); // required to update the opacity after realize
-        this._terminal.set_opacity((transparent ? 0.95 : 1.0) * 0xffff);
+
+        // making the window transparent also makes the font transparent which make it a bit more difficult
+        // to read, but making the terminal transparent prevents the scrollbar from being styled correctly
+        //
+        // we try to do the best we can by using terminal transparency if there is no scrollbar and falling
+        // back to window transparency if there is one
+        this._terminal.set_opacity(((isTransparent && !hasScrollbar) ? 0.95 : 1.0) * 0xffff);
+        this._window.set_opacity((isTransparent && hasScrollbar) ? 0.95 : 1.0);
+
+        this._terminalScrollbar.visible = hasScrollbar;
     },
 
     _updateCustomCommand: function() {

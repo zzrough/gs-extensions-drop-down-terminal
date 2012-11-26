@@ -31,6 +31,7 @@ const Convenience = Me.imports.convenience;
 // setting keys
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
+const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
@@ -76,6 +77,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let mainTable = builder.get_object("main-table");
             let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
             let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
+            let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
             let terminalHeightEntry = builder.get_object("terminal-height-entry");
             let terminalHeightResetButton = builder.get_object("terminal-height-reset-button");
             let defaultShortcutRadioButton = builder.get_object("default-shortcut-radiobutton");
@@ -115,6 +117,9 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
             // binds the terminal transparency setting
             this._settings.bind(TRANSPARENT_TERMINAL_SETTING_KEY, transparentTerminalCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
+
+            // binds the scrollbar visibility setting
+            this._settings.bind(SCROLLBAR_VISIBLE_SETTING_KEY, scrollbarVisibleCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
 
             // binds the terminal height setting
             this._settings.bind(TERMINAL_HEIGHT_SETTING_KEY, terminalHeightEntry, "text", Gio.SettingsBindFlags.DEFAULT);

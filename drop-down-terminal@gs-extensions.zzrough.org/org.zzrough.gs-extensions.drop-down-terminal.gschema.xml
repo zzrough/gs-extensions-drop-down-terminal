@@ -26,6 +26,14 @@
       </description>
     </key>
 
+    <key name="scrollbar-visible" type="b">
+      <default>false</default>
+      <summary>Enable the terminal scrollbar</summary>
+      <description>
+         Whether the terminal scrollbar is visible (true) or hidden (false).
+      </description>
+    </key>
+
     <key name="terminal-height" type="s">
       <default><![CDATA['400px']]></default>
       <summary>The terminal window height</summary>
