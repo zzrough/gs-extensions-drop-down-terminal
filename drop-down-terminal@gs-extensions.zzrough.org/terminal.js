@@ -510,6 +510,9 @@ const DropDownTerminal = new Lang.Class({
 // initializes gtk
 Gtk.init(null, 0);
 
+// sets the setting to prefer a dark theme
+Gtk.Settings.get_default()['gtk-application-prefer-dark-theme'] = true;
+
 // creates the terminal
 terminal = new DropDownTerminal();
 
