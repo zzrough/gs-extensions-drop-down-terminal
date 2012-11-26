@@ -37,4 +37,5 @@ v7 (????-??-??)
 - support for 3.7.2
 - feature: [opaque terminal (github #12)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/12)
 - bugfix: set the opacity of the terminal instead of the window to improve text readibility
+- bugfix: [use gnome shell style context menu (github #11)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/11)
 - code: use settings directly instead of the dbus API

@@ -140,6 +140,11 @@ const DropDownTerminal = new Lang.Class({
         this._customCommandArgs = [];
         this._lastForkFailed = false;
 
+        // loads the custom CSS to mimick the shell style
+        let provider = new Gtk.CssProvider();
+        provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk.css"));
+        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+
         // creates the UI
         this._actionGroup = new Gtk.ActionGroup({name: "Main"});
         this._terminal = this._createTerminal();

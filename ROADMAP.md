@@ -3,7 +3,6 @@ v7
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
 - feature: use settings from gnome-terminal
 - feature: option to show the scrollbar, suggested by bhaveekdesai)
-- bugfix: [use gnome shell style context menu (github #11)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/11)
 - code: investigate argb colors not working
 
 v8
