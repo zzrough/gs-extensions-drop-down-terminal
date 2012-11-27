@@ -12,7 +12,7 @@ v8
 
 v9
 - feature (maybe): autohide (asked by step-2)
-- feature (maybe): multi tabs (3 votes for, 6 votes against)
+- feature (maybe): multi tabs (4 votes for, 6 votes against)
 - feature (maybe): allow custom width (suggested by Dreamsorcerer)
 - feature (maybe): dnd (already tried, not that simple)
 - bugfix: investigate the focus issue preventing using the BLOCK cursor
