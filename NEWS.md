@@ -33,10 +33,10 @@ v6 (2012-11-05)
 - support for 3.7.1
 - bugfix: [terminal lost after screen is locked (github #6)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/6)
 
-v7 (????-??-??)
+v7 (2012-12-08)
 - support for 3.7.2
 - feature: [opaque terminal (github #12)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/12)
-- feature: option to show the scrollbar, suggested by bhaveekdesai)
+- feature: option to show the scrollbar (suggested by bhaveekdesai)
 - bugfix: set the opacity of the terminal instead of the window to improve text readibility
 - bugfix: [use gnome shell style context menu (github #11)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/11)
 - code: use settings directly instead of the dbus API
