@@ -403,8 +403,8 @@ const DropDownTerminal = new Lang.Class({
         //
         // we try to do the best we can by using terminal transparency if there is no scrollbar and falling
         // back to window transparency if there is one
-        this._terminal.set_opacity(((isTransparent && !hasScrollbar) ? 0.95 : 1.0) * 0xffff);
-        this._window.set_opacity((isTransparent && hasScrollbar) ? 0.95 : 1.0);
+        this._terminal.set_opacity(((isTransparent && !hasScrollbar) ? 0.94 : 1.0) * 0xffff);
+        this._window.set_opacity((isTransparent && hasScrollbar) ? 0.94 : 1.0);
 
         this._terminalScrollbar.visible = hasScrollbar;
     },
