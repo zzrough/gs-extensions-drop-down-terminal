@@ -326,7 +326,7 @@ const DropDownTerminal = new Lang.Class({
         window.set_accept_focus(true);
         window.set_deletable(false);
         window.stick();
-        window.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU);
+        window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU);
         window.set_default_size(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400);
         window.set_visual(screen.get_rgba_visual());
         window.connect("delete-event", function() { window.hide(); return true; });
