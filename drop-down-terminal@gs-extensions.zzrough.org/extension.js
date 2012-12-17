@@ -161,7 +161,9 @@ const DropDownTerminalExtension = new Lang.Class({
     _init: function() {
         // retrieves the settings
         this._settings = Convenience.getSettings(Me.path, Me.metadata.id);
+    },
 
+    enable: function() {
         // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
         this._childPid = null;
 
@@ -172,9 +174,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // initializes if we should toggle on bus name appearance 
         this._toggleOnBusNameAppearance = false;
-    },
 
-    enable: function() {
         // check dependencies
         this._checkDependencies();
 
