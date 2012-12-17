@@ -334,8 +334,6 @@ const DropDownTerminalExtension = new Lang.Class({
 
             this._toggleOnBusNameAppearance = true;
             this._forkChild();
-
-            return; // we need to wait for the bus name appearance
         }
 
         // the bus proxy might not be ready, in this case we will be called later once the bus name appears
