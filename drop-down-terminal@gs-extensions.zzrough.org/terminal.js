@@ -38,7 +38,6 @@ const DropDownTerminalIface =
 		    <arg name="width" type="i" direction="in"/>
 		    <arg name="height" type="i" direction="in"/>
     	</method>
-        <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
         <method name="Quit"/>
@@ -231,10 +230,6 @@ const DropDownTerminal = new Lang.Class({
                 this._window.resize(width, height);
             }
         }));
-    },
-
-    IsOpened: function() {
-        return this._window.visible;
     },
 
     Toggle: function() {

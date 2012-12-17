@@ -50,6 +50,7 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
 ];
 
 const TERMINAL_WINDOW_ACTOR_NAME = "dropDownTerminalWindow";
+const TERMINAL_WINDOW_WM_CLASS = "DropDownTerminalWindow";
 const ANIMATION_TIME_IN_SEC = 0.25;
 const DEBUG = false;
 
@@ -70,7 +71,6 @@ const DropDownTerminalIface =
 		    <arg name="width" type="i" direction="in"/>
 		    <arg name="height" type="i" direction="in"/>
     	</method>
-        <method name="IsOpened"><arg type="b" direction="out"/></method>
         <method name="Toggle"/>
         <method name="Focus"/>
         <method name="Quit"/>
@@ -219,7 +219,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
             this._display.get_tab_list = Lang.bind(this, function(type, screen, workspace) {
                 let windows = Lang.bind(this._display, oldGetTabList)(type, screen, workspace);
-                windows = windows.filter(function(win) { return win.get_wm_class() != "DropDownTerminalWindow"; });
+                windows = windows.filter(function(win) { return win.get_wm_class() != TERMINAL_WINDOW_WM_CLASS; });
                 return windows;
             });
 
@@ -242,6 +242,16 @@ const DropDownTerminalExtension = new Lang.Class({
                 if (root instanceof St.Widget)
                     Lang.bind(focusManager, this._oldFocusManagerRemoveGroupFunc)(root);
             });
+        }
+
+        // finds our window out if we come back from the locking screen for instance
+        let windowActors = global.get_window_actors();
+
+        for (let i in windowActors) {
+            if (windowActors[i].get_meta_window().get_wm_class() == TERMINAL_WINDOW_WM_CLASS) {
+                this._setWindowActor(windowActors[i]);
+                break;
+            }
         }
 
         // handles the first start
@@ -321,7 +331,6 @@ const DropDownTerminalExtension = new Lang.Class({
 
     _toggle: function() {
         debug("asked to toggle");
-
         // checks if there is not an instance of a previous child, mainly because it survived a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
         if (this._childPid === null && this._busProxy !== null) {
@@ -339,31 +348,27 @@ const DropDownTerminalExtension = new Lang.Class({
         // the bus proxy might not be ready, in this case we will be called later once the bus name appears
         if (this._busProxy !== null) {
 
-            // if animation is supported and the terminal is opened, we animate the closing sequence
-            if (this._busProxy.IsOpenedSync()) {
-                // unregisters from ctrl-alt-tab
-                if (this._windowActor !== null) {
-                    Main.ctrlAltTabManager.removeGroup(this._windowActor);
-                }
+            // if the actor is set, this means the terminal is opened, so we will handle closing
+            if (this._windowActor !== null) {
+                let targetY = this._hasMonitorAbove() ? this._windowActor.y : -this._windowActor.height;
+                let targetScaleY = this._hasMonitorAbove() ? 0.0 : 1.0;
 
-                // we animate the closing sequence if applicable
-                if (this._shouldAnimateWindow() && this._windowActor !== null) {
-                    let monitorAbove = this._hasMonitorAbove();
+                Tweener.addTween(this._windowActor, {
+                    y: targetY,
+                    scale_y: targetScaleY,
+                    time: this._getAnimationTime(),
+                    transition: "easeInExpo",
+                    onComplete: Lang.bind(this, function() {
+                                    // unregisters the ctrl-alt-tab group
+                                    Main.ctrlAltTabManager.removeGroup(this._windowActor);
 
-                    let targetY = monitorAbove ? this._windowActor.y : -this._windowActor.height;
-                    let targetScaleY = monitorAbove ? 0.0 : 1.0;
+                                    // clears the window actor ref since we use it to know the window visibility
+                                    this._windowActor = null;
 
-                    Tweener.addTween(this._windowActor, {
-                        y: targetY,
-                        scale_y: targetScaleY,
-                        time: ANIMATION_TIME_IN_SEC,
-                        transition: "easeInExpo",
-                        onComplete: this._busProxy.ToggleRemote,
-                        onCompleteScope: this._busProxy
-                    });
-                } else {
-                    this._busProxy.ToggleRemote();
-                }
+                                    // requests toggling asynchronously
+                                    this._busProxy.ToggleRemote();
+                                })
+                });
             } else {
                 this._busProxy.ToggleRemote();
             }
@@ -413,61 +418,49 @@ const DropDownTerminalExtension = new Lang.Class({
 
     _windowCreated: function(display, window) {
         // filter out the terminal window using its wmclass
-        if (window.get_wm_class() != "DropDownTerminalWindow") {
+        if (window.get_wm_class() != TERMINAL_WINDOW_WM_CLASS) {
             return;
         }
 
-        // adds a gray border on south of the actor to mimick the shell borders 
-        this._windowActor = window.get_compositor_private();
-        this._windowActor.clear_effects();
-        this._windowActor.add_effect(new GraySouthBorderEffect());
+        // gets and decorates the actor
+        this._setWindowActor(window.get_compositor_private());
 
-        // sets a distinctive name for the actor
-        this._windowActor.set_name(TERMINAL_WINDOW_ACTOR_NAME);
-
-
-        // a lambda to request the focus
-        let requestFocusAsync = Lang.bind(this, function(timestamp) {
+        // a lambda to request the focus asynchronously
+        let requestFocusAsync = Lang.bind(this, function() {
             if (this._busProxy !== null) {
                 this._busProxy.FocusRemote();
             }
         });
 
-        // a lambda to complete the window opening
-        let completeWindowOpening = Lang.bind(this, function() {
-            // requests the focus
-            requestFocusAsync();
-
-            // registers a ctrl-alt-tab group
-            Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
-                                            { focusCallback: requestFocusAsync });
-        });
-
         // animate the opening sequence (if animation is supported) and requests the focus on completion
-        if (this._shouldAnimateWindow()) {
-            Tweener.addTween(this._windowActor, {
-                y: this._windowY,
-                scale_y: 1.0,
-                time: ANIMATION_TIME_IN_SEC,
-                transition: "easeOutExpo",
-                onStart: this._initWindowAnimation,
-                onStartScope: this,
-                onComplete: completeWindowOpening
-            });
-        } else {
-            completeWindowOpening();
-        }
+        Tweener.addTween(this._windowActor, {
+            y: this._windowY,
+            scale_y: 1.0,
+            time: this._getAnimationTime(),
+            transition: "easeOutExpo",
+            onStart: this._initWindowAnimation,
+            onStartScope: this,
+            onComplete: Lang.bind(this, function() {
+                            // requests the focus asynchronously
+                            requestFocusAsync();
+
+                            // registers a ctrl-alt-tab group
+                            Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
+                                                            { focusCallback: Lang.bind(this, requestFocusAsync) });
+                        })
+        });
     },
 
     _actorMapped: function(wm, actor) {
         // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
         // we initialize the animation at actor mapping time (so the window is not yet visible and can be placed out of the screen)
-        if (actor.get_name() == TERMINAL_WINDOW_ACTOR_NAME && this._shouldAnimateWindow()) {
+        if (actor.get_name() == TERMINAL_WINDOW_ACTOR_NAME) {
             this._initWindowAnimation();
         }
     },
 
     _initWindowAnimation: function() {
+        // FIXME: we should reset those on monitors-changed
         if (this._hasMonitorAbove()) {
             this._windowActor.scale_y = 0.0;
         } else {
@@ -599,6 +592,18 @@ const DropDownTerminalExtension = new Lang.Class({
         this._childPid = null; 
     },
 
+    _setWindowActor: function(actor) {
+        // adds a gray border on south of the actor to mimick the shell borders
+        actor.clear_effects();
+        actor.add_effect(new GraySouthBorderEffect());
+
+        // sets a distinctive name for the actor
+        actor.set_name(TERMINAL_WINDOW_ACTOR_NAME);
+
+        // keeps the ref
+        this._windowActor = actor;
+    },
+
     _computeWindowHeight: function(heightSpec) {
         // updates the height from the height spec, so it's picked 
         let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
@@ -628,18 +633,18 @@ const DropDownTerminalExtension = new Lang.Class({
         return Main.layoutManager.panelBox.y > 0;
     },
 
-    _shouldAnimateWindow: function() {
+    _getAnimationTime: function() {
         if (!this._animationEnabled || !Main.wm._shouldAnimate()) {
-            return false;
+            return 0.0;
         }
 
         for (let ext in ExtensionUtils.extensions) {
             if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
-                return false;
+                return 0.0;
             }
         }
 
-        return true;
+        return ANIMATION_TIME_IN_SEC;
     },
 
     _getCommandEnv: function() {
