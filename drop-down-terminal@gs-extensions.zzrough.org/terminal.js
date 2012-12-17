@@ -68,7 +68,7 @@ function parseRgbaColor(spec) { col = new Gdk.RGBA(); col.parse(spec); return co
 // constants for the location of the extension
 const EXTENSION_ID = "drop-down-terminal";
 const EXTENSION_UUID = EXTENSION_ID + "@gs-extensions.zzrough.org";
-const EXTENSION_PATH = ARGV[0] || GLib.get_home_dir() + "/" + EXTENSION_UUID;
+const EXTENSION_PATH = ARGV[0] || GLib.get_home_dir() + "/.local/share/gnome-shell/extensions/" + EXTENSION_UUID;
 
 
 // constants for the settings
