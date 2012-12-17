@@ -7,7 +7,6 @@ v8
 v9
 - feature: prompt to kill the possible active pid on logout to avoid loosing something
 - bugfix: [when switching Workspaces DD Terminal flashes in and out (github #4)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/4)
-- bugfix: [no focus given on ctrl-alt-tab (github #8)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/8)
 - code: investigate how to have proper theming of the border (using the generic popup border or at least make it customisable through CSS)
 
 v10

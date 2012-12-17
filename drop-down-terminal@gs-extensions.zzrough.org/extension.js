@@ -209,11 +209,45 @@ const DropDownTerminalExtension = new Lang.Class({
                                                         Lang.bind(this, this._busNameVanished),
                                                         null, null);
 
+        // change the ctrl-alt-tab popup switcher to ignore our window as we will handle it ourself
+        // (for the look and also because the focus switching needs a hack in our case)
+        if (this._canAddCtrlTabGroup()) {
+            let oldCtrlAltTabManagerPopupFunc = Main.ctrlAltTabManager.popup;
+            this._oldCtrlAltTabManagerPopupFunc = oldCtrlAltTabManagerPopupFunc;
+
+            Main.ctrlAltTabManager.popup = function(backward, binding, mask) {
+                let display = global.screen.get_display();
+                let oldGetTabList = display.get_tab_list;
+
+                display.get_tab_list = function(type, screen, workspace) {
+                    let windows = Lang.bind(global.screen.get_display(), oldGetTabList)(type, screen, workspace);
+                    windows = windows.filter(function(win) { return win.get_wm_class() != "DropDownTerminalWindow"; });
+                    return windows;
+                };
+
+                Lang.bind(Main.ctrlAltTabManager, oldCtrlAltTabManagerPopupFunc)(backward, binding, mask);
+
+                display.get_tab_list = oldGetTabList;
+            };
+        }
+
         // handles the first start
         this._handleFirstStart();
     },
 
     disable: function() {
+        // unbinds the shortcut
+        this._unbindShortcut();
+
+        // restores the CtrlAltTabManager
+        if (this._canAddCtrlTabGroup()) {
+            Main.ctrlAltTabManager.popup = this._oldCtrlAltTabManagerPopupFunc;
+
+            if (this._windowActor !== null) {
+                Main.ctrlAltTabManager.removeGroup(this._windowActor);
+            }
+        }
+
         // issue #6: Terminal lost after screen is locked
         //
         // gnome-shell 3.6 introduces a new screen shield that disables all extensions: this is not a problem
@@ -223,9 +257,6 @@ const DropDownTerminalExtension = new Lang.Class({
         // if the screen is getting locked
         let lockingScreen = (Main.sessionMode.currentMode == "unlock-dialog"    // unlock-dialog == shield/curtain (before lock-screen w/ gdm)
                              || Main.sessionMode.currentMode == "lock-screen"); // lock-screen == lock screen (after unlock-dialog or w/o gdm)
-
-        // unbinds the shortcut
-        this._unbindShortcut();
 
         // checks if there is not an instance of a previous child, mainly because it survived a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
@@ -297,20 +328,30 @@ const DropDownTerminalExtension = new Lang.Class({
         if (this._busProxy !== null) {
 
             // if animation is supported and the terminal is opened, we animate the closing sequence
-            if (this._shouldAnimateWindow() && this._windowActor !== null && this._busProxy.IsOpenedSync()) {
-                let monitorAbove = this._hasMonitorAbove();
+            if (this._busProxy.IsOpenedSync()) {
+                // unregisters from ctrl-alt-tab
+                if (this._canAddCtrlTabGroup() && this._windowActor !== null) {
+                    Main.ctrlAltTabManager.removeGroup(this._windowActor);
+                }
 
-                let targetY = monitorAbove ? this._windowActor.y : -this._windowActor.height;
-                let targetScaleY = monitorAbove ? 0.0 : 1.0;
+                // we animate the closing sequence if applicable
+                if (this._shouldAnimateWindow() && this._windowActor !== null) {
+                    let monitorAbove = this._hasMonitorAbove();
 
-                Tweener.addTween(this._windowActor, {
-                    y: targetY,
-                    scale_y: targetScaleY,
-                    time: ANIMATION_TIME_IN_SEC,
-                    transition: "easeInExpo",
-                    onComplete: this._busProxy.ToggleRemote,
-                    onCompleteScope: this._busProxy
-                });
+                    let targetY = monitorAbove ? this._windowActor.y : -this._windowActor.height;
+                    let targetScaleY = monitorAbove ? 0.0 : 1.0;
+
+                    Tweener.addTween(this._windowActor, {
+                        y: targetY,
+                        scale_y: targetScaleY,
+                        time: ANIMATION_TIME_IN_SEC,
+                        transition: "easeInExpo",
+                        onComplete: this._busProxy.ToggleRemote,
+                        onCompleteScope: this._busProxy
+                    });
+                } else {
+                    this._busProxy.ToggleRemote();
+                }
             } else {
                 this._busProxy.ToggleRemote();
             }
@@ -372,12 +413,24 @@ const DropDownTerminalExtension = new Lang.Class({
         // sets a distinctive name for the actor
         this._windowActor.set_name(TERMINAL_WINDOW_ACTOR_NAME);
 
-        // a lambda to request focus
-        let requestFocusAsync = function(proxy) {
-            if (proxy !== null) {
-                proxy.FocusRemote();
+
+        // a lambda to request the focus
+        let requestFocusAsync = Lang.bind(this, function(timestamp) {
+            if (this._busProxy !== null) {
+                this._busProxy.FocusRemote();
             }
-        };
+        });
+
+        // a lambda to complete the window opening
+        let completeWindowOpening = Lang.bind(this, function() {
+            // requests the focus
+            requestFocusAsync();
+
+            // registers a ctrl-alt-tab group
+            if (this._canAddCtrlTabGroup())
+                Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
+                                                { focusCallback: requestFocusAsync });
+        });
 
         // animate the opening sequence (if animation is supported) and requests the focus on completion
         if (this._shouldAnimateWindow()) {
@@ -388,11 +441,10 @@ const DropDownTerminalExtension = new Lang.Class({
                 transition: "easeOutExpo",
                 onStart: this._initWindowAnimation,
                 onStartScope: this,
-                onComplete: requestFocusAsync,
-                onCompleteParams: [this._busProxy]
+                onComplete: completeWindowOpening
             });
         } else {
-            requestFocusAsync(this._busProxy);
+            completeWindowOpening();
         }
     },
 
@@ -615,6 +667,17 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // updates the first start key
         this._settings.set_boolean(FIRST_START_SETTING_KEY, false);
+    },
+
+    _canAddCtrlTabGroup: function() {
+        let shellVersion = Config.PACKAGE_VERSION.split('.');
+        let major = parseInt(shellVersion[0]);
+        let minor = parseInt(shellVersion[1]);
+        let point = parseInt(shellVersion[2]);
+
+        return (major >= 4) ||                           // 4.0.0+: let's see if that happens someday :)
+               (major == 3 && minor >= 8) ||             // 3.8.0+  (and without API break! :p)
+               (major == 3 && minor == 7 && point >= 3); // 3.7.3+
     },
 
     _checkDependencies: function() {
