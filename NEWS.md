@@ -42,5 +42,5 @@ v7 (2012-12-08)
 - code: use settings directly instead of the dbus API
 
 v8 (????-??-??)
-- feature: improve the ctrl-alt-tab look to match the shell high-res symbolic icons (requires gnome-shell 3.7.3+)
+- feature: improve the ctrl-alt-tab look to match the shell high-res symbolic icons
 - bugfix: [no focus given on ctrl-alt-tab (github #8)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/8)

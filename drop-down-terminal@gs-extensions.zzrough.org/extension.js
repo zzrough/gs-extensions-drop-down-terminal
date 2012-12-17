@@ -58,6 +58,7 @@ const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 
+const SHELL_VERSION = parseInt(Config.PACKAGE_VERSION.split(".").join(""));
 
 // dbus interface
 const DropDownTerminalIface =
@@ -211,24 +212,36 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // change the ctrl-alt-tab popup switcher to ignore our window as we will handle it ourself
         // (for the look and also because the focus switching needs a hack in our case)
-        if (this._canAddCtrlTabGroup()) {
-            let oldCtrlAltTabManagerPopupFunc = Main.ctrlAltTabManager.popup;
-            this._oldCtrlAltTabManagerPopupFunc = oldCtrlAltTabManagerPopupFunc;
+        this._oldCtrlAltTabManagerPopupFunc = Main.ctrlAltTabManager.popup;
 
-            Main.ctrlAltTabManager.popup = function(backward, binding, mask) {
-                let display = global.screen.get_display();
-                let oldGetTabList = display.get_tab_list;
+        Main.ctrlAltTabManager.popup = Lang.bind(this, function(backward, binding, mask) {
+            let oldGetTabList = this._display.get_tab_list;
 
-                display.get_tab_list = function(type, screen, workspace) {
-                    let windows = Lang.bind(global.screen.get_display(), oldGetTabList)(type, screen, workspace);
-                    windows = windows.filter(function(win) { return win.get_wm_class() != "DropDownTerminalWindow"; });
-                    return windows;
-                };
+            this._display.get_tab_list = Lang.bind(this, function(type, screen, workspace) {
+                let windows = Lang.bind(this._display, oldGetTabList)(type, screen, workspace);
+                windows = windows.filter(function(win) { return win.get_wm_class() != "DropDownTerminalWindow"; });
+                return windows;
+            });
 
-                Lang.bind(Main.ctrlAltTabManager, oldCtrlAltTabManagerPopupFunc)(backward, binding, mask);
+            Lang.bind(Main.ctrlAltTabManager, this._oldCtrlAltTabManagerPopupFunc)(backward, binding, mask);
 
-                display.get_tab_list = oldGetTabList;
-            };
+            this._display.get_tab_list = oldGetTabList;
+        });
+
+        let focusManager = global.focus_manager;
+        this._oldFocusManagerAddGroupFunc = focusManager.add_group;
+        this._oldFocusManagerRemoveGroupFunc = focusManager.remove_group;
+
+        if (SHELL_VERSION < 373) {
+            focusManager.add_group = Lang.bind(this, function(root) {
+                if (root instanceof St.Widget)
+                    Lang.bind(focusManager, this._oldFocusManagerAddGroupFunc)(root);
+            });
+
+            focusManager.remove_group = Lang.bind(this, function(root) {
+                if (root instanceof St.Widget)
+                    Lang.bind(focusManager, this._oldFocusManagerRemoveGroupFunc)(root);
+            });
         }
 
         // handles the first start
@@ -239,14 +252,15 @@ const DropDownTerminalExtension = new Lang.Class({
         // unbinds the shortcut
         this._unbindShortcut();
 
-        // restores the CtrlAltTabManager
-        if (this._canAddCtrlTabGroup()) {
-            Main.ctrlAltTabManager.popup = this._oldCtrlAltTabManagerPopupFunc;
-
-            if (this._windowActor !== null) {
-                Main.ctrlAltTabManager.removeGroup(this._windowActor);
-            }
+        // removes the ctrl-alt-tab group
+        if (this._windowActor !== null) {
+            Main.ctrlAltTabManager.removeGroup(this._windowActor);
         }
+
+        // restores the monkey patched functions
+        Main.ctrlAltTabManager.popup = this._oldCtrlAltTabManagerPopupFunc;
+        global.focus_manager.add_group = this._oldFocusManagerAddGroupFunc
+        global.focus_manager.remove_group = this._oldFocusManagerRemoveGroupFunc
 
         // issue #6: Terminal lost after screen is locked
         //
@@ -330,7 +344,7 @@ const DropDownTerminalExtension = new Lang.Class({
             // if animation is supported and the terminal is opened, we animate the closing sequence
             if (this._busProxy.IsOpenedSync()) {
                 // unregisters from ctrl-alt-tab
-                if (this._canAddCtrlTabGroup() && this._windowActor !== null) {
+                if (this._windowActor !== null) {
                     Main.ctrlAltTabManager.removeGroup(this._windowActor);
                 }
 
@@ -427,9 +441,8 @@ const DropDownTerminalExtension = new Lang.Class({
             requestFocusAsync();
 
             // registers a ctrl-alt-tab group
-            if (this._canAddCtrlTabGroup())
-                Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
-                                                { focusCallback: requestFocusAsync });
+            Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
+                                            { focusCallback: requestFocusAsync });
         });
 
         // animate the opening sequence (if animation is supported) and requests the focus on completion
@@ -667,17 +680,6 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // updates the first start key
         this._settings.set_boolean(FIRST_START_SETTING_KEY, false);
-    },
-
-    _canAddCtrlTabGroup: function() {
-        let shellVersion = Config.PACKAGE_VERSION.split('.');
-        let major = parseInt(shellVersion[0]);
-        let minor = parseInt(shellVersion[1]);
-        let point = parseInt(shellVersion[2]);
-
-        return (major >= 4) ||                           // 4.0.0+: let's see if that happens someday :)
-               (major == 3 && minor >= 8) ||             // 3.8.0+  (and without API break! :p)
-               (major == 3 && minor == 7 && point >= 3); // 3.7.3+
     },
 
     _checkDependencies: function() {
