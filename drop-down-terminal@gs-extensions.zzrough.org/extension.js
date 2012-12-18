@@ -181,8 +181,11 @@ const DropDownTerminalExtension = new Lang.Class({
         // animation setup
         this._display = global.screen.get_display();
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
-        this._actorMappedHandlerId = global.window_manager.connect("map", Lang.bind(this, this._actorMapped));
+        this._actorMappedHandlerId = global.window_manager.connect("map", Lang.bind(this, this._windowMapped));
+
+        // geometry update on monitor configuration change or panel size change
         this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
+        this._panelAllocationNotificationHandlerId = Main.panel.actor.connect("notify::allocation", Lang.bind(this, this._updateWindowGeometry));
 
         // applies the settings initially
         this._updateAnimationEnabled();
@@ -321,9 +324,11 @@ const DropDownTerminalExtension = new Lang.Class({
         // disconnects signals and clears refs related to screen handling
         global.window_manager.disconnect(this._actorMappedHandlerId);
         Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
+        Main.panel.actor.disconnect(this._panelAllocationNotificationHandlerId);
         this._display.disconnect(this._windowCreatedHandlerId);
         this._actorMappedHandlerId = null;
         this._monitorsChangedHandlerId = null;
+        this._panelAllocationNotificationHandlerId = null;
         this._windowCreatedHandlerId = null;
         this._windowActor = null;
         this._display = null;
@@ -395,6 +400,10 @@ const DropDownTerminalExtension = new Lang.Class({
             this._busProxy.SetGeometryRemote(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
         }
 
+        if (this._windowActor != null) {
+            this._windowActor.set_position(this._windowX, this._windowY);
+        }
+
         return false;
     },
 
@@ -451,7 +460,7 @@ const DropDownTerminalExtension = new Lang.Class({
         });
     },
 
-    _actorMapped: function(wm, actor) {
+    _windowMapped: function(wm, actor) {
         // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
         // we initialize the animation at actor mapping time (so the window is not yet visible and can be placed out of the screen)
         if (actor.get_name() == TERMINAL_WINDOW_ACTOR_NAME) {

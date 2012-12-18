@@ -48,3 +48,4 @@ v9 (????-??-??)
 - feature: improve the ctrl-alt-tab look to match the shell high-res symbolic icons
 - feature: way faster opening (an invisible animation was delaying the opening animation for 0.25s)
 - bugfix: [no focus given on ctrl-alt-tab (github #8)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/8)
+- bugfix: [Small gap above terminal (github #15)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/15)
