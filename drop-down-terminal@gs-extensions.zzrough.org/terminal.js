@@ -271,7 +271,7 @@ const DropDownTerminal = new Lang.Class({
         terminal.set_allow_bold(true);
         terminal.set_scroll_on_output(true);
         terminal.set_scroll_on_keystroke(true);
-        terminal.set_scrollback_lines(1024);
+        terminal.set_scrollback_lines(8096);
         terminal.set_backspace_binding(Vte.TerminalEraseBinding.ASCII_DELETE);
         terminal.set_delete_binding(Vte.TerminalEraseBinding.DELETE_SEQUENCE);
         terminal.set_word_chars("-A-Za-z0-9_$.+!*(),;:@&=?/~#%");

@@ -45,6 +45,7 @@ v8 (2012-12-17)
 - bugfix: [Screen unlock makes terminal appear (github #21)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/21)
 
 v9 (????-??-??)
+- support for 3.7.3
 - feature: improve the ctrl-alt-tab look to match the shell high-res symbolic icons
 - feature: way faster opening (an invisible animation was delaying the opening animation for 0.25s)
 - bugfix: [no focus given on ctrl-alt-tab (github #8)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/8)
