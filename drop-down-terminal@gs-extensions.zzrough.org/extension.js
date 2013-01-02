@@ -336,6 +336,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
     _toggle: function() {
         debug("asked to toggle");
+
         // checks if there is not an instance of a previous child, mainly because it survived a shell restart
         // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
         if (this._childPid === null && this._busProxy !== null) {
@@ -357,11 +358,12 @@ const DropDownTerminalExtension = new Lang.Class({
             if (this._windowActor !== null) {
                 let targetY = this._hasMonitorAbove() ? this._windowActor.y : -this._windowActor.height;
                 let targetScaleY = this._hasMonitorAbove() ? 0.0 : 1.0;
+                let animationTime = this._shouldAnimateWindow() ? ANIMATION_TIME_IN_SEC : 0;
 
                 Tweener.addTween(this._windowActor, {
                     y: targetY,
                     scale_y: targetScaleY,
-                    time: this._getAnimationTime(),
+                    time: animationTime,
                     transition: "easeInExpo",
                     onComplete: Lang.bind(this, function() {
                                     // unregisters the ctrl-alt-tab group
@@ -432,7 +434,15 @@ const DropDownTerminalExtension = new Lang.Class({
         }
 
         // gets and decorates the actor
+        // the opening sequence will be animated when the window will be mapped, in _windowMapped
         this._setWindowActor(window.get_compositor_private());
+    },
+
+    _windowMapped: function(wm, actor) {
+        // filter out the actor using its name
+        if (actor.get_name() != TERMINAL_WINDOW_ACTOR_NAME) {
+            return;
+        }
 
         // a lambda to request the focus asynchronously
         let requestFocusAsync = Lang.bind(this, function() {
@@ -441,39 +451,37 @@ const DropDownTerminalExtension = new Lang.Class({
             }
         });
 
-        // animate the opening sequence (if animation is supported) and requests the focus on completion
-        Tweener.addTween(this._windowActor, {
-            y: this._windowY,
-            scale_y: 1.0,
-            time: this._getAnimationTime(),
-            transition: "easeOutExpo",
-            onStart: this._initWindowAnimation,
-            onStartScope: this,
-            onComplete: Lang.bind(this, function() {
-                            // requests the focus asynchronously
-                            requestFocusAsync();
+        // a lambda to complete the opening sequence
+        let completeOpening = Lang.bind(this, function() {
+            // requests the focus asynchronously
+            requestFocusAsync();
 
-                            // registers a ctrl-alt-tab group
-                            Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
-                                                            { focusCallback: Lang.bind(this, requestFocusAsync) });
-                        })
+            // registers a ctrl-alt-tab group
+            Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
+                                            { focusCallback: Lang.bind(this, requestFocusAsync) });
         });
-    },
 
-    _windowMapped: function(wm, actor) {
-        // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
-        // we initialize the animation at actor mapping time (so the window is not yet visible and can be placed out of the screen)
-        if (actor.get_name() == TERMINAL_WINDOW_ACTOR_NAME) {
-            this._initWindowAnimation();
-        }
-    },
+        // animate the opening sequence if applicable
+        if (this._shouldAnimateWindow()) {
+             // FIXME: we should reset those on monitors-changed
+             //
+             // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
+             // we initialize the animation in this thread -at actor mapping time- so the window is not yet visible and can be placed out of the screen
+             if (this._hasMonitorAbove()) {
+                 this._windowActor.scale_y = 0.0;
+             } else {
+                 this._windowActor.set_position(this._windowX, -this._windowActor.height);
+             }
 
-    _initWindowAnimation: function() {
-        // FIXME: we should reset those on monitors-changed
-        if (this._hasMonitorAbove()) {
-            this._windowActor.scale_y = 0.0;
+            Tweener.addTween(this._windowActor, {
+                y: this._windowY,
+                scale_y: 1.0,
+                time: ANIMATION_TIME_IN_SEC,
+                transition: "easeOutExpo",
+                onComplete: completeOpening
+            });
         } else {
-            this._windowActor.set_position(this._windowX, -this._windowActor.height);
+            completeOpening();
         }
     },
 
@@ -642,18 +650,18 @@ const DropDownTerminalExtension = new Lang.Class({
         return Main.layoutManager.panelBox.y > 0;
     },
 
-    _getAnimationTime: function() {
+    _shouldAnimateWindow: function() {
         if (!this._animationEnabled || !Main.wm._shouldAnimate()) {
-            return 0.0;
+            return false;
         }
 
         for (let ext in ExtensionUtils.extensions) {
             if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
-                return 0.0;
+                return false;
             }
         }
 
-        return ANIMATION_TIME_IN_SEC;
+        return true;
     },
 
     _getCommandEnv: function() {
