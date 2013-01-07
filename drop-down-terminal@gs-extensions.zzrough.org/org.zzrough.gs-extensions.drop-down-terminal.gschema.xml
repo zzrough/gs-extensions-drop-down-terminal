@@ -10,11 +10,19 @@
       </description>
     </key>
 
-    <key name="enable-animation" type="b">
+    <key name="enable-opening-animation" type="b">
       <default>true</default>
-      <summary>Enable the animation</summary>
+      <summary>Enable the opening animation</summary>
       <description>
-        Whether to enable or disable the opening/closing animation.
+        Whether to enable or disable the opening animation.
+      </description>
+    </key>
+
+    <key name="enable-closing-animation" type="b">
+      <default>true</default>
+      <summary>Enable the closing animation</summary>
+      <description>
+        Whether to enable or disable the closing animation.
       </description>
     </key>
 

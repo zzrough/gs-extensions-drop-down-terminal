@@ -55,7 +55,8 @@ const ANIMATION_TIME_IN_SEC = 0.25;
 const DEBUG = false;
 
 const FIRST_START_SETTING_KEY = "first-start";
-const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
+const ENABLE_OPENING_ANIMATION_SETTING_KEY = "enable-opening-animation";
+const ENABLE_CLOSING_ANIMATION_SETTING_KEY = "enable-closing-animation";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 
@@ -188,13 +189,16 @@ const DropDownTerminalExtension = new Lang.Class({
         this._panelAllocationNotificationHandlerId = Main.panel.actor.connect("notify::allocation", Lang.bind(this, this._updateWindowGeometry));
 
         // applies the settings initially
-        this._updateAnimationEnabled();
+        this._updateOpeningAnimationEnabled();
+        this._updateClosingAnimationEnabled();
         this._updateWindowGeometry();
         this._bindShortcut();
 
         // honours setting changes
         this._settingChangedHandlerIds = [
-            this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationEnabled)),
+            this._settings.connect("changed::" + ENABLE_OPENING_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateOpeningAnimationEnabled)),
+
+            this._settings.connect("changed::" + ENABLE_CLOSING_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateClosingAnimationEnabled)),
 
             this._settings.connect("changed::" + TERMINAL_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
                 Convenience.throttle(200, this, this._updateWindowGeometry); // throttles 200ms (it's an "heavy weight" setting)
@@ -358,7 +362,7 @@ const DropDownTerminalExtension = new Lang.Class({
             if (this._windowActor !== null) {
                 let targetY = this._hasMonitorAbove() ? this._windowActor.y : -this._windowActor.height;
                 let targetScaleY = this._hasMonitorAbove() ? 0.0 : 1.0;
-                let animationTime = this._shouldAnimateWindow() ? ANIMATION_TIME_IN_SEC : 0;
+                let animationTime = this._shouldAnimateOpeningWindow() ? ANIMATION_TIME_IN_SEC : 0;
 
                 Tweener.addTween(this._windowActor, {
                     y: targetY,
@@ -382,8 +386,12 @@ const DropDownTerminalExtension = new Lang.Class({
         }
     },
 
-    _updateAnimationEnabled: function() {
-        this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
+    _updateOpeningAnimationEnabled: function() {
+        this._openingAnimationEnabled = this._settings.get_boolean(ENABLE_OPENING_ANIMATION_SETTING_KEY);
+    },
+
+    _updateClosingAnimationEnabled: function() {
+        this._closingAnimationEnabled = this._settings.get_boolean(ENABLE_CLOSING_ANIMATION_SETTING_KEY);
     },
 
     _updateWindowGeometry: function() {
@@ -462,7 +470,7 @@ const DropDownTerminalExtension = new Lang.Class({
         });
 
         // animate the opening sequence if applicable
-        if (this._shouldAnimateWindow()) {
+        if (this._shouldAnimateOpeningWindow()) {
              // FIXME: we should reset those on monitors-changed
              //
              // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
@@ -650,8 +658,22 @@ const DropDownTerminalExtension = new Lang.Class({
         return Main.layoutManager.panelBox.y > 0;
     },
 
-    _shouldAnimateWindow: function() {
-        if (!this._animationEnabled || !Main.wm._shouldAnimate()) {
+    _shouldAnimateOpeningWindow: function() {
+        if (!this._openingAnimationEnabled || !Main.wm._shouldAnimateOpening()) {
+            return false;
+        }
+
+        for (let ext in ExtensionUtils.extensions) {
+            if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
+                return false;
+            }
+        }
+
+        return true;
+    },
+
+    _shouldAnimateClosingWindow: function() {
+        if (!this._closingAnimationEnabled || !Main.wm._shouldAnimateClosing()) {
             return false;
         }
 
