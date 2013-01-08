@@ -362,7 +362,7 @@ const DropDownTerminalExtension = new Lang.Class({
             if (this._windowActor !== null) {
                 let targetY = this._hasMonitorAbove() ? this._windowActor.y : -this._windowActor.height;
                 let targetScaleY = this._hasMonitorAbove() ? 0.0 : 1.0;
-                let animationTime = this._shouldAnimateOpeningWindow() ? ANIMATION_TIME_IN_SEC : 0;
+                let animationTime = this._shouldAnimateClosingWindow() ? ANIMATION_TIME_IN_SEC : 0;
 
                 Tweener.addTween(this._windowActor, {
                     y: targetY,
@@ -659,7 +659,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _shouldAnimateOpeningWindow: function() {
-        if (!this._openingAnimationEnabled || !Main.wm._shouldAnimateOpening()) {
+        if (!this._openingAnimationEnabled || !Main.wm._shouldAnimate()) {
             return false;
         }
 
@@ -673,7 +673,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _shouldAnimateClosingWindow: function() {
-        if (!this._closingAnimationEnabled || !Main.wm._shouldAnimateClosing()) {
+        if (!this._closingAnimationEnabled || !Main.wm._shouldAnimate()) {
             return false;
         }
 
