@@ -16,7 +16,6 @@
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
 const Lang = imports.lang;
-const System = imports.system;
 
 const Gdk = imports.gi.Gdk;
 const GdkX11 = imports.gi.GdkX11;
@@ -214,7 +213,7 @@ const DropDownTerminal = new Lang.Class({
     },
 
     get Pid() {
-        return System.getpid();
+        return Convenience.getPid();
     },
 
     SetGeometry: function(x, y, width, height) {

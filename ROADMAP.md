@@ -15,7 +15,6 @@ v10
 - feature (maybe): allow custom width (suggested by Dreamsorcerer)
 - feature (maybe): dnd (already tried, not that simple)
 - bugfix: investigate the focus issue preventing using the BLOCK cursor
-- bugfix (maybe): [add icon/name to panel (github #7)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/7)
 
 future:
 - feature: pause the child process if term closed and no active pid (for powersaving, maybe an additional pref?)
