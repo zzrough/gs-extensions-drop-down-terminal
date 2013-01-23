@@ -10,8 +10,8 @@ v9
 - code: investigate how to have proper theming of the border (using the generic popup border or at least make it customisable through CSS)
 
 v10
-- feature (maybe): autohide (asked by step-2)
-- feature (maybe): multi tabs (5 votes for, 6 votes against)
+- feature (maybe): autohide (asked by step-2, koji3)
+- feature (maybe): multi tabs (13 votes for, 10 votes against)
 - feature (maybe): allow custom width (suggested by Dreamsorcerer)
 - feature (maybe): dnd (already tried, not that simple)
 - bugfix: investigate the focus issue preventing using the BLOCK cursor
