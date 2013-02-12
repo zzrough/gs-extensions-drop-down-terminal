@@ -24,7 +24,7 @@ Bug reporting
 -------------
 
 Use the [Github issue tracker](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues) to report issues
-or ask for features (**matching the vision** of this extension, in the next paragraph).
+or ask for features **matching the vision** of this extension, in the next paragraph.
 
 Vision
 ------
