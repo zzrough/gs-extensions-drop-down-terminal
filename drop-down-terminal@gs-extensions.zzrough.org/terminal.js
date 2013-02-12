@@ -138,6 +138,7 @@ const DropDownTerminal = new Lang.Class({
         // initializes the state
         this._customCommandArgs = [];
         this._lastForkFailed = false;
+        this._visible = false;
 
         // loads the custom CSS to mimick the shell style
         let provider = new Gtk.CssProvider();
@@ -525,7 +526,7 @@ const DropDownTerminal = new Lang.Class({
 });
 
 
-// initializes gtk
+// sets a nice program name and initializes gtk
 Gtk.init(null, 0);
 
 // sets the setting to prefer a dark theme
@@ -533,6 +534,7 @@ Gtk.Settings.get_default()['gtk-application-prefer-dark-theme'] = true;
 
 // creates the terminal
 terminal = new DropDownTerminal();
+GLib.set_prgname("drop-down-terminal");
 
 // starts the main loop
 Gtk.main();
