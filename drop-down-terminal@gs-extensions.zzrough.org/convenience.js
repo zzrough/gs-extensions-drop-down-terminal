@@ -22,6 +22,10 @@ const Gdk = imports.gi.Gdk;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 
+const GLIB_VERSION = GLib.MAJOR_VERSION * 1000
+                   + GLib.MINOR_VERSION * 10
+                   + GLib.MICRO_VERSION;
+
 
 function getSettings(extensionPath, extensionId) {
     let defaultSource = Gio.SettingsSchemaSource.get_default();
@@ -86,5 +90,19 @@ function gdkRunner(func) {
     return function() {
         runInGdk(func);
     };
+}
+
+
+/**
+ * Returns the pid of the active process.
+ *
+ * @return the pid
+ */
+function getPid() {
+    if (GLIB_VERSION >= 2354) { // only available in GLib 2.35.4+
+        return new Gio.Credentials().get_unix_pid();
+    } else {
+        return imports.system.getpid();
+    }
 }
 

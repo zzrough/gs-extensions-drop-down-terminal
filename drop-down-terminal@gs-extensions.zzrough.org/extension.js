@@ -29,6 +29,7 @@ const Gtk = imports.gi.Gtk;
 const Meta = imports.gi.Meta;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
+const Shell = imports.gi.Shell;
 
 const Main = imports.ui.main;
 const ModalDialog = imports.ui.modalDialog;
@@ -418,9 +419,9 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _bindShortcut: function() {
-        if (Main.wm.addKeybinding) // introduced in 3.7.2
+        if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced resp. in 3.7.2 and 3.7.5
             Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
-                                  Main.KeybindingMode.NORMAL | Main.KeybindingMode.MESSAGE_TRAY,
+                                  Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY,
                                   Lang.bind(this, this._toggle));
         else
             global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
