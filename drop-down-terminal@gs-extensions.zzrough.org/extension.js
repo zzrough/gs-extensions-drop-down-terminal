@@ -61,7 +61,7 @@ const ENABLE_CLOSING_ANIMATION_SETTING_KEY = "enable-closing-animation";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 
-const SHELL_VERSION = parseInt(Config.PACKAGE_VERSION.split(".").join(""));
+const SHELL_VERSION = 10 * parseFloat("0." + Config.PACKAGE_VERSION.split(".").join("")).toFixed(10);
 
 // dbus interface
 const DropDownTerminalIface =
@@ -240,7 +240,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._oldFocusManagerAddGroupFunc = focusManager.add_group;
         this._oldFocusManagerRemoveGroupFunc = focusManager.remove_group;
 
-        if (SHELL_VERSION < 373) {
+        if (SHELL_VERSION < 3.73) {
             focusManager.add_group = Lang.bind(this, function(root) {
                 if (root instanceof St.Widget)
                     Lang.bind(focusManager, this._oldFocusManagerAddGroupFunc)(root);
@@ -419,9 +419,13 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _bindShortcut: function() {
-        if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced resp. in 3.7.2 and 3.7.5
+        if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced in 3.7.5
             Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
                                   Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY,
+                                  Lang.bind(this, this._toggle));
+        else if (Main.wm.addKeybinding && Main.KeybindingMode) // introduced in 3.7.2
+            Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+                                  Main.KeybindingMode.NORMAL | Main.KeybindingMode.MESSAGE_TRAY,
                                   Lang.bind(this, this._toggle));
         else
             global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
@@ -472,23 +476,34 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // animate the opening sequence if applicable
         if (this._shouldAnimateOpeningWindow()) {
-             // FIXME: we should reset those on monitors-changed
-             //
-             // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
-             // we initialize the animation in this thread -at actor mapping time- so the window is not yet visible and can be placed out of the screen
-             if (this._hasMonitorAbove()) {
-                 this._windowActor.scale_y = 0.0;
-             } else {
-                 this._windowActor.set_position(this._windowX, -this._windowActor.height);
-             }
+            // FIXME: we should reset those on monitors-changed
+            //
+            // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
+            // we initialize the animation in this thread -at actor mapping time- so the window is not yet visible and can be placed out of the screen
+            //
+            // Update: starting from mutter 3.7.90, there is no animation at all if the actor is not displayed (out of the screen) at map time.
+            //         This might be a side-effect of the new frame synchronization changes. To work around that until I figure out a better fix,
+            //         schedule the whole animation in the next frame (idle_add) and make the actor transparent until the animation starts
+            //         (to avoid the brief window appearance which is the original issue).
+            this._windowActor.opacity = 0;
 
-            Tweener.addTween(this._windowActor, {
-                y: this._windowY,
-                scale_y: 1.0,
-                time: ANIMATION_TIME_IN_SEC,
-                transition: "easeOutExpo",
-                onComplete: completeOpening
-            });
+            Mainloop.idle_add(Lang.bind(this, function() {
+                this._windowActor.opacity = 255;
+
+                if (this._hasMonitorAbove()) {
+                    this._windowActor.scale_y = 0.0;
+                } else {
+                    this._windowActor.set_position(this._windowX, -this._windowActor.height);
+                }
+
+                Tweener.addTween(this._windowActor, {
+                    y: this._windowY,
+                    scale_y: 1.0,
+                    time: ANIMATION_TIME_IN_SEC,
+                    transition: "easeOutExpo",
+                    onComplete: completeOpening
+                });
+            }));
         } else {
             completeOpening();
         }
@@ -659,22 +674,8 @@ const DropDownTerminalExtension = new Lang.Class({
         return Main.layoutManager.panelBox.y > 0;
     },
 
-    _shouldAnimateOpeningWindow: function() {
-        if (!this._openingAnimationEnabled || !Main.wm._shouldAnimate()) {
-            return false;
-        }
-
-        for (let ext in ExtensionUtils.extensions) {
-            if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
-                return false;
-            }
-        }
-
-        return true;
-    },
-
-    _shouldAnimateClosingWindow: function() {
-        if (!this._closingAnimationEnabled || !Main.wm._shouldAnimate()) {
+    _shouldAnimateWindow: function() {
+        if (!this._animationEnabled || !Main.wm._shouldAnimate()) {
             return false;
         }
 
