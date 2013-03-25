@@ -468,23 +468,34 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // animate the opening sequence if applicable
         if (this._shouldAnimateWindow()) {
-             // FIXME: we should reset those on monitors-changed
-             //
-             // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
-             // we initialize the animation in this thread -at actor mapping time- so the window is not yet visible and can be placed out of the screen
-             if (this._hasMonitorAbove()) {
-                 this._windowActor.scale_y = 0.0;
-             } else {
-                 this._windowActor.set_position(this._windowX, -this._windowActor.height);
-             }
+            // FIXME: we should reset those on monitors-changed
+            //
+            // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
+            // we initialize the animation in this thread -at actor mapping time- so the window is not yet visible and can be placed out of the screen
+            //
+            // Update: starting from mutter 3.7.90, there is no animation at all if the actor is not displayed (out of the screen) at map time.
+            //         This might be a side-effect of the new frame synchronization changes. To work around that until I figure out a better fix,
+            //         schedule the whole animation in the next frame (idle_add) and make the actor transparent until the animation starts
+            //         (to avoid the brief window appearance which is the original issue).
+            this._windowActor.opacity = 0;
 
-            Tweener.addTween(this._windowActor, {
-                y: this._windowY,
-                scale_y: 1.0,
-                time: ANIMATION_TIME_IN_SEC,
-                transition: "easeOutExpo",
-                onComplete: completeOpening
-            });
+            Mainloop.idle_add(Lang.bind(this, function() {
+                this._windowActor.opacity = 255;
+
+                if (this._hasMonitorAbove()) {
+                    this._windowActor.scale_y = 0.0;
+                } else {
+                    this._windowActor.set_position(this._windowX, -this._windowActor.height);
+                }
+
+                Tweener.addTween(this._windowActor, {
+                    y: this._windowY,
+                    scale_y: 1.0,
+                    time: ANIMATION_TIME_IN_SEC,
+                    transition: "easeOutExpo",
+                    onComplete: completeOpening
+                });
+            }));
         } else {
             completeOpening();
         }
