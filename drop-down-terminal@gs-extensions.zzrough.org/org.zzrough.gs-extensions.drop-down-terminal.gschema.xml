@@ -42,6 +42,15 @@
       </description>
     </key>
 
+    <key name="transparency-level" type="u">
+      <default>94</default>
+      <summary>The transparency level</summary>
+      <description>
+        The transparency level between 0 (fully transparent) and 100 (fully opaque), which is
+        only used if 'transparent-terminal' is set.
+      </description>
+    </key>
+
     <key name="scrollbar-visible" type="b">
       <default>false</default>
       <summary>Enable the terminal scrollbar</summary>

@@ -52,5 +52,6 @@ v9 (2013-03-25)
 - feature: way faster opening (an invisible animation was delaying the opening animation for 0.25s)
 - feature: proper transparency for the terminal+scrollbar thanks to the new gtk 3.7 opacity handling
 - feature: [Separate opening and closing animation (github #27)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/27)
+- feature: [Customizable transparency level (github #30)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/30)
 - bugfix: [no focus given on ctrl-alt-tab (github #8)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/8)
 - bugfix: [Small gap above terminal (github #15)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/15)
