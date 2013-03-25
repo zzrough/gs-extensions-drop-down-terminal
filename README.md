@@ -20,6 +20,12 @@ On top of the main shortcut to display/hide the terminal, there are additional s
 * Ctrl-Shift-C: copy
 * Ctrl-Shift-V: paste
 
+Additional configuration and tips
+---------------------------------
+
+See the wiki [for more configuration and tips](https://github.com/zzrough/gs-extensions-drop-down-terminal/wiki).
+
+
 Bug reporting
 -------------
 
