@@ -44,9 +44,12 @@ v7 (2012-12-08)
 v8 (2012-12-17)
 - bugfix: [Screen unlock makes terminal appear (github #21)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/21)
 
-v9 (????-??-??)
-- support for 3.7.3 and 3.7.4
+v9 (2013-03-25)
+- support from 3.7.3 up to 3.8
+- workaround for a gtk allocation regression [b.g.o #696187](https://bugzilla.gnome.org/show_bug.cgi?id=696187)
+- workaround for a mutter 3.7.90 change (possibly the frame sync)
 - feature: improve the ctrl-alt-tab look to match the shell high-res symbolic icons
 - feature: way faster opening (an invisible animation was delaying the opening animation for 0.25s)
+- feature: proper transparency for the terminal+scrollbar thanks to the new gtk 3.7 opacity handling
 - bugfix: [no focus given on ctrl-alt-tab (github #8)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/8)
 - bugfix: [Small gap above terminal (github #15)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/15)
