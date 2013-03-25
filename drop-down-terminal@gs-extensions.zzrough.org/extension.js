@@ -411,9 +411,13 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _bindShortcut: function() {
-        if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced resp. in 3.7.2 and 3.7.5
+        if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced in 3.7.5
             Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
                                   Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY,
+                                  Lang.bind(this, this._toggle));
+        else if (Main.wm.addKeybinding && Main.KeybindingMode) // introduced in 3.7.2
+            Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+                                  Main.KeybindingMode.NORMAL | Main.KeybindingMode.MESSAGE_TRAY,
                                   Lang.bind(this, this._toggle));
         else
             global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
