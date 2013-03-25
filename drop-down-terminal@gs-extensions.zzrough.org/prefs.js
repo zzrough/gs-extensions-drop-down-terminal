@@ -29,7 +29,8 @@ const Convenience = Me.imports.convenience;
 
 
 // setting keys
-const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
+const ENABLE_OPENING_ANIMATION_SETTING_KEY = "enable-opening-animation";
+const ENABLE_CLOSING_ANIMATION_SETTING_KEY = "enable-closing-animation";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
 const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
@@ -75,7 +76,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
         } else {
             // gets the interesting builder objects
             let mainTable = builder.get_object("main-table");
-            let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
+            let enableOpeningAnimationCheckButton = builder.get_object("enable-opening-animation-checkbutton");
+            let enableClosingAnimationCheckButton = builder.get_object("enable-closing-animation-checkbutton");
             let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
             let terminalHeightEntry = builder.get_object("terminal-height-entry");
@@ -112,8 +114,11 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._configureOtherShortcutTreeView(this._otherShortcutTreeView);
             this._otherShortcutRowIter = this._otherShortcutListStore.append();
 
-            // binds the animation enablement setting
-            this._settings.bind(ENABLE_ANIMATION_SETTING_KEY, enableAnimationCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
+            // binds the opening animation enablement setting
+            this._settings.bind(ENABLE_OPENING_ANIMATION_SETTING_KEY, enableOpeningAnimationCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
+
+            // binds the closing animation enablement setting
+            this._settings.bind(ENABLE_CLOSING_ANIMATION_SETTING_KEY, enableClosingAnimationCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
 
             // binds the terminal transparency setting
             this._settings.bind(TRANSPARENT_TERMINAL_SETTING_KEY, transparentTerminalCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
