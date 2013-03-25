@@ -395,13 +395,19 @@ const DropDownTerminal = new Lang.Class({
 
         this._terminal.set_background_image(null); // required to update the opacity after realize
 
-        // making the window transparent also makes the font transparent which make it a bit more difficult
-        // to read, but making the terminal transparent prevents the scrollbar from being styled correctly
-        //
-        // we try to do the best we can by using terminal transparency if there is no scrollbar and falling
-        // back to window transparency if there is one
-        this._terminal.set_opacity(((isTransparent && !hasScrollbar) ? 0.94 : 1.0) * 0xffff);
-        this._window.set_opacity((isTransparent && hasScrollbar) ? 0.94 : 1.0);
+        if (this._terminalScrollbar.set_opacity) { // 3.7.10+
+            // starting from 3.7.10, all gtk widgets can have their opacity changed
+            this._terminal.set_opacity((isTransparent ? 0.94 : 1.0) * 0xffff);
+            this._terminalScrollbar.set_opacity(isTransparent ? 0.94 : 1.0);
+        } else {
+            // making the window transparent also makes the font transparent which make it a bit more difficult
+            // to read, but making the terminal transparent prevents the scrollbar from being styled correctly
+            //
+            // we try to do the best we can by using terminal transparency if there is no scrollbar and falling
+            // back to window transparency if there is one
+            this._terminal.set_opacity(((isTransparent && !hasScrollbar) ? 0.94 : 1.0) * 0xffff);
+            this._window.set_opacity((isTransparent && hasScrollbar) ? 0.94 : 1.0);
+        }
 
         this._terminalScrollbar.visible = hasScrollbar;
     },
