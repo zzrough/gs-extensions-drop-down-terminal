@@ -60,7 +60,7 @@ const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 
-const SHELL_VERSION = parseInt(Config.PACKAGE_VERSION.split(".").join(""));
+const SHELL_VERSION = 10 * parseFloat("0." + Config.PACKAGE_VERSION.split(".").join("")).toFixed(10);
 
 // dbus interface
 const DropDownTerminalIface =
@@ -236,7 +236,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._oldFocusManagerAddGroupFunc = focusManager.add_group;
         this._oldFocusManagerRemoveGroupFunc = focusManager.remove_group;
 
-        if (SHELL_VERSION < 373) {
+        if (SHELL_VERSION < 3.73) {
             focusManager.add_group = Lang.bind(this, function(root) {
                 if (root instanceof St.Widget)
                     Lang.bind(focusManager, this._oldFocusManagerAddGroupFunc)(root);
