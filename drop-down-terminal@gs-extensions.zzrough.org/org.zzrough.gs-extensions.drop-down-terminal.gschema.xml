@@ -18,6 +18,22 @@
       </description>
     </key>
 
+    <key name="opening-animation-time" type="u">
+      <default>250</default>
+      <summary>The opening animation time in ms</summary>
+      <description>
+        The opening animation time in milliseconds or zero for no opening animation.
+      </description>
+    </key>
+
+    <key name="closing-animation-time" type="u">
+      <default>250</default>
+      <summary>The closing animation time in ms</summary>
+      <description>
+        The closing animation time in milliseconds or zero for no closing animation.
+      </description>
+    </key>
+
     <key name="transparent-terminal" type="b">
       <default>true</default>
       <summary>Enable the terminal window transparency</summary>

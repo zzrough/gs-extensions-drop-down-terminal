@@ -52,11 +52,12 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
 
 const TERMINAL_WINDOW_ACTOR_NAME = "dropDownTerminalWindow";
 const TERMINAL_WINDOW_WM_CLASS = "DropDownTerminalWindow";
-const ANIMATION_TIME_IN_SEC = 0.25;
 const DEBUG = false;
 
 const FIRST_START_SETTING_KEY = "first-start";
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
+const OPENING_ANIMATION_TIME_SETTING_KEY = "opening-animation-time";
+const CLOSING_ANIMATION_TIME_SETTING_KEY = "closing-animation-time";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 
@@ -189,13 +190,15 @@ const DropDownTerminalExtension = new Lang.Class({
         this._panelAllocationNotificationHandlerId = Main.panel.actor.connect("notify::allocation", Lang.bind(this, this._updateWindowGeometry));
 
         // applies the settings initially
-        this._updateAnimationEnabled();
+        this._updateAnimationProperties();
         this._updateWindowGeometry();
         this._bindShortcut();
 
         // honours setting changes
         this._settingChangedHandlerIds = [
-            this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationEnabled)),
+            this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
+            this._settings.connect("changed::" + OPENING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
+            this._settings.connect("changed::" + CLOSING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
 
             this._settings.connect("changed::" + TERMINAL_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
                 Convenience.throttle(200, this, this._updateWindowGeometry); // throttles 200ms (it's an "heavy weight" setting)
@@ -359,7 +362,7 @@ const DropDownTerminalExtension = new Lang.Class({
             if (this._windowActor !== null) {
                 let targetY = this._hasMonitorAbove() ? this._windowActor.y : -this._windowActor.height;
                 let targetScaleY = this._hasMonitorAbove() ? 0.0 : 1.0;
-                let animationTime = this._shouldAnimateWindow() ? ANIMATION_TIME_IN_SEC : 0;
+                let animationTime = this._shouldAnimateWindow() ? this._closingAnimationTimeMillis / 1000.0 : 0;
 
                 Tweener.addTween(this._windowActor, {
                     y: targetY,
@@ -383,8 +386,10 @@ const DropDownTerminalExtension = new Lang.Class({
         }
     },
 
-    _updateAnimationEnabled: function() {
+    _updateAnimationProperties: function() {
         this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
+        this._openingAnimationTimeMillis = this._settings.get_uint(OPENING_ANIMATION_TIME_SETTING_KEY);
+        this._closingAnimationTimeMillis = this._settings.get_uint(CLOSING_ANIMATION_TIME_SETTING_KEY);
     },
 
     _updateWindowGeometry: function() {
@@ -467,7 +472,7 @@ const DropDownTerminalExtension = new Lang.Class({
         });
 
         // animate the opening sequence if applicable
-        if (this._shouldAnimateWindow()) {
+        if (this._shouldAnimateWindow() && this._openingAnimationTimeMillis > 0) {
             // FIXME: we should reset those on monitors-changed
             //
             // to avoid an animation glitch where we could briefly see the window at its target position before the animation starts,
@@ -491,7 +496,7 @@ const DropDownTerminalExtension = new Lang.Class({
                 Tweener.addTween(this._windowActor, {
                     y: this._windowY,
                     scale_y: 1.0,
-                    time: ANIMATION_TIME_IN_SEC,
+                    time: this._openingAnimationTimeMillis / 1000.0,
                     transition: "easeOutExpo",
                     onComplete: completeOpening
                 });
