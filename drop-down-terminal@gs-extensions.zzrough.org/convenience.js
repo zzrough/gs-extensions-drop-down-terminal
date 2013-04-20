@@ -55,14 +55,15 @@ function getSettings(extensionPath, extensionId) {
  * @interval: the application interval in milliseconds
  * @scope: the execution scope of the function
  * @func: the delegate function to call in the mainloop
+ * @args: the possible args, or null or undefined if no argument should be passed
  */
-function throttle(interval, scope, func) {
+function throttle(interval, scope, func, args) {
     if (func._throttlingId !== undefined) {
         MainLoop.source_remove(func._throttlingId);
     }
 
     func._throttlingId = MainLoop.timeout_add(interval, function() {
-        Lang.bind(scope, func)();
+        func.apply(scope, args);
         delete func._throttlingId;
 
         return false;
