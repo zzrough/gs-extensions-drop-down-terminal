@@ -57,4 +57,5 @@ v9 (2013-03-25)
 - bugfix: [Small gap above terminal (github #15)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/15)
 
 v10 (2013-04-21)
+- bugfix: [Allow a block or underline cursor in the terminal (github #36)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/36)
 - bugfix: [Switch focus faster (github #38)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/38)

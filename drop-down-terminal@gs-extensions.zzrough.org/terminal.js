@@ -291,24 +291,6 @@ const DropDownTerminal = new Lang.Class({
         //
         // terminal.set_colors_rgba(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
 
-        // FIXME: the default (BLOCK) is better but incorrectly shows the terminal being unfocused from time to time
-        //        (still better with the focus enhancements in v2)
-        //
-        // It might be a regression from vte3/gtk3 since we configure/use the terminal+window
-        // the same as guake (gtk2) which always draws the focus correctly.
-        //
-        // The internal "has_focus" flag of the terminal is not correctly updated, because in this
-        // no "focus-[in|out]-event" is emitted.
-        //
-        // Certainly related: when cursor blink mode is on and the mouse is hover on the terminal,
-        // blinking stops!
-        //
-        // Maybe it is https://bugzilla.gnome.org/show_bug.cgi?id=623406#c5
-        //
-        // But it does not seem to impact g-t, so this might be because we hide our own window?
-        // Or maybe this is because I have the global gtk cursor blink to off to save some milliwatts? ;)
-        terminal.set_cursor_shape(Vte.TerminalCursorShape.IBEAM);
-
         return terminal;
     },
 
