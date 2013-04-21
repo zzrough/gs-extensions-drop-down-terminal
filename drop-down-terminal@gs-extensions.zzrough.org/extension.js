@@ -461,11 +461,11 @@ const DropDownTerminalExtension = new Lang.Class({
             }
         });
 
+        // requests the focus asynchronously
+        requestFocusAsync();
+
         // a lambda to complete the opening sequence
         let completeOpening = Lang.bind(this, function() {
-            // requests the focus asynchronously
-            requestFocusAsync();
-
             // registers a ctrl-alt-tab group
             Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
                                             { focusCallback: Lang.bind(this, requestFocusAsync) });
