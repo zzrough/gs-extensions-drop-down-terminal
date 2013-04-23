@@ -189,6 +189,9 @@ const DropDownTerminalExtension = new Lang.Class({
         this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
         this._panelAllocationNotificationHandlerId = Main.panel.actor.connect("notify::allocation", Lang.bind(this, this._updateWindowGeometry));
 
+        // scroll event handling
+        this._panelScrollEventHandlerId = Main.panel.actor.connect("scroll-event", Lang.bind(this, this._handleScroll));
+
         // applies the settings initially
         this._updateAnimationProperties();
         this._updateWindowGeometry();
@@ -329,10 +332,12 @@ const DropDownTerminalExtension = new Lang.Class({
         global.window_manager.disconnect(this._actorMappedHandlerId);
         Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
         Main.panel.actor.disconnect(this._panelAllocationNotificationHandlerId);
+        Main.panel.actor.disconnect(this._panelScrollEventHandlerId);
         this._display.disconnect(this._windowCreatedHandlerId);
         this._actorMappedHandlerId = null;
         this._monitorsChangedHandlerId = null;
         this._panelAllocationNotificationHandlerId = null;
+        this._panelScrollEventHandlerId = null;
         this._windowCreatedHandlerId = null;
         this._windowActor = null;
         this._display = null;
@@ -384,6 +389,19 @@ const DropDownTerminalExtension = new Lang.Class({
                 this._busProxy.ToggleRemote();
             }
         }
+    },
+
+    _handleScroll: function(actor, event) {
+
+        // only proceed if the terminal is hidden/shown and the scroll occurs
+        // downwards/upwards
+        if(this._windowActor === null && event.get_scroll_direction() != Clutter.ScrollDirection.DOWN)
+            return;
+        if(this._windowActor !== null && event.get_scroll_direction() != Clutter.ScrollDirection.UP)
+            return;
+
+        this._toggle();
+
     },
 
     _updateAnimationProperties: function() {
