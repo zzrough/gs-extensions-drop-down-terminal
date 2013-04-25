@@ -88,8 +88,15 @@ function debug(text) { DEBUG && log("[DDT] " + text); }
 
 
 // window border effect class
+//
+// we should use a delegate to avoid the GType crashes (https://bugzilla.gnome.org/show_bug.cgi?id=688973)
+// but we can't since the Clutter.Effect is abstract, so let's add a crappy hack there
+if (window.__DDTInstance === undefined) {
+    window.__DDTInstance = 1;
+}
+
 const GraySouthBorderEffect = new Lang.Class({
-    Name: "GraySouthBorderEffect",
+    Name: "GraySouthBorderEffect-" + window.__DDTInstance++,
     Extends: Clutter.Effect,
 
     _init: function() {
@@ -115,16 +122,15 @@ const GraySouthBorderEffect = new Lang.Class({
 // missing dependencies dialog
 const MissingVteDialog = new Lang.Class({
     Name: "MissingDepsDialog",
-    Extends: ModalDialog.ModalDialog,
 
     _init: function() {
-        this.parent({styleClass: "modal-dialog"});
+        this._delegate = new ModalDialog.ModalDialog({styleClass: "modal-dialog"});
 
-        this.setButtons([{ label:   _("Close"),
-                           action:  Lang.bind(this, this.close),
-                           key:     Clutter.Escape,
-                           default: true
-                        }]);
+        this._delegate.setButtons([{ label:   _("Close"),
+                                     action:  Lang.bind(this._delegate, this._delegate.close),
+                                     key:     Clutter.Escape,
+                                     default: true
+                                   }]);
 
         let errorIcon = new St.Icon({ icon_name: "dialog-error-symbolic",
                                       icon_size: 24,
@@ -151,7 +157,11 @@ const MissingVteDialog = new Lang.Class({
         box.add(new St.Label({ text: '  ' }));
         box.add(messageLabel);
 
-        this.contentLayout.add(box);
+        this._delegate.contentLayout.add(box);
+    },
+
+    open: function() {
+        this._delegate.open();
     }
 });
 
