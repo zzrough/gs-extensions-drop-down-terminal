@@ -233,7 +233,10 @@ const DropDownTerminal = new Lang.Class({
 
             if (width != currentWidth || height != currentHeight) {
                 this._window.resize(width, height);
-                this._window.set_size_request(width, height); // workaround for gtk+ regression from change b495ce5...
+
+                if (Convenience.GTK_VERSION >= 37060 && Convenience.GTK_VERSION <= 38000) {
+                    this._window.set_size_request(width, height); // workaround for a gtk+ regression (b.g.o #696187)
+                }
             }
         }));
     },
@@ -310,8 +313,14 @@ const DropDownTerminal = new Lang.Class({
         window.set_deletable(false);
         window.stick();
         window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU);
-        window.set_default_size(-1, -1); // use a size request as there is a regression on the default size (b.g.o #696187)
-        window.set_size_request(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400); // ditto
+
+        if (Convenience.GTK_VERSION >= 37060 && Convenience.GTK_VERSION <= 38000) {
+-           window.set_default_size(-1, -1); // workaround for a gtk+ regression (b.g.o #696187)
+-           window.set_size_request(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400); // ditto
+        } else {
+            window.set_default_size(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400);
+        }
+
         window.set_visual(screen.get_rgba_visual());
         window.connect("delete-event", function() { window.hide(); return true; });
         window.connect("destroy", Gtk.main_quit);
