@@ -88,6 +88,14 @@
       </description>
     </key>
 
+    <key name="scroll-toggle" type="b">
+      <default>false</default>
+      <summary>Whether to toggle by scrolling on the top bar or not</summary>
+      <description>
+        Whether to show/hide the terminal by scrolling on the top bar or not.
+      </description>
+    </key>
+
     <key name="real-shortcut" type="as">
       <default><![CDATA[['Above_Tab']]]></default>
       <summary>An internal key that must not be changed manually</summary>
