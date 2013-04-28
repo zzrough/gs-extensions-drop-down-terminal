@@ -60,7 +60,7 @@ const PopupUi =
 
 // helper function that simply calls #parse on a new Gdk.RGBA instance
 // to easily create an Gdk.RGBA color
-function parseRgbaColor(spec) { col = new Gdk.RGBA(); col.parse(spec); return col; }
+function parseRgbaColor(spec) { let col = new Gdk.RGBA(); col.parse(spec); return col; }
 
 
 // constants for the location of the extension
@@ -540,7 +540,7 @@ Gtk.init(null, 0);
 Gtk.Settings.get_default()['gtk-application-prefer-dark-theme'] = true;
 
 // creates the terminal
-terminal = new DropDownTerminal();
+let terminal = new DropDownTerminal();
 GLib.set_prgname("drop-down-terminal");
 
 // starts the main loop
