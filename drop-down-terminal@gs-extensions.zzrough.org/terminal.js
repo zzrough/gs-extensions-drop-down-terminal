@@ -317,8 +317,8 @@ const DropDownTerminal = new Lang.Class({
         if (Convenience.GTK_VERSION >= 30801) {
             // nothing, the size must be set explicitely using SetGeometry
         } else if (Convenience.GTK_VERSION >= 30706 && Convenience.GTK_VERSION <= 30800) {
--           window.set_default_size(-1, -1); // workaround for a gtk+ regression (b.g.o #696187)
--           window.set_size_request(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400); // ditto
+            window.set_default_size(-1, -1); // workaround for a gtk+ regression (b.g.o #696187)
+            window.set_size_request(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400); // ditto
         } else {
             window.set_default_size(screen.get_monitor_geometry(screen.get_primary_monitor()).width, 400);
         }
