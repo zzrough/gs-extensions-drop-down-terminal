@@ -234,7 +234,7 @@ const DropDownTerminal = new Lang.Class({
             if (width != currentWidth || height != currentHeight) {
                 this._window.resize(width, height);
 
-                if (Convenience.GTK_VERSION >= 37060 && Convenience.GTK_VERSION <= 38000) {
+                if (Convenience.GTK_VERSION >= 30706 && Convenience.GTK_VERSION <= 30800) {
                     this._window.set_size_request(width, height); // workaround for a gtk+ regression (b.g.o #696187)
                 }
             }
