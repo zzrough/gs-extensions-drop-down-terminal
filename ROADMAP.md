@@ -1,8 +1,9 @@
 v13
 - feature: [customizable transparency level (github #30)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/30)
 - feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
+- feature: customizable font
 - feature: detect active pid and ask before exiting the shell? (or detach it?)
-- feature: use settings from gnome-terminal
+- feature: remove the border when height = 100%
 - code: investigate argb colors not working
 
 v14
