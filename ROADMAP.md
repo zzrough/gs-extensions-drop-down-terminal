@@ -1,4 +1,4 @@
-v13
+v14
 - feature: [customizable transparency level (github #30)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/30)
 - feature: [better height preference UI (github #5)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/5)
 - feature: customizable font
@@ -6,12 +6,12 @@ v13
 - feature: remove the border when height = 100%
 - code: investigate argb colors not working
 
-v14
+v15
 - feature: prompt to kill the possible active pid on logout to avoid loosing something
 - bugfix: [when switching Workspaces DD Terminal flashes in and out (github #4)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/4)
 - code: investigate how to have proper theming of the border (using the generic popup border or at least make it customisable through CSS)
 
-v15
+v16
 - feature (maybe): autohide (asked by step-2, koji3)
 - feature (maybe): multi tabs (13 votes for, 10 votes against)
 - feature (maybe): allow custom width (suggested by Dreamsorcerer)

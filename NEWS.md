@@ -61,11 +61,12 @@ v10 (2013-04-21)
 - bugfix: [Switch focus faster (github #38)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/38)
 
 v11 (2013-04-28)
-- bugfix: [Height change doesn''t work on 3.8.1 (github #41)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/41)
 - bugfix: [Error upgrading extension (github #40)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/40)
 - code: make the gtk allocation regression fix conditional ; the story is not finished yet see b.g.o. #696882
 
 v12 (2013-05-08)
 - bugfix: [Height change doesn''t work on 3.8.1 (github #41)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/41)
 
-v13 (????-??-??)
+v13 (2013-09-25)
+- support up to 3.10
+- disable use of very recently deprecated methods in Vte as the methods are not visible from GJS

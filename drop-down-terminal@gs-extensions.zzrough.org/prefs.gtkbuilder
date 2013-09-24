@@ -76,7 +76,6 @@
                 <child>
                   <object class="GtkRadioButton" id="other-shortcut-radiobutton">
                     <property name="label" translatable="yes">Other</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -138,7 +137,6 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                     <child>
                       <object class="GtkRadioButton" id="default-shortcut-radiobutton">
                         <property name="label" translatable="yes">Default</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
@@ -215,7 +213,6 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                 <child>
                   <object class="GtkCheckButton" id="run-custom-command-checkbutton">
                     <property name="label" translatable="yes">Run a custom command instead of my shell</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -315,14 +312,13 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
               <object class="GtkTable" id="table3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="n_rows">5</property>
+                <property name="n_rows">6</property>
                 <property name="n_columns">4</property>
                 <property name="column_spacing">6</property>
                 <property name="row_spacing">6</property>
                 <child>
                   <object class="GtkCheckButton" id="enable-animation-checkbutton">
                     <property name="label" translatable="yes">Animation</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -330,23 +326,6 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                   </object>
                   <packing>
                     <property name="right_attach">4</property>
-                    <property name="y_options"/>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="transparent-terminal-checkbutton">
-                    <property name="label" translatable="yes">Transparency</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="active">True</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="right_attach">4</property>
-                    <property name="top_attach">1</property>
-                    <property name="bottom_attach">2</property>
                     <property name="y_options"/>
                   </packing>
                 </child>
@@ -359,8 +338,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                     <property name="label" translatable="yes">Height</property>
                   </object>
                   <packing>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
                     <property name="x_options">GTK_FILL</property>
                     <property name="y_options"/>
                   </packing>
@@ -380,15 +359,14 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">2</property>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
                     <property name="x_options">GTK_FILL</property>
                     <property name="y_options"/>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkButton" id="terminal-height-reset-button">
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -404,8 +382,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                   <packing>
                     <property name="left_attach">2</property>
                     <property name="right_attach">3</property>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
                     <property name="x_options"/>
                     <property name="y_options"/>
                   </packing>
@@ -418,8 +396,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                   <packing>
                     <property name="left_attach">3</property>
                     <property name="right_attach">4</property>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
                     <property name="y_options"/>
                   </packing>
                 </child>
@@ -429,8 +407,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                     <property name="can_focus">False</property>
                   </object>
                   <packing>
-                    <property name="top_attach">4</property>
-                    <property name="bottom_attach">5</property>
+                    <property name="top_attach">5</property>
+                    <property name="bottom_attach">6</property>
                     <property name="x_options"/>
                     <property name="y_options"/>
                   </packing>
@@ -446,8 +424,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">4</property>
-                    <property name="top_attach">4</property>
-                    <property name="bottom_attach">5</property>
+                    <property name="top_attach">5</property>
+                    <property name="bottom_attach">6</property>
                     <property name="x_options">GTK_FILL</property>
                     <property name="y_options"/>
                   </packing>
@@ -455,7 +433,6 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                 <child>
                   <object class="GtkCheckButton" id="scrollbar-visible-checkbutton">
                     <property name="label" translatable="yes">Scrollbar</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -463,8 +440,67 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                   </object>
                   <packing>
                     <property name="right_attach">4</property>
+                    <property name="top_attach">3</property>
+                    <property name="bottom_attach">4</property>
+                    <property name="y_options"/>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
+                  <packing>
                     <property name="top_attach">2</property>
                     <property name="bottom_attach">3</property>
+                    <property name="x_options"/>
+                    <property name="y_options"/>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label13">
+                    <property name="width_request">520</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">&lt;small&gt;Transparency support is temporary unavailable because of &lt;a href="https://git.gnome.org/browse/vte/commit/?h=vte-0-34&amp;amp;id=2da7058c57fd27bb8a8955b50a7a5b2ae8e6d50f"&gt;a very late change of vte&lt;/a&gt; (0.34.8) that makes the extension crash. This will be restored as soon as possible.&lt;/small&gt;</property>
+                    <property name="use_markup">True</property>
+                    <property name="wrap">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">4</property>
+                    <property name="top_attach">2</property>
+                    <property name="bottom_attach">3</property>
+                    <property name="x_options">GTK_FILL</property>
+                    <property name="y_options"/>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHBox" id="hbox1">
+                    <property name="visible">True</property>
+                    <property name="sensitive">False</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkCheckButton" id="transparent-terminal-checkbutton">
+                        <property name="label" translatable="yes">Transparency</property>
+                        <property name="visible">True</property>
+                        <property name="sensitive">False</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="right_attach">4</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
                     <property name="y_options"/>
                   </packing>
                 </child>
