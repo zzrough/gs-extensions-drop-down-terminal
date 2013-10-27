@@ -65,22 +65,24 @@ const SHELL_VERSION = 10 * parseFloat("0." + Config.PACKAGE_VERSION.split(".").j
 
 // dbus interface
 const DropDownTerminalIface =
-    <interface name="org.zzrough.GsExtensions.DropDownTerminal">
-        <property name="Pid" type="i" access="read"/>
-        <method name="SetGeometry">
-		    <arg name="x" type="i" direction="in"/>
-		    <arg name="y" type="i" direction="in"/>
-		    <arg name="width" type="i" direction="in"/>
-		    <arg name="height" type="i" direction="in"/>
-    	</method>
-        <method name="Toggle"/>
-        <method name="Focus"/>
-        <method name="Quit"/>
-        <signal name="Failure">
-            <arg type="s" name="name"/>
-            <arg type="s" name="cause"/>
-        </signal>
-    </interface>;
+    '<node>                                                       \
+     <interface name="org.zzrough.GsExtensions.DropDownTerminal"> \
+        <property name="Pid" type="i" access="read"/>             \
+        <method name="SetGeometry">                               \
+            <arg name="x" type="i" direction="in"/>               \
+            <arg name="y" type="i" direction="in"/>               \
+            <arg name="width" type="i" direction="in"/>           \
+            <arg name="height" type="i" direction="in"/>          \
+        </method>                                                 \
+        <method name="Toggle"/>                                   \
+        <method name="Focus"/>                                    \
+        <method name="Quit"/>                                     \
+        <signal name="Failure">                                   \
+            <arg type="s" name="name"/>                           \
+            <arg type="s" name="cause"/>                          \
+        </signal>                                                 \
+     </interface>                                                 \
+     </node>';
 
 
 // helper to only log in debug mode
