@@ -64,23 +64,24 @@ const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 const SHELL_VERSION = 10 * parseFloat("0." + Config.PACKAGE_VERSION.split(".").join("")).toFixed(10);
 
 // dbus interface
-const DropDownTerminalIface =
-    <interface name="org.zzrough.GsExtensions.DropDownTerminal">
-        <property name="Pid" type="i" access="read"/>
-        <method name="SetGeometry">
-		    <arg name="x" type="i" direction="in"/>
-		    <arg name="y" type="i" direction="in"/>
-		    <arg name="width" type="i" direction="in"/>
-		    <arg name="height" type="i" direction="in"/>
-    	</method>
-        <method name="Toggle"/>
-        <method name="Focus"/>
-        <method name="Quit"/>
-        <signal name="Failure">
-            <arg type="s" name="name"/>
-            <arg type="s" name="cause"/>
-        </signal>
-    </interface>;
+const DropDownTerminalIface ='<node>\
+        <interface name="org.zzrough.GsExtensions.DropDownTerminal">\
+            <property name="Pid" type="i" access="read"/>\
+            <method name="SetGeometry">\
+    		    <arg name="x" type="i" direction="in"/>\
+    		    <arg name="y" type="i" direction="in"/>\
+    		    <arg name="width" type="i" direction="in"/>\
+    		    <arg name="height" type="i" direction="in"/>\
+        	</method>\
+            <method name="Toggle"/>\
+            <method name="Focus"/>\
+            <method name="Quit"/>\
+            <signal name="Failure">\
+                <arg type="s" name="name"/>\
+                <arg type="s" name="cause"/>\
+            </signal>\
+        </interface>\
+    </node>';
 
 
 // helper to only log in debug mode
@@ -184,7 +185,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._windowActor = null;
         this._firstDisplay = true;
 
-        // initializes if we should toggle on bus name appearance 
+        // initializes if we should toggle on bus name appearance
         this._toggleOnBusNameAppearance = false;
 
         // check dependencies
@@ -637,7 +638,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // forgets about the child pid too, it will be find out again at the next toggle if the bus is
         // activated meanwhile
-        this._childPid = null; 
+        this._childPid = null;
     },
 
     _setWindowActor: function(actor) {
@@ -653,7 +654,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _computeWindowHeight: function(heightSpec) {
-        // updates the height from the height spec, so it's picked 
+        // updates the height from the height spec, so it's picked
         let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
 
         if (match === null) {
@@ -737,9 +738,9 @@ const DropDownTerminalExtension = new Lang.Class({
         try {
             imports.gi.Vte;
         } catch (e) {
-            // creates and opens the dialog after 1 second 
+            // creates and opens the dialog after 1 second
             Mainloop.timeout_add_seconds(1, function() {
-                new MissingVteDialog().open();            
+                new MissingVteDialog().open();
                 return false;
             });
 
