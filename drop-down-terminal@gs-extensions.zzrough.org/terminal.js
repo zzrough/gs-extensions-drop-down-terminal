@@ -408,6 +408,11 @@ const DropDownTerminal = new Lang.Class({
                 this._terminal.set_opacity((isTransparent ? transparencyLevel : 1.0) * 0xffff);
             } else {
                 this._terminal.opacity = transparencyLevel;
+
+                // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
+                this._window.opacity = 0.999;
+                this._terminal.backgroundTransparent = true;
+                this._terminal.backgroundOpacity = transparencyLevel;
             }
 
             this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
