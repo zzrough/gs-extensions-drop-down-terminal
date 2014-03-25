@@ -70,3 +70,8 @@ v12 (2013-05-08)
 v13 (2013-09-25)
 - support up to 3.10
 - disable use of very recently deprecated methods in Vte as the methods are not visible from GJS
+
+v14 (2014-03-26)
+- support up to 3.12
+- fix terminal jumping to secondary monitor (thanks to Martin Pöhlmann!)
+- tentative fix for transparency loss with utter failure
