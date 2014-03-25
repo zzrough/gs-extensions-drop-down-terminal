@@ -398,6 +398,9 @@ const DropDownTerminal = new Lang.Class({
         let transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
         let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
 
+        isTransparent = false;
+        transparencyLevel = 1.0;
+
         if (this._terminal.set_background_image) { // remove in 0.34.8
             this._terminal.set_background_image(null); // required to update the opacity after realize
         }
@@ -407,12 +410,14 @@ const DropDownTerminal = new Lang.Class({
             if (this._terminal.set_background_image) { // remove in 0.34.8
                 this._terminal.set_opacity((isTransparent ? transparencyLevel : 1.0) * 0xffff);
             } else {
-                this._terminal.opacity = transparencyLevel;
-
                 // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
-                this._window.opacity = 0.999;
-                this._terminal.backgroundTransparent = true;
+                this._window.opacity = isTransparent ? 0.999 : 1.0;
+
+                this._terminal.opacity = isTransparent ? transparencyLevel : 1.0;
+
+                // FIXME: not updating after setting change from (transparent to non-transparent)
                 this._terminal.backgroundOpacity = transparencyLevel;
+                this._terminal.backgroundTransparent = isTransparent;
             }
 
             this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
