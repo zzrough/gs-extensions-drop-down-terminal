@@ -366,7 +366,9 @@ const DropDownTerminalExtension = new Lang.Class({
             this._toggleOnBusNameAppearance = true;
             this._forkChild();
         }
-        
+
+	// FIXME: pull request #69, we should really not have to do that as we already monitor
+	//        the "monitors-changed" signal
         this._updateWindowGeometry();
 
         // the bus proxy might not be ready, in this case we will be called later once the bus name appears
