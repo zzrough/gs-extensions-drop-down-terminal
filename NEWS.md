@@ -75,3 +75,6 @@ v14 (2014-03-26)
 - support up to 3.12
 - fix terminal jumping to secondary monitor (thanks to Martin Pöhlmann!)
 - tentative fix for transparency loss with utter failure
+
+v15 (2014-09-23)
+- support up to 3.14
