@@ -14,9 +14,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
-
 const Lang = imports.lang;
 
+const Pango = imports.gi.Pango;
 const Gdk = imports.gi.Gdk;
 const GdkX11 = imports.gi.GdkX11;
 const Gio = imports.gi.Gio;
@@ -166,7 +166,7 @@ const DropDownTerminal = new Lang.Class({
 
         // gets the settings
         this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
-        this._interfaceSettings = new Gio.Settings({schema: "org.gnome.desktop.interface"});
+        this._interfaceSettings = new Gio.Settings({schema_id: "org.gnome.desktop.interface"});
 
         // applies the settings initially
         this._updateFont();
@@ -280,16 +280,23 @@ const DropDownTerminal = new Lang.Class({
         terminal.set_can_focus(true);
 
         if (terminal.set_background_transparent) { // removed in 0.34.8
-                terminal.set_background_transparent(false);
+            terminal.set_background_transparent(false);
         }
 
         terminal.set_allow_bold(true);
         terminal.set_scroll_on_output(true);
         terminal.set_scroll_on_keystroke(true);
         terminal.set_scrollback_lines(8096);
-        terminal.set_backspace_binding(Vte.TerminalEraseBinding.ASCII_DELETE);
-        terminal.set_delete_binding(Vte.TerminalEraseBinding.DELETE_SEQUENCE);
-        terminal.set_word_chars("-A-Za-z0-9_$.+!*(),;:@&=?/~#%");
+
+        if (Vte.TerminalEraseBinding) {
+            terminal.set_backspace_binding(Vte.TerminalEraseBinding.ASCII_DELETE);
+            terminal.set_delete_binding(Vte.TerminalEraseBinding.DELETE_SEQUENCE);
+        }
+
+        if (terminal.set_word_chars) {
+            terminal.set_word_chars("-A-Za-z0-9_$.+!*(),;:@&=?/~#%");
+        }
+
         terminal.set_encoding("UTF-8");
         terminal.connect("eof", Lang.bind(this, this._forkUserShell));
         terminal.connect("child-exited", Lang.bind(this, this._forkUserShell));
@@ -298,7 +305,7 @@ const DropDownTerminal = new Lang.Class({
 
         // FIXME: we get weird colors when we apply tango colors
         //
-        // terminal.set_colors_rgba(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
+        // terminal.set_colors(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
 
         return terminal;
     },
@@ -363,10 +370,18 @@ const DropDownTerminal = new Lang.Class({
         let success, pid;
 
         try {
-            [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
-                                                              GLib.SpawnFlags.SEARCH_PATH, null);
+            if (this._terminal.spawn_sync) { // 0.37.0
+                [success, pid] = this._terminal.spawn_sync(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
+                                                           GLib.SpawnFlags.SEARCH_PATH, null, null);
+            } else {
+                [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
+                                                                  GLib.SpawnFlags.SEARCH_PATH, null);
+            }
+
             this._lastForkFailed = false;
         } catch (e) {
+            logError(e);
+
             this._lastForkFailed = true;
 
             let cause = e.name + " - " + e.message;
@@ -381,7 +396,11 @@ const DropDownTerminal = new Lang.Class({
             }
         }
 
-        this._terminal.get_pty_object().set_term("xterm");
+        if (this._terminal.get_pty) { // 0.37.0
+            // (nothing, the default is the user choice at build-time, which defaults to xterm anyway)
+        } else {
+            this._terminal.get_pty_object().set_term("xterm");
+        }
     },
 
     _refreshWindow: function() {
@@ -390,7 +409,10 @@ const DropDownTerminal = new Lang.Class({
     },
 
     _updateFont: function() {
-        this._terminal.set_font_from_string(this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY));
+        let fontDescStr = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
+        let fontDesc = Pango.FontDescription.from_string(fontDescStr);
+
+        this._terminal.set_font(fontDesc);
     },
 
     _updateOpacityAndScrollbar: function() {
@@ -535,6 +557,7 @@ const DropDownTerminal = new Lang.Class({
         delete env["GNOME_DESKTOP_ICON"];
 
         env["COLORTERM"] = "drop-down-terminal";
+        env["TERM"] = "xterm";
 
         // gets an array of key=value pairs
         let envArray = [];
