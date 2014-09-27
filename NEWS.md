@@ -78,3 +78,6 @@ v14 (2014-03-26)
 
 v15 (2014-09-23)
 - support up to 3.14
+
+v16 (2014-09-27)
+- enabled back transparency as certain distributions support it again (mainly Fedora)

@@ -463,7 +463,7 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">&lt;small&gt;Transparency support is temporary unavailable because of &lt;a href="https://git.gnome.org/browse/vte/commit/?h=vte-0-34&amp;amp;id=2da7058c57fd27bb8a8955b50a7a5b2ae8e6d50f"&gt;a very late change of vte&lt;/a&gt; (0.34.8) that makes the extension crash. This will be restored as soon as possible.&lt;/small&gt;</property>
+                    <property name="label" translatable="yes">&lt;small&gt;Transparency support is only included on certain distributions like Fedora as the support has been removed on the upstream VTE project.&lt;/small&gt;</property>
                     <property name="use_markup">True</property>
                     <property name="wrap">True</property>
                   </object>
@@ -479,13 +479,13 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                 <child>
                   <object class="GtkHBox" id="hbox1">
                     <property name="visible">True</property>
-                    <property name="sensitive">False</property>
+                    <property name="sensitive">True</property>
                     <property name="can_focus">False</property>
                     <child>
                       <object class="GtkCheckButton" id="transparent-terminal-checkbutton">
                         <property name="label" translatable="yes">Transparency</property>
                         <property name="visible">True</property>
-                        <property name="sensitive">False</property>
+                        <property name="sensitive">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
                         <property name="draw_indicator">True</property>
