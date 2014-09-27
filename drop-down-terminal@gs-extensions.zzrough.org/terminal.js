@@ -420,9 +420,6 @@ const DropDownTerminal = new Lang.Class({
         let transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
         let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
 
-        isTransparent = false;
-        transparencyLevel = 1.0;
-
         if (this._terminal.set_background_image) { // remove in 0.34.8
             this._terminal.set_background_image(null); // required to update the opacity after realize
         }
