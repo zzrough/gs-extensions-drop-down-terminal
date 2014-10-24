@@ -76,6 +76,8 @@ const FONT_NAME_SETTING_KEY = "monospace-font-name";
 const TRANSPARENCY_LEVEL_SETTING_KEY = "transparency-level";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
 const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
+const COLOR_FOREGROUND_SETTING_KEY = "foreground-color";
+const COLOR_BACKGROUND_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
@@ -187,6 +189,14 @@ const DropDownTerminal = new Lang.Class({
         }));
 
         this._settings.connect("changed::" + TRANSPARENT_TERMINAL_SETTING_KEY, Lang.bind(this, function() {
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+        }));
+
+        this._settings.connect("changed::" + COLOR_FOREGROUND_SETTING_KEY, Lang.bind(this, function() {
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+        }));
+
+        this._settings.connect("changed::" + COLOR_BACKGROUND_SETTING_KEY, Lang.bind(this, function() {
             Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
         }));
 
@@ -419,10 +429,15 @@ const DropDownTerminal = new Lang.Class({
         let isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
         let transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
         let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
+        let fgColor = this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY);
+        let bgColor = this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY);
 
         if (this._terminal.set_background_image) { // remove in 0.34.8
             this._terminal.set_background_image(null); // required to update the opacity after realize
         }
+
+        this._terminal.set_color_foreground_rgba(parseRgbaColor(fgColor));
+        this._terminal.set_color_background_rgba(parseRgbaColor(bgColor));
 
         if (this._terminalScrollbar.set_opacity) { // 3.7.10+
             // starting from 3.7.10, all gtk widgets can have their opacity changed
