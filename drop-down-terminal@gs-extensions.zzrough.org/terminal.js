@@ -436,8 +436,8 @@ const DropDownTerminal = new Lang.Class({
             this._terminal.set_background_image(null); // required to update the opacity after realize
         }
 
-        this._terminal.set_color_foreground_rgba(parseRgbaColor(fgColor));
-        this._terminal.set_color_background_rgba(parseRgbaColor(bgColor));
+        this._terminal.set_color_foreground(parseRgbaColor(fgColor));
+        this._terminal.set_color_background(parseRgbaColor(bgColor));
 
         if (this._terminalScrollbar.set_opacity) { // 3.7.10+
             // starting from 3.7.10, all gtk widgets can have their opacity changed
