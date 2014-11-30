@@ -126,12 +126,12 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             terminalHeightResetButton.connect("clicked", Lang.bind(this, function() { this._settings.reset(TERMINAL_HEIGHT_SETTING_KEY); }));
 
             // binds the custom shortcut setting
-            this._otherShortcutSettingChanged();
             this._settings.connect("changed::" + OTHER_SHORTCUT_SETTING_KEY, Lang.bind(this, this._otherShortcutSettingChanged));
+            this._otherShortcutSettingChanged();
 
             // binds the shortcut type (too bad bind_with_mapping is not introspectable)
-            this._shortcutTypeSettingChanged();
             this._settings.connect("changed::" + SHORTCUT_TYPE_SETTING_KEY, Lang.bind(this, this._shortcutTypeSettingChanged));
+            this._shortcutTypeSettingChanged();
 
             this._otherShortcutRadioButton.connect("notify::active", Lang.bind(this, function() {
                 this._settings.set_string(SHORTCUT_TYPE_SETTING_KEY, this._otherShortcutRadioButton["active"] ? "other" : "default");
@@ -142,11 +142,11 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._settings.bind(RUN_CUSTOM_COMMAND_SETTING_KEY, this._runCustomCommandCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
             this._settings.bind(CUSTOM_COMMAND_SETTING_KEY, this._customCommandEntry, "text", Gio.SettingsBindFlags.DEFAULT);
 
-            this._runCustomCommandCheckButtonToggled();
-            this._checkCustomCommandEntry();
-
             this._runCustomCommandCheckButton.connect("notify::active", Lang.bind(this, this._runCustomCommandCheckButtonToggled));
             this._customCommandEntry.connect("changed", Lang.bind(this, this._checkCustomCommandEntry));
+
+            this._runCustomCommandCheckButtonToggled();
+            this._checkCustomCommandEntry();
         }
     },
 

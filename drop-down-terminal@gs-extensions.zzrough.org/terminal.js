@@ -168,11 +168,6 @@ const DropDownTerminal = new Lang.Class({
         this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
         this._interfaceSettings = new Gio.Settings({schema_id: "org.gnome.desktop.interface"});
 
-        // applies the settings initially
-        this._updateFont();
-        this._updateOpacityAndScrollbar();
-        this._updateCustomCommand();
-
         // connect to the settings changes
         this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
             Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, this._updateFont)));
@@ -192,6 +187,11 @@ const DropDownTerminal = new Lang.Class({
 
         this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
         this._settings.connect("changed::" + CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
+
+        // applies the settings initially
+        this._updateFont();
+        this._updateOpacityAndScrollbar();
+        this._updateCustomCommand();
 
         // adds the uri matchers
         this._uriHandlingPropertiesbyTag = {};

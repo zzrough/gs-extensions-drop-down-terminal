@@ -201,11 +201,6 @@ const DropDownTerminalExtension = new Lang.Class({
         this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
         this._panelAllocationNotificationHandlerId = Main.panel.actor.connect("notify::allocation", Lang.bind(this, this._updateWindowGeometry));
 
-        // applies the settings initially
-        this._updateAnimationProperties();
-        this._updateWindowGeometry();
-        this._bindShortcut();
-
         // honours setting changes
         this._settingChangedHandlerIds = [
             this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
@@ -221,6 +216,11 @@ const DropDownTerminalExtension = new Lang.Class({
                 this._bindShortcut();
             }))
         ];
+
+        // applies the settings initially
+        this._updateAnimationProperties();
+        this._updateWindowGeometry();
+        this._bindShortcut();
 
         // registers the bus name watch
         this._busWatchId = Gio.DBus.session.watch_name("org.zzrough.GsExtensions.DropDownTerminal",
