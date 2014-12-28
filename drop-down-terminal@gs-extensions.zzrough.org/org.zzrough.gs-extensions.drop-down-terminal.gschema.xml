@@ -88,11 +88,11 @@
       </description>
     </key>
 
-    <key name="scroll-toggle" type="b">
+    <key name="enable-toggle-on-scroll" type="b">
       <default>false</default>
-      <summary>Whether to toggle by scrolling on the top bar or not</summary>
+      <summary>Enable toggling by scrolling the top bar</summary>
       <description>
-        Whether to show/hide the terminal by scrolling on the top bar or not.
+        Whether to enable toggling by scrolling on the top bar of the primary screen.
       </description>
     </key>
 

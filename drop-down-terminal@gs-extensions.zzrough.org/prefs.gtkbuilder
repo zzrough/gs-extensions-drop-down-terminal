@@ -167,8 +167,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                   <placeholder/>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="scroll-toggle-checkbutton">
-                    <property name="label" translatable="yes">Scroll to toggle</property>
+                  <object class="GtkCheckButton" id="enable-toggle-on-scroll-checkbutton">
+                    <property name="label" translatable="yes">Toggle on scroll</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>

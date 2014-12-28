@@ -60,7 +60,7 @@ const OPENING_ANIMATION_TIME_SETTING_KEY = "opening-animation-time";
 const CLOSING_ANIMATION_TIME_SETTING_KEY = "closing-animation-time";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
-const SCROLL_TOGGLE_SETTING_KEY = "scroll-toggle";
+const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = "enable-toggle-on-scroll";
 
 const SHELL_VERSION = 10 * parseFloat("0." + Config.PACKAGE_VERSION.split(".").join("")).toFixed(10);
 
@@ -189,13 +189,11 @@ const DropDownTerminalExtension = new Lang.Class({
         // geometry update on monitor configuration change or panel size change
         this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
         this._panelAllocationNotificationHandlerId = Main.panel.actor.connect("notify::allocation", Lang.bind(this, this._updateWindowGeometry));
-
-        // scroll event handling
-        if(this._settings.get_boolean(SCROLL_TOGGLE_SETTING_KEY))
-            this._panelScrollEventHandlerId = Main.panel.actor.connect("scroll-event", Lang.bind(this, this._handleScroll));
+        this._panelScrollEventHandlerId = Main.panel.actor.connect("scroll-event", Lang.bind(this, this._panelScrolled));
 
         // applies the settings initially
         this._updateAnimationProperties();
+        this._updateToggleOnScroll();
         this._updateWindowGeometry();
         this._bindShortcut();
 
@@ -204,6 +202,7 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
             this._settings.connect("changed::" + OPENING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
             this._settings.connect("changed::" + CLOSING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
+            this._settings.connect("changed::" + ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, Lang.bind(this, this._updateToggleOnScroll)),
 
             this._settings.connect("changed::" + TERMINAL_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
                 Convenience.throttle(200, this, this._updateWindowGeometry); // throttles 200ms (it's an "heavy weight" setting)
@@ -212,16 +211,6 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
                 this._unbindShortcut();
                 this._bindShortcut();
-            })),
-
-            // enable or disable revealing the terminal by scrolling on the top bar
-            this._settings.connect("changed::" + SCROLL_TOGGLE_SETTING_KEY, Lang.bind(this, function() {
-                if(this._settings.get_boolean(SCROLL_TOGGLE_SETTING_KEY))
-                    this._panelScrollEventHandlerId = Main.panel.actor.connect("scroll-event", Lang.bind(this, this._handleScroll));
-                else {
-                    Main.panel.actor.disconnect(this._panelScrollEventHandlerId);
-                    this._panelScrollEventHandlerId = null;
-                }
             }))
         ];
 
@@ -344,6 +333,7 @@ const DropDownTerminalExtension = new Lang.Class({
         global.window_manager.disconnect(this._actorMappedHandlerId);
         Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
         Main.panel.actor.disconnect(this._panelAllocationNotificationHandlerId);
+        Main.panel.actor.disconnect(this._panelScrollEventHandlerId);
         this._display.disconnect(this._windowCreatedHandlerId);
         this._actorMappedHandlerId = null;
         this._monitorsChangedHandlerId = null;
@@ -352,12 +342,6 @@ const DropDownTerminalExtension = new Lang.Class({
         this._windowCreatedHandlerId = null;
         this._windowActor = null;
         this._display = null;
-
-        // remove scroll handler from top bar if present
-        if(this._panelScrollEventHandlerId !== null) {
-            Main.panel.actor.disconnect(this._panelScrollEventHandlerId);
-            this._panelScrollEventHandlerId = null;
-        }
     },
 
     _toggle: function() {
@@ -408,23 +392,33 @@ const DropDownTerminalExtension = new Lang.Class({
         }
     },
 
-    _handleScroll: function(actor, event) {
+    _panelScrolled: function(actor, event) {
+        // checks if toggle on scroll is enabled
+        if (!this._toggleOnScrollEnabled) {
+            return;
+        }
 
         // only proceed if the terminal is hidden/shown and the scroll occurs
         // downwards/upwards
-        if(this._windowActor === null && event.get_scroll_direction() != Clutter.ScrollDirection.DOWN)
+        if (this._windowActor === null && event.get_scroll_direction() != Clutter.ScrollDirection.DOWN) {
             return;
-        if(this._windowActor !== null && event.get_scroll_direction() != Clutter.ScrollDirection.UP)
+        }
+
+        if (this._windowActor !== null && event.get_scroll_direction() != Clutter.ScrollDirection.UP) {
             return;
+        }
 
         this._toggle();
-
     },
 
     _updateAnimationProperties: function() {
         this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY);
         this._openingAnimationTimeMillis = this._settings.get_uint(OPENING_ANIMATION_TIME_SETTING_KEY);
         this._closingAnimationTimeMillis = this._settings.get_uint(CLOSING_ANIMATION_TIME_SETTING_KEY);
+    },
+
+    _updateToggleOnScroll: function() {
+        this._toggleOnScrollEnabled = this._settings.get_boolean(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY);
     },
 
     _updateWindowGeometry: function() {
