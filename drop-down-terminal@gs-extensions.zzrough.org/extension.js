@@ -251,18 +251,6 @@ const DropDownTerminalExtension = new Lang.Class({
         this._oldFocusManagerAddGroupFunc = focusManager.add_group;
         this._oldFocusManagerRemoveGroupFunc = focusManager.remove_group;
 
-        if (SHELL_VERSION < 3.73) {
-            focusManager.add_group = Lang.bind(this, function(root) {
-                if (root instanceof St.Widget)
-                    Lang.bind(focusManager, this._oldFocusManagerAddGroupFunc)(root);
-            });
-
-            focusManager.remove_group = Lang.bind(this, function(root) {
-                if (root instanceof St.Widget)
-                    Lang.bind(focusManager, this._oldFocusManagerRemoveGroupFunc)(root);
-            });
-        }
-
         // finds our window out if we come back from the locking screen for instance
         let windowActors = global.get_window_actors();
 

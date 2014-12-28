@@ -106,10 +106,6 @@ function gdkRunner(func) {
  * @return the pid
  */
 function getPid() {
-    if (GLIB_VERSION >= 23540) { // only available in GLib 2.35.4+
-        return new Gio.Credentials().get_unix_pid();
-    } else {
-        return imports.system.getpid();
-    }
+    return new Gio.Credentials().get_unix_pid();
 }
 
