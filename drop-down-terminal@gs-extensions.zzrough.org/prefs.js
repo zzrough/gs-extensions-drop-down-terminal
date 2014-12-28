@@ -36,6 +36,7 @@ const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
 const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
+const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = "enable-toggle-on-scroll";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
@@ -81,6 +82,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let terminalHeightEntry = builder.get_object("terminal-height-entry");
             let terminalHeightResetButton = builder.get_object("terminal-height-reset-button");
             let defaultShortcutRadioButton = builder.get_object("default-shortcut-radiobutton");
+            let enableToggleOnScrollCheckButton = builder.get_object("enable-toggle-on-scroll-checkbutton");
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
             this._otherShortcutTreeView = builder.get_object("other-shortcut-treeview");
             this._otherShortcutListStore = builder.get_object("other-shortcut-liststore");
@@ -137,6 +139,9 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
                 this._settings.set_string(SHORTCUT_TYPE_SETTING_KEY, this._otherShortcutRadioButton["active"] ? "other" : "default");
                 this._shortcutTypeSettingChanged();
             }));
+
+            // binds the toggle on scroll setting
+            this._settings.bind(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, enableToggleOnScrollCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
 
             // binds the custom command settings
             this._settings.bind(RUN_CUSTOM_COMMAND_SETTING_KEY, this._runCustomCommandCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);

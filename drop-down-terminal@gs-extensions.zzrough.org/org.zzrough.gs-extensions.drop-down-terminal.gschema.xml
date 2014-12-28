@@ -88,6 +88,14 @@
       </description>
     </key>
 
+    <key name="enable-toggle-on-scroll" type="b">
+      <default>false</default>
+      <summary>Enable toggling by scrolling the top bar</summary>
+      <description>
+        Whether to enable toggling by scrolling on the top bar of the primary screen.
+      </description>
+    </key>
+
     <key name="real-shortcut" type="as">
       <default><![CDATA[['Above_Tab']]]></default>
       <summary>An internal key that must not be changed manually</summary>
