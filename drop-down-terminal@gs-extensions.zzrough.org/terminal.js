@@ -176,23 +176,23 @@ const DropDownTerminal = new Lang.Class({
         }));
 
         this._settings.connect("changed::" + SCROLLBAR_VISIBLE_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
         }));
 
         this._settings.connect("changed::" + TRANSPARENCY_LEVEL_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
         }));
 
         this._settings.connect("changed::" + TRANSPARENT_TERMINAL_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
         }));
 
         this._settings.connect("changed::" + COLOR_FOREGROUND_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
         }));
 
         this._settings.connect("changed::" + COLOR_BACKGROUND_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndScrollbar));
+            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
         }));
 
         this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
@@ -200,7 +200,7 @@ const DropDownTerminal = new Lang.Class({
 
         // applies the settings initially
         this._updateFont();
-        this._updateOpacityAndScrollbar();
+        this._updateOpacityAndColors();
         this._updateCustomCommand();
 
         // adds the uri matchers
@@ -406,16 +406,30 @@ const DropDownTerminal = new Lang.Class({
         this._terminal.set_font(fontDesc);
     },
 
-    _updateOpacityAndScrollbar: function() {
+    _updateOpacityAndColors: function() {
         let isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
         let transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
         let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
 
-        let fgColor = this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY);
-        let bgColor = this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY);
+        // updates the colors
+        //
+        // Note: to follow the deprecation scheme, we try first the _rgba variants as vte < 0.38
+        //       already has the non-rgba-suffixed one but it was working with GdkColor back then,
+        //       and passing a GdkRGBA would raise an exception
+        let fgColor = parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
+        let bgColor = parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
 
-        this._terminal.set_color_foreground(parseRgbaColor(fgColor));
-        this._terminal.set_color_background(parseRgbaColor(bgColor));
+        if (this._terminal.set_color_foreground_rgba) { // removed in vte 0.38
+            this._terminal.set_color_foreground_rgba(fgColor);
+        } else {
+            this._terminal.set_color_foreground(fgColor);
+        }
+
+        if (this._terminal.set_color_background_rgba) { // removed in vte 0.38
+            this._terminal.set_color_background_rgba(bgColor);
+        } else {
+            this._terminal.set_color_background(bgColor);
+        }
 
         if (this._terminalScrollbar.set_opacity) { // 3.7.10+
             // starting from 3.7.10, all gtk widgets can have their opacity changed
