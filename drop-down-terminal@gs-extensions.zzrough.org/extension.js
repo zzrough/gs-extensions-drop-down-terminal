@@ -199,8 +199,14 @@ const DropDownTerminalExtension = new Lang.Class({
         this._actorMappedHandlerId = global.window_manager.connect("map", Lang.bind(this, this._windowMapped));
 
         // geometry update on monitor configuration change or panel size change
-        this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, this._updateWindowGeometry));
-        this._panelAllocationNotificationHandlerId = Main.panel.actor.connect("notify::allocation", Lang.bind(this, this._updateWindowGeometry));
+        this._monitorsChangedHandlerId = Main.layoutManager.connect("monitors-changed", Lang.bind(this, function() {
+            Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
+        }));
+
+        this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect("notify::allocation", Lang.bind(this, function() {
+            Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
+        }));
+
         this._panelScrollEventHandlerId = Main.panel.actor.connect("scroll-event", Lang.bind(this, this._panelScrolled));
 
         // honours setting changes
@@ -211,7 +217,7 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, Lang.bind(this, this._updateToggleOnScroll)),
 
             this._settings.connect("changed::" + TERMINAL_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
-                Convenience.throttle(200, this, this._updateWindowGeometry); // throttles 200ms (it's an "heavy weight" setting)
+                Convenience.throttle(100, this, this._updateWindowGeometry); // throttles to 10Hz (it's an "heavy weight" setting)
             })),
 
             this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
@@ -332,7 +338,7 @@ const DropDownTerminalExtension = new Lang.Class({
         // disconnects signals and clears refs related to screen handling
         global.window_manager.disconnect(this._actorMappedHandlerId);
         Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
-        Main.panel.actor.disconnect(this._panelAllocationNotificationHandlerId);
+        Main.layoutManager.panelBox.disconnect(this._panelAllocationNotificationHandlerId);
         Main.panel.actor.disconnect(this._panelScrollEventHandlerId);
         this._display.disconnect(this._windowCreatedHandlerId);
         this._actorMappedHandlerId = null;
@@ -429,7 +435,7 @@ const DropDownTerminalExtension = new Lang.Class({
         // computes the window geometry except the height
         let panelBox = Main.layoutManager.panelBox;
         this._windowX = panelBox.x;
-        this._windowY = panelBox.y + panelBox.height;
+        this._windowY = Math.max(panelBox.y + panelBox.height, 0);
         this._windowWidth = panelBox.width;
 
         // computes and keep the window height for use when the terminal will be spawn (if it is not already)
