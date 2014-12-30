@@ -438,7 +438,11 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // applies the change dynamically if the terminal is already spawn
         if (this._busProxy !== null && this._windowHeight !== null) {
-            this._busProxy.SetGeometryRemote(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
+            if (SHELL_VERSION < 3.14) {
+                this._busProxy.SetGeometryRemote(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
+            } else {
+                this._busProxy.SetGeometryRemote(this._windowX, this._windowY - panelBox.height, this._windowWidth, this._windowHeight);
+            }
         }
 
         if (this._windowActor != null) {
@@ -636,7 +640,11 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // applies the geometry if applicable
         if (this._windowHeight !== null) {
-            this._busProxy.SetGeometrySync(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
+            if (SHELL_VERSION < 3.14) {
+                this._busProxy.SetGeometrySync(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
+            } else {
+                this._busProxy.SetGeometrySync(this._windowX, this._windowY - Main.layoutManager.panelBox.height, this._windowWidth, this._windowHeight);
+            }
         }
 
         // initial toggling if explicitely asked to, since we we can also be called on a shell restart
