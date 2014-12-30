@@ -274,11 +274,6 @@ const DropDownTerminal = new Lang.Class({
         let terminal = new Vte.Terminal();
 
         terminal.set_can_focus(true);
-
-        if (terminal.set_background_transparent) { // removed in 0.34.8
-            terminal.set_background_transparent(false);
-        }
-
         terminal.set_allow_bold(true);
         terminal.set_scroll_on_output(true);
         terminal.set_scroll_on_keystroke(true);
@@ -406,24 +401,16 @@ const DropDownTerminal = new Lang.Class({
         let transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
         let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
 
-        if (this._terminal.set_background_image) { // remove in 0.34.8
-            this._terminal.set_background_image(null); // required to update the opacity after realize
-        }
-
         if (this._terminalScrollbar.set_opacity) { // 3.7.10+
             // starting from 3.7.10, all gtk widgets can have their opacity changed
-            if (this._terminal.set_background_image) { // remove in 0.34.8
-                this._terminal.set_opacity((isTransparent ? transparencyLevel : 1.0) * 0xffff);
-            } else {
-                // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
-                this._window.opacity = isTransparent ? 0.999 : 1.0;
+            // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
+            this._window.opacity = isTransparent ? 0.999 : 1.0;
 
-                this._terminal.opacity = isTransparent ? transparencyLevel : 1.0;
+            this._terminal.opacity = isTransparent ? transparencyLevel : 1.0;
 
-                // FIXME: not updating after setting change from (transparent to non-transparent)
-                this._terminal.backgroundOpacity = transparencyLevel;
-                this._terminal.backgroundTransparent = isTransparent;
-            }
+            // FIXME: not updating after setting change from (transparent to non-transparent)
+            this._terminal.backgroundOpacity = transparencyLevel;
+            this._terminal.backgroundTransparent = isTransparent;
 
             this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
         } else {
