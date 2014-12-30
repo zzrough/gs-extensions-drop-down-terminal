@@ -51,6 +51,24 @@
       </description>
     </key>
 
+    <key name="foreground-color" type="s">
+      <default><![CDATA['#aaaaaa']]></default>
+      <summary>The terminal foreground (default text) color</summary>
+      <description>
+        The terminal foreground color for normal text as hexadecimal value in the form "#rgb",
+        "#rrggbb", "#rrrgggbbb" or "#rrrrggggbbbb".
+      </description>
+    </key>
+
+    <key name="background-color" type="s">
+      <default><![CDATA['#000000']]></default>
+      <summary>The terminal background color</summary>
+      <description>
+        The terminal background color as hexadecimal value in the form "#rgb", "#rrggbb",
+        "#rrrgggbbb" or "#rrrrggggbbbb".
+      </description>
+    </key>
+
     <key name="scrollbar-visible" type="b">
       <default>false</default>
       <summary>Enable the terminal scrollbar</summary>
