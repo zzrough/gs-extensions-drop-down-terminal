@@ -75,7 +75,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this.pack_start(label, true, true, 0);
         } else {
             // gets the interesting builder objects
-            let mainTable = builder.get_object("main-table");
+            let mainBox = builder.get_object("main-box");
             let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
             let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
@@ -90,8 +90,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._customCommandBox = builder.get_object("custom-command-box");
             this._customCommandEntry = builder.get_object("custom-command-entry");
 
-            // packs the main table
-            this.pack_start(mainTable, true, true, 0);
+            // packs the main box
+            this.pack_start(mainBox, true, true, 0);
 
             // gives a hint on invalid window height input (does not prevent from writing a wrong value)
             terminalHeightEntry.connect("changed", Lang.bind(this, function() {
