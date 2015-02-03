@@ -33,6 +33,7 @@ const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
 const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
+const TRANSPARENCY_LEVEL_SETTING_KEY = "transparency-level";
 const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
@@ -81,6 +82,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
             let terminalHeightEntry = builder.get_object("terminal-height-entry");
             let terminalHeightResetButton = builder.get_object("terminal-height-reset-button");
+            let transparencyLevelSpinner = builder.get_object("transparency-level");
             let defaultShortcutRadioButton = builder.get_object("default-shortcut-radiobutton");
             let enableToggleOnScrollCheckButton = builder.get_object("enable-toggle-on-scroll-checkbutton");
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
@@ -109,6 +111,17 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
                 terminalHeightEntry["secondary-icon-name"] = valid ? null : "dialog-warning-symbolic";
                 terminalHeightEntry["secondary-icon-tooltip-text"] = valid ? null : _("Invalid syntax or range");
             }));
+
+            // init transparencyLevelSpinner
+            transparencyLevelSpinner.set_range(0,100);
+            transparencyLevelSpinner.set_sensitive(true);
+            transparencyLevelSpinner.set_value(this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY));
+            transparencyLevelSpinner.set_increments(1, 10);
+            transparencyLevelSpinner.connect('value-changed', Lang.bind(this, function(button){
+                let s = button.get_value_as_int();
+                this._settings.set_uint(TRANSPARENCY_LEVEL_SETTING_KEY, s);
+            }));
+	
 
             // configure the tree view column and creates the unique row of the model
             this._configureOtherShortcutTreeView(this._otherShortcutTreeView);
