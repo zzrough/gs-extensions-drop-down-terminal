@@ -144,7 +144,8 @@ const MissingVteDialog = new Lang.Class({
                                                    "\n" +
                                                    "Please install:\n" +
                                                    "    - on Fedora/Arch: the 'vte3' package (you certainly uninstalled it)\n" +
-                                                   "    - on Debian/Ubuntu: the 'gir-1.2-vte-2.90' package (not installed by default)\n" +
+                                                   "    - on Debian/Ubuntu: the 'gir-1.2-vte-2.*' package (not installed by default)\n" +
+                                                   "    - on openSUSE: the 'typelib-1_0-Vte-2.*' package (not installed by default)\n" +
                                                    "\n" +
                                                    "Then, log out.") });
         messageLabel.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;

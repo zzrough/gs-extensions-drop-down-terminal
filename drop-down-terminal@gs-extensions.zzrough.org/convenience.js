@@ -109,3 +109,16 @@ function getPid() {
     return new Gio.Credentials().get_unix_pid();
 }
 
+
+/**
+ * Parses a Gdk.RGBA color of the form "#rgb",
+ * "#rrggbb", "#rrrgggbbb" or "#rrrrggggbbbb".
+ *
+ * @return the color parsed
+ */
+function parseRgbaColor(spec) {
+    let col = new Gdk.RGBA();
+    col.parse(spec);
+    return col;
+}
+

@@ -60,11 +60,6 @@ const PopupUi =
 
 
 
-// helper function that simply calls #parse on a new Gdk.RGBA instance
-// to easily create an Gdk.RGBA color
-function parseRgbaColor(spec) { let col = new Gdk.RGBA(); col.parse(spec); return col; }
-
-
 // constants for the location of the extension
 const EXTENSION_ID = "drop-down-terminal";
 const EXTENSION_UUID = EXTENSION_ID + "@gs-extensions.zzrough.org";
@@ -83,26 +78,26 @@ const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
 
 // constants borrowed from gnome-terminal
-const ForegroundColor = parseRgbaColor("#aaaaaaaaaaaa");
-const BackgroundColor = parseRgbaColor("#000000000000");
+const ForegroundColor = Convenience.parseRgbaColor("#aaaaaaaaaaaa");
+const BackgroundColor = Convenience.parseRgbaColor("#000000000000");
 
 const TangoPalette = [
-    parseRgbaColor("#000000000000"),
-    parseRgbaColor("#cccc00000000"),
-    parseRgbaColor("#4e4e9a9a0606"),
-    parseRgbaColor("#c4c4a0a00000"),
-    parseRgbaColor("#34346565a4a4"),
-    parseRgbaColor("#757550507b7b"),
-    parseRgbaColor("#060698209a9a"),
-    parseRgbaColor("#d3d3d7d7cfcf"),
-    parseRgbaColor("#555557575353"),
-    parseRgbaColor("#efef29292929"),
-    parseRgbaColor("#8a8ae2e23434"),
-    parseRgbaColor("#fcfce9e94f4f"),
-    parseRgbaColor("#72729f9fcfcf"),
-    parseRgbaColor("#adad7f7fa8a8"),
-    parseRgbaColor("#3434e2e2e2e2"),
-    parseRgbaColor("#eeeeeeeeecec")
+    Convenience.parseRgbaColor("#000000000000"),
+    Convenience.parseRgbaColor("#cccc00000000"),
+    Convenience.parseRgbaColor("#4e4e9a9a0606"),
+    Convenience.parseRgbaColor("#c4c4a0a00000"),
+    Convenience.parseRgbaColor("#34346565a4a4"),
+    Convenience.parseRgbaColor("#757550507b7b"),
+    Convenience.parseRgbaColor("#060698209a9a"),
+    Convenience.parseRgbaColor("#d3d3d7d7cfcf"),
+    Convenience.parseRgbaColor("#555557575353"),
+    Convenience.parseRgbaColor("#efef29292929"),
+    Convenience.parseRgbaColor("#8a8ae2e23434"),
+    Convenience.parseRgbaColor("#fcfce9e94f4f"),
+    Convenience.parseRgbaColor("#72729f9fcfcf"),
+    Convenience.parseRgbaColor("#adad7f7fa8a8"),
+    Convenience.parseRgbaColor("#3434e2e2e2e2"),
+    Convenience.parseRgbaColor("#eeeeeeeeecec")
 ];
 
 const UserCharsPattern = "-[:alnum:]";
@@ -416,8 +411,8 @@ const DropDownTerminal = new Lang.Class({
         // Note: to follow the deprecation scheme, we try first the _rgba variants as vte < 0.38
         //       already has the non-rgba-suffixed one but it was working with GdkColor back then,
         //       and passing a GdkRGBA would raise an exception
-        let fgColor = parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
-        let bgColor = parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
+        let fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
+        let bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
 
         if (this._terminal.set_color_foreground_rgba) { // removed in vte 0.38
             this._terminal.set_color_foreground_rgba(fgColor);

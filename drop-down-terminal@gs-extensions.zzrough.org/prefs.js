@@ -37,6 +37,8 @@ const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = "enable-toggle-on-scroll";
+const FOREGROUND_COLOR_SETTING_KEY = "foreground-color";
+const BACKGROUND_COLOR_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
@@ -75,7 +77,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this.pack_start(label, true, true, 0);
         } else {
             // gets the interesting builder objects
-            let mainBox = builder.get_object("main-box");
+            let mainNotebook = builder.get_object("main-notebook");
             let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
             let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
@@ -83,6 +85,10 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let terminalHeightResetButton = builder.get_object("terminal-height-reset-button");
             let defaultShortcutRadioButton = builder.get_object("default-shortcut-radiobutton");
             let enableToggleOnScrollCheckButton = builder.get_object("enable-toggle-on-scroll-checkbutton");
+            let foregroundColorResetButton = builder.get_object("foreground-color-reset-button");
+            let backgroundColorResetButton = builder.get_object("background-color-reset-button");
+            this._foregroundColorButton = builder.get_object("foreground-color-button");
+            this._backgroundColorButton = builder.get_object("background-color-button");
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
             this._otherShortcutTreeView = builder.get_object("other-shortcut-treeview");
             this._otherShortcutListStore = builder.get_object("other-shortcut-liststore");
@@ -91,7 +97,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._customCommandEntry = builder.get_object("custom-command-entry");
 
             // packs the main box
-            this.pack_start(mainBox, true, true, 0);
+            this.pack_start(mainNotebook, true, true, 0);
 
             // gives a hint on invalid window height input (does not prevent from writing a wrong value)
             terminalHeightEntry.connect("changed", Lang.bind(this, function() {
@@ -152,6 +158,30 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
             this._runCustomCommandCheckButtonToggled();
             this._checkCustomCommandEntry();
+
+            // binds the color settings
+            this._foregroundColorButton.connect("color-set", Lang.bind(this, function() {
+                this._settings.set_string(FOREGROUND_COLOR_SETTING_KEY, this._foregroundColorButton.rgba.to_string());
+                this._updateForegroundColorButton();
+            }));
+
+            this._backgroundColorButton.connect("color-set", Lang.bind(this, function() {
+                this._settings.set_string(BACKGROUND_COLOR_SETTING_KEY, this._backgroundColorButton.rgba.to_string());
+                this._updateBackgroundColorButton();
+            }));
+
+            foregroundColorResetButton.connect("clicked", Lang.bind(this, function() {
+                this._settings.reset(FOREGROUND_COLOR_SETTING_KEY);
+                this._updateForegroundColorButton();
+            }));
+
+            backgroundColorResetButton.connect("clicked", Lang.bind(this, function() {
+                this._settings.reset(BACKGROUND_COLOR_SETTING_KEY);
+                this._updateBackgroundColorButton();
+            }));
+
+            this._updateForegroundColorButton();
+            this._updateBackgroundColorButton();
         }
     },
 
@@ -209,6 +239,14 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
     _updateOtherShortcutRow: function(accel) {
         let [key, mods] = (accel !== null) ? Gtk.accelerator_parse(accel) : [0, 0];
         this._otherShortcutListStore.set(this._otherShortcutRowIter, [SHORTCUT_COLUMN_KEY, SHORTCUT_COLUMN_MODS], [key, mods]);
+    },
+
+    _updateForegroundColorButton: function() {
+        this._foregroundColorButton.set_rgba(Convenience.parseRgbaColor(this._settings.get_string(FOREGROUND_COLOR_SETTING_KEY)));
+    },
+
+    _updateBackgroundColorButton: function() {
+        this._backgroundColorButton.set_rgba(Convenience.parseRgbaColor(this._settings.get_string(BACKGROUND_COLOR_SETTING_KEY)));
     },
 
     _runCustomCommandCheckButtonToggled: function() {
