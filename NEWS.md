@@ -81,3 +81,15 @@ v15 (2014-09-23)
 
 v16 (2014-09-27)
 - enabled back transparency as certain distributions support it again (mainly Fedora)
+
+v17 (2015-03-25)
+- toggle the terminal by scrolling on the top panel (thanks to Kristoffer Kleine)
+- added settings to set foreground/background color (thanks to kraiz)
+- make terminal opacity configurable (thanks to Tonic Artos)
+- fixed a wrong vertical offset (thanks to Alexander Shabalin)
+- port to Gnome 3.16 (thanks to Ádám Barancsuk)
+- added prefs for foreground/background color
+- fixed terminal position on HiDPI
+- fixed space at the top when top panel hidden
+- only keep compat with Gnome-Shell 3.10+ (older versions are becoming a huge maintenance burden)
+- port prefs gtkbuilder file to gtk3
