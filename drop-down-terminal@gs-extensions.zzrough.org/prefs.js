@@ -33,6 +33,7 @@ const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
 const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
 const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
+const TRANSPARENCY_LEVEL_SETTING_KEY = "transparency-level";
 const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
@@ -83,6 +84,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
             let terminalHeightEntry = builder.get_object("terminal-height-entry");
             let terminalHeightResetButton = builder.get_object("terminal-height-reset-button");
+            let transparencyLevelSpinButton = builder.get_object("transparency-level-spinbutton");
             let defaultShortcutRadioButton = builder.get_object("default-shortcut-radiobutton");
             let enableToggleOnScrollCheckButton = builder.get_object("enable-toggle-on-scroll-checkbutton");
             let foregroundColorResetButton = builder.get_object("foreground-color-reset-button");
@@ -182,6 +184,13 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
             this._updateForegroundColorButton();
             this._updateBackgroundColorButton();
+
+            // binds the transparency level
+            transparencyLevelSpinButton.connect('value-changed', Lang.bind(this, function(button) {
+                this._settings.set_uint(TRANSPARENCY_LEVEL_SETTING_KEY, button.get_value_as_int());
+            }));
+
+            transparencyLevelSpinButton.set_value(this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY))
         }
     },
 
