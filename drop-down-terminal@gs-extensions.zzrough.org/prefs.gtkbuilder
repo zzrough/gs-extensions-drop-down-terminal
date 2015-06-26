@@ -1,7 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
+  <requires lib="gtk+" version="3.0"/>
+  <object class="GtkListStore" id="liststore1">
+    <columns>
+      <!-- column-name position-name -->
+      <column type="gchararray"/>
+      <!-- column-name position-value -->
+      <column type="gint"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Top</col>
+        <col id="1">0</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left</col>
+        <col id="1">1</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right</col>
+        <col id="1">2</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Bottom</col>
+        <col id="1">3</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="other-shortcut-liststore">
     <columns>
       <!-- column-name key -->
@@ -63,14 +89,14 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label13">
+                      <object class="GtkLabel" id="transparency-description">
                         <property name="width_request">520</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">&lt;small&gt;Transparency support is only included on certain distributions like Fedora as the support has been removed on the upstream VTE project.&lt;/small&gt;</property>
                         <property name="use_markup">True</property>
                         <property name="wrap">True</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -95,84 +121,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label2">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="halign">start</property>
-                        <property name="margin_top">6</property>
-                        <property name="xalign">0</property>
-                        <property name="xpad">2</property>
-                        <property name="label" translatable="yes">Height</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">5</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="terminal-height-entry">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="halign">start</property>
-                        <property name="margin_top">6</property>
-                        <property name="invisible_char">●</property>
-                        <property name="width_chars">20</property>
-                        <property name="primary_icon_activatable">False</property>
-                        <property name="secondary_icon_activatable">False</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">5</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="terminal-height-reset-button">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="tooltip_text" translatable="yes">Reset the field to its default value</property>
-                        <property name="halign">start</property>
-                        <property name="margin_top">6</property>
-                        <property name="hexpand">True</property>
-                        <child>
-                          <object class="GtkImage" id="image2">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="stock">gtk-revert-to-saved</property>
-                          </object>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">5</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label12">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
-                        <property name="label" translatable="yes">&lt;small&gt;The height in pixels (400px for instance) or in percentage (30% for instance)&lt;/small&gt;</property>
-                        <property name="use_markup">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">6</property>
-                        <property name="width">2</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label1">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">6</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label6">
+                      <object class="GtkLabel" id="transparency-description-spacer">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
@@ -199,7 +148,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label17">
+                      <object class="GtkLabel" id="transparency-spacer">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
@@ -222,14 +171,138 @@
                       </packing>
                     </child>
                     <child>
-                      <placeholder/>
+                      <object class="GtkLabel" id="position-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Position</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="size-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="margin_top">6</property>
+                        <property name="xpad">2</property>
+                        <property name="label" translatable="yes">Height</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="terminal-size-entry">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="halign">start</property>
+                        <property name="margin_top">6</property>
+                        <property name="invisible_char">●</property>
+                        <property name="width_chars">20</property>
+                        <property name="primary_icon_activatable">False</property>
+                        <property name="secondary_icon_activatable">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="terminal-size-reset-button">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="tooltip_text" translatable="yes">Reset the field to its default value</property>
+                        <property name="halign">start</property>
+                        <property name="margin_top">6</property>
+                        <property name="hexpand">True</property>
+                        <child>
+                          <object class="GtkImage" id="image2">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-revert-to-saved</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="height-description">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">&lt;small&gt;The height in pixels (400px for instance) or in percentage (30% for instance)&lt;/small&gt;</property>
+                        <property name="use_markup">True</property>
+                        <property name="ellipsize">start</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">7</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="height-description-spacer">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">7</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="position-combobox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">liststore1</property>
+                        <property name="active">0</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="positioncellrenderertext"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="transparency-spacer2">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="position-spacer">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">5</property>
+                      </packing>
                     </child>
                   </object>
                 </child>
               </object>
             </child>
             <child type="label">
-              <object class="GtkLabel" id="label9">
+              <object class="GtkLabel" id="appearance-title-label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">&lt;b&gt;Appearance&lt;/b&gt;</property>
@@ -356,8 +429,8 @@
                           <object class="GtkLabel" id="label5">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="xalign">0</property>
                             <property name="label" translatable="yes">Key above "Tab"</property>
+                            <property name="xalign">0</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -371,10 +444,10 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="vexpand">True</property>
-                            <property name="xalign">0</property>
                             <property name="label" translatable="yes">&lt;small&gt;This key is the one above "Tab" on many keyboard layouts, like good old &lt;a href="https://en.wikipedia.org/wiki/Quake_%28video_game%29" title="A bit of history"&gt;Quake&lt;/a&gt;.
 Tip: Alt + this key allows to cycle between the windows of an application.&lt;/small&gt;</property>
                             <property name="use_markup">True</property>
+                            <property name="xalign">0</property>
                           </object>
                           <packing>
                             <property name="expand">True</property>
@@ -453,10 +526,10 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                       <object class="GtkLabel" id="label14">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">&lt;small&gt;Please do not ask for full color support: I want it as much as you do but &lt;b&gt;it can't be done yet&lt;/b&gt;. There are shortcomings with the JS bindings that make color support limited.&lt;/small&gt;</property>
                         <property name="use_markup">True</property>
                         <property name="wrap">True</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -478,8 +551,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                       <object class="GtkLabel" id="label25">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Text color</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -524,8 +597,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                       <object class="GtkLabel" id="label20">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Background color</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -657,8 +730,8 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                               <object class="GtkLabel" id="custom-command-label">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="xalign">0</property>
                                 <property name="label" translatable="yes">Custom command</property>
+                                <property name="xalign">0</property>
                               </object>
                             </child>
                           </object>
