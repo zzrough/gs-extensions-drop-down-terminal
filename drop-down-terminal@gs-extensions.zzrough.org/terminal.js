@@ -142,7 +142,13 @@ const DropDownTerminal = new Lang.Class({
 
         // loads the custom CSS to mimick the shell style
         let provider = new Gtk.CssProvider();
-        provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk.css"));
+
+        if (Convenience.GTK_VERSION >= 31600) {
+            provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk.css"));
+        } else {
+            provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk-3-14.css"));
+        }
+
         Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         // creates the widgets and lays them out
