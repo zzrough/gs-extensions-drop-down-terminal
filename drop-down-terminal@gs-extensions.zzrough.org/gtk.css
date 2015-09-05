@@ -1,22 +1,35 @@
+/* Removes the menu container's faint shadow */
+GtkWindow *{
+    box-shadow: none;
+}
+
+/* Mini Reset for best cross-theme compatibility */
+.menu,
+.menu .menuitem{
+    padding:0;
+    margin:0;
+    border-color:#a5a5a5;
+    border-style:solid;
+    background-color:#000;
+}
+
 .menu {
     color: white;
-    background-color: #000;
-    border: 2px solid #a5a5a5;
+    border-width: 2px;
     border-radius: 8px;
-    -GtkMenu-horizontal-padding: 2;
     padding: 1.4em 0;
 }
 
+/* Please consider the following style rule instead - font-size: 11; */
 .menu .menuitem {
-    font: Cantarell 11; /* Requires gtk 3.7.4 (was hardcoded before) */
+    border-width:0 2px;
+    font: Cantarell 11; 
     padding: 0.5em 4.75em 0.5em 0.78em;
 }
 
 .menu .menuitem:active,
 .menu .menuitem:hover {
     background-color: #4c4c4c;
-    border: 2px solid #a5a5a5;
-    border-width: 0 2px;
 }
 
 GtkWindow {
@@ -26,3 +39,22 @@ GtkWindow {
 .scrollbar.trough {
     background-color: #000;
 }
+
+/* The following commented styles match GNOME Shell's 3.16 look 
+
+.menu{
+    border-radius:3px;
+}
+
+.menu,
+.menu .menuitem{
+    background-color: #383d3d;
+    border-width:0;
+}
+
+.menu .menuitem:active,
+.menu .menuitem:hover {
+    background-color: #4a4f4f;
+}
+
+*/
