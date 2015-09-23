@@ -94,5 +94,6 @@ v17 (2015-03-25)
 - only keep compat with Gnome-Shell 3.10+ (older versions are becoming a huge maintenance burden)
 - port prefs gtkbuilder file to gtk3
 
-v18 (2015-09-??)
+v18 (2015-09-23)
 - fix for broken context menu in 3.16 (thanks to nikolowry)
+- match 3.16+ menu border (not the thick gray border anymore)

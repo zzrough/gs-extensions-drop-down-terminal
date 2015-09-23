@@ -98,16 +98,22 @@ if (window.__DDTInstance === undefined) {
     window.__DDTInstance = 1;
 }
 
-const GraySouthBorderEffect = new Lang.Class({
-    Name: "GraySouthBorderEffect-" + window.__DDTInstance++,
+const SouthBorderEffect = new Lang.Class({
+    Name: "SouthBorderEffect-" + window.__DDTInstance++,
     Extends: Clutter.Effect,
 
     _init: function() {
         this.parent();
 
-        this._width = 2;
         this._color = new Cogl.Color();
-        this._color.init_from_4ub(0xa5, 0xa5, 0xa5, 0xff);
+
+        if (Convenience.GTK_VERSION >= 31590) {
+             this._color.init_from_4ub(0x1c, 0x1f, 0x1f, 0xff);
+             this._width = 1;
+        } else {
+             this._color.init_from_4ub(0xa5, 0xa5, 0xa5, 0xff);
+             this._width = 2;
+        }
     },
 
     vfunc_paint: function() {
@@ -685,7 +691,7 @@ const DropDownTerminalExtension = new Lang.Class({
     _setWindowActor: function(actor) {
         // adds a gray border on south of the actor to mimick the shell borders
         actor.clear_effects();
-        actor.add_effect(new GraySouthBorderEffect());
+        actor.add_effect(new SouthBorderEffect());
 
         // sets a distinctive name for the actor
         actor.set_name(TERMINAL_WINDOW_ACTOR_NAME);
