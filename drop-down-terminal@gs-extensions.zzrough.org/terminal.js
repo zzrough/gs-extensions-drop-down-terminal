@@ -143,8 +143,10 @@ const DropDownTerminal = new Lang.Class({
         // loads the custom CSS to mimick the shell style
         let provider = new Gtk.CssProvider();
 
-        if (Convenience.GTK_VERSION >= 31600) {
+        if (Convenience.GTK_VERSION >= 31790) {
             provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk.css"));
+        } else if (Convenience.GTK_VERSION >= 31590) {
+            provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk-3-16.css"));
         } else {
             provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + "/gtk-3-14.css"));
         }

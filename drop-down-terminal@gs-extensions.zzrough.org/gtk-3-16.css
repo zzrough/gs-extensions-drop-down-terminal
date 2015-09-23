@@ -7,8 +7,8 @@ GtkWindow * {
     box-shadow: none; /* removes the container's faint shadow */
 }
 
-.scrollbar {
-    border-width: 0;
+.scrollbar.trough {
+    background-color: #000;
 }
 
 /* Mini Reset for best cross-theme compatibility */
