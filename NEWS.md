@@ -97,3 +97,6 @@ v17 (2015-03-25)
 v18 (2015-09-23)
 - fix for broken context menu in 3.16 (thanks to nikolowry)
 - match 3.16+ menu border (not the thick gray border anymore)
+
+v19 (2015-11-04)
+- fix animation and positioning on 3.18 (thanks to imnotjames and daniviga)
