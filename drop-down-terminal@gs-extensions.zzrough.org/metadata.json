@@ -3,7 +3,7 @@
   "uuid": "drop-down-terminal@gs-extensions.zzrough.org",
   "name": "Drop Down Terminal",
   "description": "Drop down terminal toggled by a keystroke (the key above tab by default) for advanced users.",
-  "shell-version": ["3.10", "3.11.90", "3.11.91", "3.11.92", "3.12", "3.13.3", "3.13.4", "3.13.90", "3.13.91", "3.13.92", "3.14", "3.16", "3.17.90", "3.17.91", "3.18"],
+  "shell-version": ["3.10", "3.11.90", "3.11.91", "3.11.92", "3.12", "3.13.3", "3.13.4", "3.13.90", "3.13.91", "3.13.92", "3.14", "3.16", "3.17.90", "3.17.91", "3.17.92", "3.18"],
   "url": "https://github.com/zzrough/gs-extensions-drop-down-terminal"
 }
 
