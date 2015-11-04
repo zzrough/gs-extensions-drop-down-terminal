@@ -329,7 +329,13 @@ const DropDownTerminal = new Lang.Class({
         window.set_accept_focus(true);
         window.set_deletable(false);
         window.stick();
-        window.set_type_hint(Gdk.WindowTypeHint.DOCK);
+
+        if (Convenience.GTK_VERSION >= 31800) {
+            window.set_type_hint(Gdk.WindowTypeHint.COMBO);
+        } else {
+            window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU);
+        }
+
         window.set_visual(screen.get_rgba_visual());
         window.connect("delete-event", function() { window.hide(); return true; });
         window.connect("destroy", Gtk.main_quit);
