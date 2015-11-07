@@ -441,9 +441,10 @@ const DropDownTerminalExtension = new Lang.Class({
     _updateWindowGeometry: function() {
         // computes the window geometry except the height
         let panelBox = Main.layoutManager.panelBox;
-        this._windowX = panelBox.x;
+        let legacyTray = Main.legacyTray.actor;
+        this._windowX = panelBox.x + legacyTray.x;
         this._windowY = Math.max(panelBox.y + panelBox.height, 0);
-        this._windowWidth = panelBox.width;
+        this._windowWidth = legacyTray.width;
 
         // computes and keep the window height for use when the terminal will be spawn (if it is not already)
         let heightSpec = this._settings.get_string(TERMINAL_HEIGHT_SETTING_KEY);
