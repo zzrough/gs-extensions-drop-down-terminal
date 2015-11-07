@@ -58,9 +58,15 @@ const FIRST_START_SETTING_KEY = "first-start";
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const OPENING_ANIMATION_TIME_SETTING_KEY = "opening-animation-time";
 const CLOSING_ANIMATION_TIME_SETTING_KEY = "closing-animation-time";
-const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
+const TERMINAL_SIZE_SETTING_KEY = "terminal-size";
 const REAL_SHORTCUT_SETTING_KEY = "real-shortcut";
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = "enable-toggle-on-scroll";
+const TERMINAL_POSITION_SETTING_KEY = "terminal-position";
+
+const TOP_EDGE = 0;
+const LEFT_EDGE = 1;
+const RIGHT_EDGE = 2;
+const BOTTOM_EDGE = 3;
 
 const SHELL_VERSION = 10 * parseFloat("0." + Config.PACKAGE_VERSION.split(".").join("")).toFixed(10);
 
@@ -223,8 +229,17 @@ const DropDownTerminalExtension = new Lang.Class({
             this._settings.connect("changed::" + CLOSING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
             this._settings.connect("changed::" + ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, Lang.bind(this, this._updateToggleOnScroll)),
 
-            this._settings.connect("changed::" + TERMINAL_HEIGHT_SETTING_KEY, Lang.bind(this, function() {
-                Convenience.throttle(100, this, this._updateWindowGeometry); // throttles to 10Hz (it's an "heavy weight" setting)
+            this._settings.connect("changed::" + TERMINAL_SIZE_SETTING_KEY, Lang.bind(this, function() {
+                if (this._windowActor != null) {
+                    Convenience.throttle(100, this, this._updateWindowGeometry); // throttles to 10Hz (it's an "heavy weight" setting)
+                }
+            })),
+
+            this._settings.connect("changed::" + TERMINAL_POSITION_SETTING_KEY, Lang.bind(this, function() {
+                if (this._windowActor != null) {
+                    this._windowActor.remove_clip();
+                    Convenience.throttle(100, this, this._updateWindowGeometry); // throttles to 10Hz (it's an "heavy weight" setting)
+                }
             })),
 
             this._settings.connect("changed::" + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function() {
@@ -374,8 +389,8 @@ const DropDownTerminalExtension = new Lang.Class({
             this._forkChild();
         }
 
-	// FIXME: pull request #69, we should really not have to do that as we already monitor
-	//        the "monitors-changed" signal
+        // FIXME: pull request #69, we should really not have to do that as we already monitor
+        //        the "monitors-changed" signal
         this._updateWindowGeometry();
 
         // the bus proxy might not be ready, in this case we will be called later once the bus name appears
@@ -383,18 +398,40 @@ const DropDownTerminalExtension = new Lang.Class({
 
             // if the actor is set, this means the terminal is opened, so we will handle closing
             if (this._windowActor !== null) {
-                let targetY = this._hasMonitorAbove() ? this._windowActor.y : -this._windowActor.height;
-                let targetScaleY = this._hasMonitorAbove() ? 0.0 : 1.0;
+                let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+                let targetY = this._windowY;
+                let targetX = this._windowX;
                 let animationTime = this._shouldAnimateWindow() ? this._closingAnimationTimeMillis / 1000.0 : 0;
+                let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+
+                switch (terminalPosition) {
+                    case LEFT_EDGE:
+                        targetX = this._windowX - this._windowActor.width;
+                        break;
+                    case RIGHT_EDGE:
+                        targetX = this._windowX + this._windowActor.width;
+                        break;
+                    case BOTTOM_EDGE:
+                        targetY = this._windowY + this._windowActor.height;
+                        break;
+                    default:
+                    case TOP_EDGE:
+                        targetY = this._windowY - this._windowActor.height;
+                        break;
+                }
 
                 Tweener.addTween(this._windowActor, {
+                    x: targetX,
                     y: targetY,
-                    scale_y: targetScaleY,
                     time: animationTime,
                     transition: "easeInExpo",
+                    onUpdate: Lang.bind(this, this._updateClip),
                     onComplete: Lang.bind(this, function() {
                                     // unregisters the ctrl-alt-tab group
                                     Main.ctrlAltTabManager.removeGroup(this._windowActor);
+
+                                    // Remove the clip set on update.
+                                    this._windowActor.remove_clip();
 
                                     // clears the window actor ref since we use it to know the window visibility
                                     this._windowActor = null;
@@ -439,15 +476,58 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _updateWindowGeometry: function() {
-        // computes the window geometry except the height
+        let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
         let panelBox = Main.layoutManager.panelBox;
-        this._windowX = panelBox.x;
-        this._windowY = Math.max(panelBox.y + panelBox.height, 0);
-        this._windowWidth = panelBox.width;
+        let panelHeight = Main.layoutManager.panelBox.height;
+        let sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY);
 
-        // computes and keep the window height for use when the terminal will be spawn (if it is not already)
-        let heightSpec = this._settings.get_string(TERMINAL_HEIGHT_SETTING_KEY);
-        this._windowHeight = this._computeWindowHeight(heightSpec);
+        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        let screen = global.screen.get_monitor_geometry(global.screen.get_primary_monitor());
+        let screenLeft = screen.x / scaleFactor;
+        let screenTop = screen.y / scaleFactor;
+        let screenHeight = screen.height / scaleFactor;
+        let screenWidth = screen.width / scaleFactor;
+        let screenRight = screenLeft + screenWidth;
+        let screenBottom = screenTop + screenHeight;
+
+        switch (terminalPosition) {
+            case LEFT_EDGE:
+                global.log("left");
+                this._windowX = screenLeft;
+                this._windowY = panelBox.y == screenTop ? screenTop + panelBox.height: screenTop;
+                this._windowWidth = this._evaluateSizeSpec(sizeSpec, false);
+                this._windowHeight = panelBox.y == screenTop ? screenHeight - panelHeight : screenHeight;
+                break;
+            case RIGHT_EDGE:
+                global.log("right");
+                let width = this._evaluateSizeSpec(sizeSpec, false);
+                this._windowX = screenRight - width;
+                this._windowY = panelBox.y == screenTop ? screenTop + panelBox.height: screenTop;
+                this._windowWidth = width;
+                this._windowHeight = panelBox.y == screenTop ? screenHeight - panelHeight : screenHeight;
+                break;
+            case BOTTOM_EDGE:
+                global.log("bottom");
+                let height = this._evaluateSizeSpec(sizeSpec, true);
+                this._windowX = screenLeft;
+                this._windowY = panelBox.y + panelBox.height == screenBottom ? screenBottom - panelBox.height - height : screenBottom - height;
+                this._windowWidth = screenWidth;
+                this._windowHeight = height;
+                break;
+            default:
+            case TOP_EDGE:
+                global.log("top");
+                this._windowX = screenLeft;
+                this._windowY = panelBox.y == screenTop ? screenTop + panelBox.height: screenTop;
+                this._windowWidth = screenWidth;
+                this._windowHeight = this._evaluateSizeSpec(sizeSpec, true);
+                break;
+        }
+
+        global.log(this._windowX);
+        global.log(this._windowY);
+        global.log(this._windowWidth);
+        global.log(this._windowHeight);
 
         // applies the change dynamically if the terminal is already spawn
         if (this._busProxy !== null && this._windowHeight !== null) {
@@ -519,6 +599,9 @@ const DropDownTerminalExtension = new Lang.Class({
             // registers a ctrl-alt-tab group
             Main.ctrlAltTabManager.addGroup(this._windowActor, _("Drop Down Terminal"), 'utilities-terminal-symbolic',
                                             { focusCallback: Lang.bind(this, requestFocusAsync) });
+
+            // Remove the clip set on update.
+            this._windowActor.remove_clip();
         });
 
         // animate the opening sequence if applicable
@@ -532,19 +615,37 @@ const DropDownTerminalExtension = new Lang.Class({
             //         This might be a side-effect of the new frame synchronization changes. To work around that until I figure out a better fix,
             //         schedule the whole animation in the next frame (idle_add) and make the actor transparent until the animation starts
             //         (to avoid the brief window appearance which is the original issue).
+            //
+            //         Tonic: I added a workaround by making sure at least one pixel is on the screen.
             this._windowActor.opacity = 0;
 
             Mainloop.idle_add(Lang.bind(this, function() {
-                this._windowActor.opacity = 255;
+                let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
-                if (this._hasMonitorAbove()) {
-                    this._windowActor.scale_y = 0.0;
-                } else {
-                    this._windowActor.set_position(this._windowX, -this._windowActor.height);
+                this._windowActor.opacity = 255;
+                // Workaround animation bug by making sure the window is partially on screen.
+                let workaround = 1;
+
+                switch (terminalPosition) {
+                    case LEFT_EDGE:
+                        this._windowActor.set_position(this._windowX - this._windowActor.width + workaround, this._windowY);
+                        break;
+                    case RIGHT_EDGE:
+                        this._windowActor.set_position(this._windowX + this._windowActor.width - workaround, this._windowY);
+                        break;
+                    case BOTTOM_EDGE:
+                        this._windowActor.set_position(this._windowX, this._windowY + this._windowActor.height - workaround);
+                        break;
+                    default:
+                    case TOP_EDGE:
+                        this._windowActor.set_position(this._windowX, this._windowY - this._windowActor.height + workaround);
+                        break;
                 }
 
                 Tweener.addTween(this._windowActor, {
                     y: this._windowY,
+                    x: this._windowX,
+                    onUpdate: Lang.bind(this, this._updateClip),
                     scale_y: 1.0,
                     time: this._openingAnimationTimeMillis / 1000.0,
                     transition: "easeOutExpo",
@@ -653,11 +754,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // applies the geometry if applicable
         if (this._windowHeight !== null) {
-            if (SHELL_VERSION < 3.14) {
-                this._busProxy.SetGeometrySync(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
-            } else {
-                this._busProxy.SetGeometrySync(this._windowX, this._windowY - Main.layoutManager.panelBox.height, this._windowWidth, this._windowHeight);
-            }
+            this._busProxy.SetGeometryRemote(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
         }
 
         // initial toggling if explicitely asked to, since we we can also be called on a shell restart
@@ -696,7 +793,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._windowActor = actor;
     },
 
-    _computeWindowHeight: function(heightSpec) {
+    _evaluateSizeSpec: function(heightSpec, vertical) {
         // updates the height from the height spec, so it's picked 
         let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
 
@@ -715,15 +812,34 @@ const DropDownTerminalExtension = new Lang.Class({
             }
 
             let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-            let monitorHeight = Main.layoutManager.primaryMonitor.height / scaleFactor;
-            let panelHeight = Main.layoutManager.panelBox.height;
 
-            return parseInt((monitorHeight - panelHeight) * value / 100.0);
+            if (vertical) {
+                let monitorHeight = Main.layoutManager.primaryMonitor.height / scaleFactor;
+                let panelHeight = Main.layoutManager.panelBox.height;
+                return parseInt((monitorHeight - panelHeight) * value / 100.0);
+            } else {
+                let monitorWidth = Main.layoutManager.primaryMonitor.width / scaleFactor;
+                return parseInt(monitorWidth * value / 100.0);
+            }
         }
     },
 
-    _hasMonitorAbove: function() {
-        return Main.layoutManager.panelBox.y > 0;
+    _updateClip: function() {
+        let monitor = Main.layoutManager.primaryMonitor;
+        let a = this._windowActor.allocation;
+        let clip = new Clutter.ActorBox({
+            x1: Math.max(monitor.x, a.x1),
+            y1: Math.max(monitor.y, a.y1),
+            x2: Math.min(monitor.x + monitor.width, a.x2),
+            y2: Math.min(monitor.y + monitor.height, a.y2) 
+        });
+
+        clip.x1 -= this._windowActor.x;
+        clip.x2 -= this._windowActor.x;
+        clip.y1 -= this._windowActor.y;
+        clip.y2 -= this._windowActor.y;
+
+        this._windowActor.set_clip(clip.x1, clip.y1, clip.x2 - clip.x1, clip.y2 - clip.y1);
     },
 
     _shouldAnimateWindow: function() {
