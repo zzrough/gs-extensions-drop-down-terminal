@@ -246,6 +246,7 @@ const DropDownTerminal = new Lang.Class({
                 this._window.move(x, y);
             }
 
+
             if (width != currentWidth || height != currentHeight) {
                 this._window.resize(width, height);
             }
@@ -331,12 +332,14 @@ const DropDownTerminal = new Lang.Class({
         window.stick();
 
         if (Convenience.GTK_VERSION >= 31800) {
-            window.set_type_hint(Gdk.WindowTypeHint.COMBO);
+            window.set_type_hint(Gdk.WindowTypeHint.DOCK);
         } else {
             window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU);
         }
 
         window.set_visual(screen.get_rgba_visual());
+
+        window.connect("enter_notify_event", Lang.bind(this, this.Focus));
         window.connect("delete-event", function() { window.hide(); return true; });
         window.connect("destroy", Gtk.main_quit);
 

@@ -192,6 +192,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     enable: function() {
+        this._tracker = Shell.WindowTracker.get_default()
         // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
         this._childPid = null;
 
@@ -401,45 +402,48 @@ const DropDownTerminalExtension = new Lang.Class({
 
             // if the actor is set, this means the terminal is opened, so we will handle closing
             if (this._windowActor !== null) {
-                let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
-                let targetY = this._windowY;
-                let targetX = this._windowX;
-                let animationTime = this._shouldAnimateWindow() ? this._closingAnimationTimeMillis / 1000.0 : 0;
-                let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+                if (this._tracker.focus_app != null) {
+                    this._busProxy.FocusRemote();
+                } else {
+                    let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+                    let targetY = this._windowY;
+                    let targetX = this._windowX;
+                    let animationTime = this._shouldAnimateWindow() ? this._closingAnimationTimeMillis / 1000.0 : 0;
+                    let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
-                switch (terminalPosition) {
-                    case LEFT_EDGE:
-                        targetX = this._windowX - this._windowActor.width;
-                        break;
-                    case RIGHT_EDGE:
-                        targetX = this._windowX + this._windowActor.width;
-                        break;
-                    case BOTTOM_EDGE:
-                        targetY = this._windowY + this._windowActor.height;
-                        break;
-                    default:
-                    case TOP_EDGE:
-                        targetY = this._windowY - this._windowActor.height;
-                        break;
+                    switch (terminalPosition) {
+                        case LEFT_EDGE:
+                            targetX = this._windowX - this._windowActor.width;
+                            break;
+                        case RIGHT_EDGE:
+                            targetX = this._windowX + this._windowActor.width;
+                            break;
+                        case BOTTOM_EDGE:
+                            targetY = this._windowY + this._windowActor.height;
+                            break;
+                        default:
+                        case TOP_EDGE:
+                            targetY = this._windowY - this._windowActor.height;
+                            break;
+                    }
+                    Tweener.addTween(this._windowActor, {
+                        x: targetX,
+                        y: targetY,
+                        time: animationTime,
+                        transition: "easeInExpo",
+                        onUpdate: Lang.bind(this, this._updateClip),
+                        onComplete: Lang.bind(this, function() {
+                                        // unregisters the ctrl-alt-tab group
+                                        Main.ctrlAltTabManager.removeGroup(this._windowActor);
+
+                                        // clears the window actor ref since we use it to know the window visibility
+                                        this._windowActor = null;
+
+                                        // requests toggling asynchronously
+                                        this._busProxy.ToggleRemote();
+                                    })
+                    });
                 }
-
-                Tweener.addTween(this._windowActor, {
-                    x: targetX,
-                    y: targetY,
-                    time: animationTime,
-                    transition: "easeInExpo",
-                    onUpdate: Lang.bind(this, this._updateClip),
-                    onComplete: Lang.bind(this, function() {
-                                    // unregisters the ctrl-alt-tab group
-                                    Main.ctrlAltTabManager.removeGroup(this._windowActor);
-
-                                    // clears the window actor ref since we use it to know the window visibility
-                                    this._windowActor = null;
-
-                                    // requests toggling asynchronously
-                                    this._busProxy.ToggleRemote();
-                                })
-                });
             } else {
                 this._busProxy.ToggleRemote();
             }
