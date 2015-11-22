@@ -76,6 +76,12 @@ const COLOR_BACKGROUND_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
 
+// gnome desktop wm settings
+const WM_PREFERENCES_SCHEMA = "org.gnome.desktop.wm.preferences";
+const WM_FOCUS_MODE_SETTING_KEY = "focus-mode";
+const FOCUS_MODE_CLICK = "click";
+const FOCUS_MODE_MOUSE = "mouse";
+const FOCUS_MODE_SLOPPY = "sloppy";
 
 // constants borrowed from gnome-terminal
 const ForegroundColor = Convenience.parseRgbaColor("#aaaaaaaaaaaa");
@@ -201,10 +207,17 @@ const DropDownTerminal = new Lang.Class({
         this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
         this._settings.connect("changed::" + CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
 
+        // connect to gnome settings changes
+        this._desktopSettings = Convenience.getInstalledSettings(WM_PREFERENCES_SCHEMA);
+        if (this._desktopSettings != null) {
+            this._desktopSettings.connect("changed::" + WM_FOCUS_MODE_SETTING_KEY, Lang.bind(this, this._updateFocusMode));
+        }
+
         // applies the settings initially
         this._updateFont();
         this._updateOpacityAndColors();
         this._updateCustomCommand();
+        this._updateFocusMode();
 
         // adds the uri matchers
         this._uriHandlingPropertiesbyTag = {};
@@ -245,6 +258,7 @@ const DropDownTerminal = new Lang.Class({
             if (x != currentX || y != currentY) {
                 this._window.move(x, y);
             }
+
 
             if (width != currentWidth || height != currentHeight) {
                 this._window.resize(width, height);
@@ -305,6 +319,7 @@ const DropDownTerminal = new Lang.Class({
         terminal.connect("eof", Lang.bind(this, this._forkUserShell));
         terminal.connect("child-exited", Lang.bind(this, this._forkUserShell));
         terminal.connect("button-release-event", Lang.bind(this, this._terminalButtonReleased));
+        terminal.connect("button-press-event", Lang.bind(this, this._terminalButtonPressed));
         terminal.connect("refresh-window", Lang.bind(this, this._refreshWindow));
 
         // FIXME: we get weird colors when we apply tango colors
@@ -331,12 +346,14 @@ const DropDownTerminal = new Lang.Class({
         window.stick();
 
         if (Convenience.GTK_VERSION >= 31800) {
-            window.set_type_hint(Gdk.WindowTypeHint.COMBO);
+            window.set_type_hint(Gdk.WindowTypeHint.DOCK);
         } else {
             window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU);
         }
 
         window.set_visual(screen.get_rgba_visual());
+
+        window.connect("enter_notify_event", Lang.bind(this, this._windowMouseEnter));
         window.connect("delete-event", function() { window.hide(); return true; });
         window.connect("destroy", Gtk.main_quit);
 
@@ -482,6 +499,30 @@ const DropDownTerminal = new Lang.Class({
         // we do not want the terminal to get stuck)
         if (this._lastForkFailed) {
             this._forkUserShell();
+        }
+    },
+
+    _updateFocusMode: function() {
+        let mode;
+        if (this._desktopSettings == null) {
+            mode = FOCUS_MODE_CLICK;
+            return;
+        } else {
+            mode = this._desktopSettings.get_string(WM_FOCUS_MODE_SETTING_KEY);
+        }
+
+        this._focusMode = mode;
+    },
+
+    _windowMouseEnter: function(window, event) {
+        if (this._focusMode != FOCUS_MODE_CLICK) {
+            this.Focus();
+        }
+    },
+
+    _terminalButtonPressed: function(terminal, event) {
+        if (this._focusMode == FOCUS_MODE_CLICK) {
+            this.Focus();
         }
     },
 

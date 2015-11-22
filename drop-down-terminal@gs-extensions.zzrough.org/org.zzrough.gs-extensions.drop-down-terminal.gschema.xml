@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
+	<enum id="org.zzrough.gs-extensions.drop-down-terminal.terminal-position">
+		<value nick="Top" value="0" />
+		<value nick="Left" value="1" />
+		<value nick="Right" value="2" />
+		<value nick="Bottom" value="3" />
+	</enum>
   <schema path="/org/zzrough/gs-extensions/drop-down-terminal/" id="org.zzrough.gs-extensions.drop-down-terminal">
     <key name="first-start" type="b">
       <default>true</default>
@@ -77,11 +83,19 @@
       </description>
     </key>
 
-    <key name="terminal-height" type="s">
+    <key name="terminal-size" type="s">
       <default><![CDATA['400px']]></default>
-      <summary>The terminal window height</summary>
+      <summary>The terminal window position</summary>
       <description>
-        The terminal window height in pixels (400px for instance) or in percentage (30% for instance).
+	      The terminal window size in pixels (400px for instance) or in percentage (30% for instance). The size value is used for the height or width if the position is top/bottom, or left/right.
+      </description>
+    </key>
+
+    <key name="terminal-position" enum="org.zzrough.gs-extensions.drop-down-terminal.terminal-position">
+      <default>'Top'</default>
+      <summary>The terminal window position</summary>
+      <description>
+	      The edge of the screen to which the terminal window is aligned.
       </description>
     </key>
 

@@ -32,7 +32,8 @@ const Convenience = Me.imports.convenience;
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
 const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
-const TERMINAL_HEIGHT_SETTING_KEY = "terminal-height";
+const TERMINAL_SIZE_SETTING_KEY = "terminal-size";
+const TERMINAL_POSITION_SETTING_KEY = "terminal-position";
 const TRANSPARENCY_LEVEL_SETTING_KEY = "transparency-level";
 const SHORTCUT_TYPE_SETTING_KEY = "shortcut-type";
 const OTHER_SHORTCUT_SETTING_KEY = "other-shortcut";
@@ -82,13 +83,14 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
             let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
-            let terminalHeightEntry = builder.get_object("terminal-height-entry");
-            let terminalHeightResetButton = builder.get_object("terminal-height-reset-button");
+            let terminalSizeEntry = builder.get_object("terminal-size-entry");
+            let terminalSizeResetButton = builder.get_object("terminal-size-reset-button");
             let transparencyLevelSpinButton = builder.get_object("transparency-level-spinbutton");
             let defaultShortcutRadioButton = builder.get_object("default-shortcut-radiobutton");
             let enableToggleOnScrollCheckButton = builder.get_object("enable-toggle-on-scroll-checkbutton");
             let foregroundColorResetButton = builder.get_object("foreground-color-reset-button");
             let backgroundColorResetButton = builder.get_object("background-color-reset-button");
+	    let positionComboBox = builder.get_object("position-combobox");
             this._foregroundColorButton = builder.get_object("foreground-color-button");
             this._backgroundColorButton = builder.get_object("background-color-button");
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
@@ -102,8 +104,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this.pack_start(mainNotebook, true, true, 0);
 
             // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-            terminalHeightEntry.connect("changed", Lang.bind(this, function() {
-                let match = terminalHeightEntry.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i);
+            terminalSizeEntry.connect("changed", Lang.bind(this, function() {
+                let match = terminalSizeEntry.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i);
                 let valid = (match !== null)
 
                 if (valid) {
@@ -114,8 +116,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
                                                          : (value > 0 && value <= 100);
                 }
 
-                terminalHeightEntry["secondary-icon-name"] = valid ? null : "dialog-warning-symbolic";
-                terminalHeightEntry["secondary-icon-tooltip-text"] = valid ? null : _("Invalid syntax or range");
+                terminalSizeEntry["secondary-icon-name"] = valid ? null : "dialog-warning-symbolic";
+                terminalSizeEntry["secondary-icon-tooltip-text"] = valid ? null : _("Invalid syntax or range");
             }));
 
             // configure the tree view column and creates the unique row of the model
@@ -132,8 +134,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._settings.bind(SCROLLBAR_VISIBLE_SETTING_KEY, scrollbarVisibleCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
 
             // binds the terminal height setting
-            this._settings.bind(TERMINAL_HEIGHT_SETTING_KEY, terminalHeightEntry, "text", Gio.SettingsBindFlags.DEFAULT);
-            terminalHeightResetButton.connect("clicked", Lang.bind(this, function() { this._settings.reset(TERMINAL_HEIGHT_SETTING_KEY); }));
+            this._settings.bind(TERMINAL_SIZE_SETTING_KEY, terminalSizeEntry, "text", Gio.SettingsBindFlags.DEFAULT);
+            terminalSizeResetButton.connect("clicked", Lang.bind(this, function() { this._settings.reset(TERMINAL_SIZE_SETTING_KEY); }));
 
             // binds the custom shortcut setting
             this._settings.connect("changed::" + OTHER_SHORTCUT_SETTING_KEY, Lang.bind(this, this._otherShortcutSettingChanged));
@@ -191,6 +193,13 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             }));
 
             transparencyLevelSpinButton.set_value(this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY))
+
+	    // binds the terminal position setting
+	    // this._settings.bind(TERMINAL_POSITION_SETTING_KEY, positionComboBox, "active", Gio.SettingsBindFlags.DEFAULT);
+	    positionComboBox.set_active(this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY));
+	    positionComboBox.connect('changed', Lang.bind (this, function(widget) {
+		    this._settings.set_enum(TERMINAL_POSITION_SETTING_KEY, widget.get_active());
+	    }));
         }
     },
 
