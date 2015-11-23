@@ -100,3 +100,6 @@ v18 (2015-09-23)
 
 v19 (2015-11-04)
 - fix animation and positioning on 3.18 (thanks to imnotjames and daniviga)
+
+v20 (2015-??-??)
+- add configurable position (top/bottom/left/right) (thanks to TonicArtos)
