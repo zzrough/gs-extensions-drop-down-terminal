@@ -235,10 +235,10 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="height-description">
+                      <object class="GtkLabel" id="size-description">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;small&gt;The height in pixels (400px for instance) or in percentage (30% for instance)&lt;/small&gt;</property>
+                        <property name="label" translatable="yes">&lt;small&gt;The size in pixels (400px for instance) or in percentage (30% for instance)&lt;/small&gt;</property>
                         <property name="use_markup">True</property>
                         <property name="ellipsize">start</property>
                         <property name="xalign">0</property>
@@ -250,7 +250,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="height-description-spacer">
+                      <object class="GtkLabel" id="size-description-spacer">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
