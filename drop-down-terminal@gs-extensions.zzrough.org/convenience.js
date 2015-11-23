@@ -51,12 +51,14 @@ function getSettings(extensionPath, extensionId) {
 
 function getInstalledSettings(schema) {
     let installedSchemas = Gio.Settings.list_schemas();
+
     for (i in installedSchemas) {
         if (installedSchemas[i] == schema) {
             return Gio.Settings.new(installedSchemas[i]);
         }
     }
-    return null
+
+    return null;
 }
 
 /*

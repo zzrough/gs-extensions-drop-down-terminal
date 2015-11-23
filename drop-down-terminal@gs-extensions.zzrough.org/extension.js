@@ -192,7 +192,8 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     enable: function() {
-        this._tracker = Shell.WindowTracker.get_default()
+        this._tracker = Shell.WindowTracker.get_default();
+
         // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
         this._childPid = null;
 
@@ -426,6 +427,7 @@ const DropDownTerminalExtension = new Lang.Class({
                             targetY = this._windowY - this._windowActor.height;
                             break;
                     }
+
                     Tweener.addTween(this._windowActor, {
                         x: targetX,
                         y: targetY,
@@ -481,19 +483,20 @@ const DropDownTerminalExtension = new Lang.Class({
 
     _updateWindowGeometry: function() {
         let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+
         // computes the window geometry except the height
         let panelBox = Main.layoutManager.panelBox;
         let sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY);
         let panelHeight = Main.layoutManager.panelBox.height;
-		
+
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-	let screen = global.screen.get_monitor_geometry(global.screen.get_primary_monitor());
-	let x1 = screen.x / scaleFactor;
-	let y1 = screen.y / scaleFactor;
-	let screenHeight = screen.height / scaleFactor;
-	let screenWidth = screen.width / scaleFactor;
-	let x2 = x1 + screenWidth;
-	let y2 = y1 + screenHeight;
+        let screen = global.screen.get_monitor_geometry(global.screen.get_primary_monitor());
+        let x1 = screen.x / scaleFactor;
+        let y1 = screen.y / scaleFactor;
+        let screenHeight = screen.height / scaleFactor;
+        let screenWidth = screen.width / scaleFactor;
+        let x2 = x1 + screenWidth;
+        let y2 = y1 + screenHeight;
 
         switch (terminalPosition) {
             case LEFT_EDGE:
@@ -614,6 +617,7 @@ const DropDownTerminalExtension = new Lang.Class({
                 let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
                 this._windowActor.opacity = 255;
+
                 // Workaround animation bug by making sure the window is partially on screen.
                 let workaround = 1;
 

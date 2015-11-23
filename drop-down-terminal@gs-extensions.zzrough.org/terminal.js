@@ -259,7 +259,6 @@ const DropDownTerminal = new Lang.Class({
                 this._window.move(x, y);
             }
 
-
             if (width != currentWidth || height != currentHeight) {
                 this._window.resize(width, height);
             }
