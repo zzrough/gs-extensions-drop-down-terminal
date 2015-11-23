@@ -502,15 +502,8 @@ const DropDownTerminal = new Lang.Class({
     },
 
     _updateFocusMode: function() {
-        let mode;
-        if (this._desktopSettings == null) {
-            mode = FOCUS_MODE_CLICK;
-            return;
-        } else {
-            mode = this._desktopSettings.get_string(WM_FOCUS_MODE_SETTING_KEY);
-        }
-
-        this._focusMode = mode;
+        this._focusMode = this._desktopSettings ? this._desktopSettings.get_string(WM_FOCUS_MODE_SETTING_KEY)
+                                                : FOCUS_MODE_CLICK;
     },
 
     _windowMouseEnter: function(window, event) {
