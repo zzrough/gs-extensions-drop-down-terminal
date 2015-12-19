@@ -43,6 +43,7 @@ const FOREGROUND_COLOR_SETTING_KEY = "foreground-color";
 const BACKGROUND_COLOR_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
+const ENABLE_AUDIBLE_BELL_KEY = "enable-audible-bell";
 
 // shortcut tree view columns
 const SHORTCUT_COLUMN_KEY  = 0;
@@ -91,6 +92,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let foregroundColorResetButton = builder.get_object("foreground-color-reset-button");
             let backgroundColorResetButton = builder.get_object("background-color-reset-button");
 	    let positionComboBox = builder.get_object("position-combobox");
+            let enableAudibleBellCheckButton = builder.get_object("enable-audible-bell-checkbutton");
             this._foregroundColorButton = builder.get_object("foreground-color-button");
             this._backgroundColorButton = builder.get_object("background-color-button");
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
@@ -162,6 +164,9 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
             this._runCustomCommandCheckButtonToggled();
             this._checkCustomCommandEntry();
+
+            // binds the terminal bett setting
+            this._settings.bind(ENABLE_AUDIBLE_BELL_KEY, enableAudibleBellCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
 
             // binds the color settings
             this._foregroundColorButton.connect("color-set", Lang.bind(this, function() {
@@ -298,7 +303,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
 // preferences init hook
 function init() {
-    
+
 }
 
 // preferences widget building hook
