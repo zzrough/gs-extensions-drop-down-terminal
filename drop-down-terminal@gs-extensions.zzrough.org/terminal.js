@@ -456,6 +456,11 @@ const DropDownTerminal = new Lang.Class({
             this._terminal.set_color_background(bgColor);
         }
 
+        // Note: if the terminal widget uses transparency the window widget has to be 100% transparent.
+        //       setting an invisble background colour is better than setting the opcaity, because changing
+        //       the opcaity also affects all child widgets
+        this._window.override_background_color(Gtk.StateType.NORMAL, isTransparent ? new Gdk.RGBA() : null);
+
         if (this._terminalScrollbar.set_opacity) { // 3.7.10+
             // starting from 3.7.10, all gtk widgets can have their opacity changed
             // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
