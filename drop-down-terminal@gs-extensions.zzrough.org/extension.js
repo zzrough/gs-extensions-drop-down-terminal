@@ -200,7 +200,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._windowActor = null;
         this._firstDisplay = true;
 
-        // initializes if we should toggle on bus name appearance 
+        // initializes if we should toggle on bus name appearance
         this._toggleOnBusNameAppearance = false;
 
         // check dependencies
@@ -766,7 +766,7 @@ const DropDownTerminalExtension = new Lang.Class({
 
         // forgets about the child pid too, it will be find out again at the next toggle if the bus is
         // activated meanwhile
-        this._childPid = null; 
+        this._childPid = null;
     },
 
     _setWindowActor: function(actor) {
@@ -782,7 +782,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _evaluateSizeSpec: function(heightSpec, vertical) {
-        // updates the height from the height spec, so it's picked 
+        // updates the height from the height spec, so it's picked
         let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
 
         if (match === null) {
@@ -819,7 +819,7 @@ const DropDownTerminalExtension = new Lang.Class({
             x1: Math.max(monitor.x, a.x1),
             y1: Math.max(monitor.y, a.y1),
             x2: Math.min(monitor.x + monitor.width, a.x2),
-            y2: Math.min(monitor.y + monitor.height, a.y2) 
+            y2: Math.min(monitor.y + monitor.height, a.y2)
         });
 
         clip.x1 -= this._windowActor.x;
@@ -886,9 +886,9 @@ const DropDownTerminalExtension = new Lang.Class({
         try {
             imports.gi.Vte;
         } catch (e) {
-            // creates and opens the dialog after 1 second 
+            // creates and opens the dialog after 1 second
             Mainloop.timeout_add_seconds(1, function() {
-                new MissingVteDialog().open();            
+                new MissingVteDialog().open();
                 return false;
             });
 

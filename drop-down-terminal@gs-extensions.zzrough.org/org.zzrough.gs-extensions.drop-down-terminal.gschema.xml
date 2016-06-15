@@ -153,6 +153,14 @@
         The custom command to launch in the terminal, only used if the 'run-custom-command' key value is 'true'.
       </description>
     </key>
+
+    <key name="enable-tabs" type="b">
+      <default>true</default>
+      <summary>Enable tabs support</summary>
+      <description>
+        Whether to enable or disable the tabs support.
+      </description>
+    </key>
   </schema>
 </schemalist>
 

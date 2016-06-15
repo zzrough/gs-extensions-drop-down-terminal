@@ -43,6 +43,7 @@ const FOREGROUND_COLOR_SETTING_KEY = "foreground-color";
 const BACKGROUND_COLOR_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
+const ENABLE_TABS_SETTING_KEY = "enable-tabs";
 
 // shortcut tree view columns
 const SHORTCUT_COLUMN_KEY  = 0;
@@ -81,6 +82,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             // gets the interesting builder objects
             let mainNotebook = builder.get_object("main-notebook");
             let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
+
             let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
             let terminalSizeEntry = builder.get_object("terminal-size-entry");
@@ -90,7 +92,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             let enableToggleOnScrollCheckButton = builder.get_object("enable-toggle-on-scroll-checkbutton");
             let foregroundColorResetButton = builder.get_object("foreground-color-reset-button");
             let backgroundColorResetButton = builder.get_object("background-color-reset-button");
-	    let positionComboBox = builder.get_object("position-combobox");
+            let positionComboBox = builder.get_object("position-combobox");
+
             this._foregroundColorButton = builder.get_object("foreground-color-button");
             this._backgroundColorButton = builder.get_object("background-color-button");
             this._otherShortcutRadioButton = builder.get_object("other-shortcut-radiobutton");
@@ -99,6 +102,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._runCustomCommandCheckButton = builder.get_object("run-custom-command-checkbutton");
             this._customCommandBox = builder.get_object("custom-command-box");
             this._customCommandEntry = builder.get_object("custom-command-entry");
+
+            let enableTabsCheckButton = builder.get_object("enable-tabs-checkbutton");
 
             // packs the main box
             this.pack_start(mainNotebook, true, true, 0);
@@ -133,9 +138,12 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             // binds the scrollbar visibility setting
             this._settings.bind(SCROLLBAR_VISIBLE_SETTING_KEY, scrollbarVisibleCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
 
+            this._settings.bind(ENABLE_TABS_SETTING_KEY, enableTabsCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
+
             // binds the terminal height setting
             this._settings.bind(TERMINAL_SIZE_SETTING_KEY, terminalSizeEntry, "text", Gio.SettingsBindFlags.DEFAULT);
             terminalSizeResetButton.connect("clicked", Lang.bind(this, function() { this._settings.reset(TERMINAL_SIZE_SETTING_KEY); }));
+
 
             // binds the custom shortcut setting
             this._settings.connect("changed::" + OTHER_SHORTCUT_SETTING_KEY, Lang.bind(this, this._otherShortcutSettingChanged));
@@ -298,7 +306,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
 // preferences init hook
 function init() {
-    
+
 }
 
 // preferences widget building hook

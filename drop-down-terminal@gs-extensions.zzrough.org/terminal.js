@@ -75,6 +75,7 @@ const COLOR_FOREGROUND_SETTING_KEY = "foreground-color";
 const COLOR_BACKGROUND_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
+const ENABLE_TABS_SETTING_KEY = "enable-tabs";
 
 // gnome desktop wm settings
 const WM_PREFERENCES_SCHEMA = "org.gnome.desktop.wm.preferences";
@@ -135,15 +136,15 @@ const UriHandlingProperties = [
     { pattern: "(?:news:|man:|info:)[[:alnum:]\\Q^_{|}~!\"#$%&'()*+,./;:=?`\\E]+", flavor: UriFlavor.AsIs }
 ];
 
-
 // terminal class
 const DropDownTerminal = new Lang.Class({
     Name: "DropDownTerminal",
+    tabEnumerator: 1,
+    tabs: [],
 
     _init: function() {
         // initializes the state
         this._customCommandArgs = [];
-        this._lastForkFailed = false;
         this._visible = false;
 
         // loads the custom CSS to mimick the shell style
@@ -158,78 +159,99 @@ const DropDownTerminal = new Lang.Class({
         }
 
         Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-        // creates the widgets and lays them out
-        this._actionGroup = new Gtk.ActionGroup({name: "Main"});
-        this._terminal = this._createTerminal();
-        this._terminalBox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
-        this._terminalScrollbar = new Gtk.Scrollbar({ orientation: Gtk.Orientation.VERTICAL,
-                                                      adjustment: this._terminal.get_vadjustment() });
         this._window = this._createWindow();
-        this._popup = this._createPopupAndActions(this._window, this._actionGroup);
 
-        this._terminalBox.pack_start(this._terminal, true, true, 0);
-        this._terminalBox.pack_end(this._terminalScrollbar, false, false, 0);
-        this._window.add(this._terminalBox);
 
-        this._terminal.show();
-        this._terminalBox.show();
+        // Tabs shortcuts
+        this._window.connect('key-press-event', Lang.bind(this, function(window, event) {
+            if (!this._isTabsEnabled) return;
+
+            let defaultMask = Gtk.accelerator_get_default_mod_mask()
+            let [isModified, mask] = event.get_state(true);
+            let [isSymbol, key] = event.get_keyval();
+
+
+            if ((defaultMask & mask) === Gdk.ModifierType.CONTROL_MASK) {
+              switch(Gdk.keyval_to_upper(key)) {
+                case Gdk.KEY_T:
+                  this.addTab('Terminal ' + this.tabEnumerator++);
+                  return Gdk.EVENT_STOP;
+              }
+            }
+
+            if ((defaultMask & mask) === Gdk.ModifierType.MOD1_MASK) {
+              switch(key) {
+                case Gdk.KEY_Left:
+                  this.notebook.prev_page();
+                  return Gdk.EVENT_STOP;
+                case Gdk.KEY_Right:
+                  this.notebook.next_page();
+                  return Gdk.EVENT_STOP;
+              }
+            }
+          })
+        );
+
+        // Notebook - is the default gnome tabs widget
+        this.notebook = new Gtk.Notebook();
+        this.notebook.set_tab_pos(Gtk.PositionType.BOTTOM);
+        this.notebook.set_show_border(true);
+        this.notebook.set_scrollable(true);
+        this.notebook.show()
+
+        this._window.add(this.notebook);
 
         // gets the settings
         this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
         this._interfaceSettings = new Gio.Settings({schema_id: "org.gnome.desktop.interface"});
 
+        this._updateTabsSupport();
         // connect to the settings changes
+
         this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, this._updateFont)));
+          this._applyToAllTabs(function(tab) {
+            Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, function() {
+             this._updateFont(tab);
+            })));
+          });
         }));
 
-        this._settings.connect("changed::" + SCROLLBAR_VISIBLE_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
+        let updateAppearance = Lang.bind(this, function() {
+          this._applyToAllTabs(function(tab) {
+            Convenience.runInGdk(Lang.bind(this, function() { this._updateOpacityAndColors(tab) }));
+          });
+        })
+
+        let updateCommand = Lang.bind(this, function() {
+          this._applyToAllTabs(function(tab) {
+            this._updateCustomCommand(tab)
+          });
+        });
+
+        [
+          SCROLLBAR_VISIBLE_SETTING_KEY,
+          TRANSPARENCY_LEVEL_SETTING_KEY,
+          TRANSPARENT_TERMINAL_SETTING_KEY,
+          COLOR_FOREGROUND_SETTING_KEY,
+          COLOR_BACKGROUND_SETTING_KEY
+        ].forEach(Lang.bind(this, function(key) {
+          this._settings.connect("changed::" + key, updateAppearance);
         }));
 
-        this._settings.connect("changed::" + TRANSPARENCY_LEVEL_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
+        [
+          RUN_CUSTOM_COMMAND_SETTING_KEY,
+          CUSTOM_COMMAND_SETTING_KEY
+        ].forEach(Lang.bind(this, function(key) {
+          this._settings.connect("changed::" + key, updateCommand);
         }));
 
-        this._settings.connect("changed::" + TRANSPARENT_TERMINAL_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
-        }));
-
-        this._settings.connect("changed::" + COLOR_FOREGROUND_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
-        }));
-
-        this._settings.connect("changed::" + COLOR_BACKGROUND_SETTING_KEY, Lang.bind(this, function() {
-            Convenience.runInGdk(Lang.bind(this, this._updateOpacityAndColors));
-        }));
-
-        this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
-        this._settings.connect("changed::" + CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
+        this._settings.connect("changed::" + ENABLE_TABS_SETTING_KEY, Lang.bind(this, this._updateTabsSupport)),
 
         // connect to gnome settings changes
         this._desktopSettings = Convenience.getInstalledSettings(WM_PREFERENCES_SCHEMA);
         if (this._desktopSettings != null) {
             this._desktopSettings.connect("changed::" + WM_FOCUS_MODE_SETTING_KEY, Lang.bind(this, this._updateFocusMode));
         }
-
-        // applies the settings initially
-        this._updateFont();
-        this._updateOpacityAndColors();
-        this._updateCustomCommand();
-        this._updateFocusMode();
-
-        // adds the uri matchers
-        this._uriHandlingPropertiesbyTag = {};
-
-        UriHandlingProperties.forEach(Lang.bind(this, function(hp) {
-            let regex = GLib.Regex.new(hp.pattern, GLib.RegexCompileFlags.CASELESS | GLib.RegexCompileFlags.OPTIMIZE, 0);
-
-            let tag = this._terminal.match_add_gregex(regex, 0);
-            this._terminal.match_set_cursor_type(tag, Gdk.CursorType.HAND2);
-
-            this._uriHandlingPropertiesbyTag[tag] = hp;
-        }));
 
         // asks the session bus to own the interface name
         Gio.DBus.session.own_name("org.zzrough.GsExtensions.DropDownTerminal",
@@ -242,12 +264,82 @@ const DropDownTerminal = new Lang.Class({
         this._bus = Gio.DBusExportedObject.wrapJSObject(DropDownTerminalIface, this);
         this._bus.export(Gio.DBus.session, "/org/zzrough/GsExtensions/DropDownTerminal");
 
-        // forks the user shell early to detect a potential startup error
-        this._forkUserShell();
+        this.addTab('Terminal ' + this.tabEnumerator++);
     },
 
     get Pid() {
         return Convenience.getPid();
+    },
+
+    _applyToAllTabs: function(cb) {
+      this.tabs.forEach(Lang.bind(this, cb));
+    },
+
+    _addUriMatchers: function(tab) {
+        // adds the uri matchers
+        this._uriHandlingPropertiesbyTag = {};
+        UriHandlingProperties.forEach(Lang.bind(this, function(hp) {
+            let regex = GLib.Regex.new(hp.pattern, GLib.RegexCompileFlags.CASELESS | GLib.RegexCompileFlags.OPTIMIZE, 0);
+            let tag = tab.terminal.match_add_gregex(regex, 0);
+            tab.terminal.match_set_cursor_type(tag, Gdk.CursorType.HAND2);
+            this._uriHandlingPropertiesbyTag[tag] = hp;
+        }));
+    },
+
+    addTab: function(tabName) {
+      let tab = this._createTerminalTab();
+      let eventBox = new Gtk.EventBox();
+
+      let label = new Gtk.Label({ halign: Gtk.Align.CENTER, label: tabName, valign: Gtk.Align.CENTER });
+      eventBox.add(label);
+      label.show();
+
+      tab.terminal.popup = this._createPopupAndActions(tab);
+
+      this.tabs.push(tab);
+      this.notebook.append_page(tab.container, eventBox);
+
+      // CLose tab on middle mouse button click
+      eventBox.connect('button-press-event', Lang.bind(this, function(widget, event) {
+        let [isNumberDelivered, button] = event.get_button()
+        if (button === Gdk.BUTTON_MIDDLE) {
+          if (this.notebook.get_n_pages() === 1) return this._forkUserShell(tab.terminal);
+          let pageNum = this.notebook.page_num(tab.container);
+          this._removeTab(pageNum);
+        }
+      }));
+
+      tab.container.show();
+      tab.terminal.show();
+      this.notebook.set_current_page(this.notebook.get_n_pages() - 1);
+
+      this._updateFont(tab);
+      this._updateOpacityAndColors(tab);
+      this._updateCustomCommand(tab);
+      this._addUriMatchers(tab)
+
+      this._forkUserShell(tab.terminal);
+      this._updateFocusMode(tab);
+      return tab;
+    },
+
+    _createTerminalTab: function() {
+        let terminal = this._createTerminalView();
+        let terminalBox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
+        let terminalScrollbar = new Gtk.Scrollbar({ orientation: Gtk.Orientation.VERTICAL,
+                                                    adjustment: terminal.get_vadjustment() })
+
+        let actionGroup = new Gtk.ActionGroup({name: "Main"});
+
+        terminalBox.pack_start(terminal, true, true, 0);
+        terminalBox.pack_end(terminalScrollbar, false, false, 0);
+
+        return {
+          terminal: terminal,
+          container: terminalBox,
+          scrollbar: terminalScrollbar,
+          actionGroup: actionGroup
+        }
     },
 
     SetGeometry: function(x, y, width, height) {
@@ -296,7 +388,7 @@ const DropDownTerminal = new Lang.Class({
         Gtk.main_quit();
     },
 
-    _createTerminal: function() {
+    _createTerminalView: function() {
         let terminal = new Vte.Terminal();
 
         terminal.set_can_focus(true);
@@ -315,8 +407,18 @@ const DropDownTerminal = new Lang.Class({
         }
 
         terminal.set_encoding("UTF-8");
-        terminal.connect("eof", Lang.bind(this, this._forkUserShell));
-        terminal.connect("child-exited", Lang.bind(this, this._forkUserShell));
+        terminal.connect("eof", Lang.bind(this, function() {
+          if (this.notebook.get_n_pages() === 1) return this._forkUserShell(terminal);
+          let pageNum = this.notebook.get_current_page();
+          this._removeTab(pageNum);
+        }));
+
+        terminal.connect("child-exited", Lang.bind(this, function() {
+          if (this.notebook.get_n_pages() === 1) return this._forkUserShell(terminal);
+          let pageNum = this.notebook.get_current_page();
+          this._removeTab(pageNum);
+        }));
+
         terminal.connect("button-release-event", Lang.bind(this, this._terminalButtonReleased));
         terminal.connect("button-press-event", Lang.bind(this, this._terminalButtonPressed));
         terminal.connect("refresh-window", Lang.bind(this, this._refreshWindow));
@@ -326,6 +428,19 @@ const DropDownTerminal = new Lang.Class({
         // terminal.set_colors(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
 
         return terminal;
+    },
+
+    _removeTab: function(pageNum) {
+       this.notebook.remove_page(pageNum);
+       let removedTabs = this.tabs.splice(pageNum, 1);
+       if (removedTabs.length) {
+         removedTab = removedTabs[0];
+         removedTab.terminal.popup.destroy();
+         removedTab.terminal.destroy();
+         removedTab.container.destroy();
+         removedTab.scrollbar.destroy();
+       }
+       return removedTab;
     },
 
     _createWindow: function() {
@@ -359,10 +474,10 @@ const DropDownTerminal = new Lang.Class({
         return window;
     },
 
-    _createPopupAndActions: function() {
+    _createPopupAndActions: function(tab) {
         // get some shortcuts
-        let term = this._terminal;
-        let group = this._actionGroup;
+        let term = tab.terminal;
+        let group = tab.actionGroup;
 
         // creates the actions and fills the action group
         this._createAction("Copy", "Copy", Gtk.STOCK_COPY, "<shift><control>C", group, Lang.bind(term, term.copy_clipboard));
@@ -379,26 +494,26 @@ const DropDownTerminal = new Lang.Class({
         return uiManager.get_widget("/TerminalPopup");
     },
 
-    _forkUserShell: function() {
-        this._terminal.reset(false, true);
+    _forkUserShell: function(terminal) {
+        terminal.reset(false, true);
 
         let args = this._getCommandArgs();
         let success, pid;
 
         try {
-            if (this._terminal.spawn_sync) { // 0.37.0
-                [success, pid] = this._terminal.spawn_sync(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
+            if (terminal.spawn_sync) { // 0.37.0
+                [success, pid] = terminal.spawn_sync(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
                                                            GLib.SpawnFlags.SEARCH_PATH, null, null);
             } else {
-                [success, pid] = this._terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
+                [success, pid] = terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
                                                                   GLib.SpawnFlags.SEARCH_PATH, null);
             }
 
-            this._lastForkFailed = false;
+            terminal._lastForkFailed = false;
         } catch (e) {
             logError(e);
 
-            this._lastForkFailed = true;
+            terminal._lastForkFailed = true;
 
             let cause = e.name + " - " + e.message;
 
@@ -412,10 +527,10 @@ const DropDownTerminal = new Lang.Class({
             }
         }
 
-        if (this._terminal.get_pty) { // 0.37.0
+        if (terminal.get_pty) { // 0.37.0
             // (nothing, the default is the user choice at build-time, which defaults to xterm anyway)
         } else {
-            this._terminal.get_pty_object().set_term("xterm");
+            terminal.get_pty_object().set_term("xterm");
         }
     },
 
@@ -424,14 +539,13 @@ const DropDownTerminal = new Lang.Class({
         this._window.window.invalidate_rect(rect, true);
     },
 
-    _updateFont: function() {
+    _updateFont: function(tab) {
         let fontDescStr = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
         let fontDesc = Pango.FontDescription.from_string(fontDescStr);
-
-        this._terminal.set_font(fontDesc);
+        tab.terminal.set_font(fontDesc);
     },
 
-    _updateOpacityAndColors: function() {
+    _updateOpacityAndColors: function(tab) {
         let isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
         let transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
         let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
@@ -444,44 +558,56 @@ const DropDownTerminal = new Lang.Class({
         let fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
         let bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
 
-        if (this._terminal.set_color_foreground_rgba) { // removed in vte 0.38
-            this._terminal.set_color_foreground_rgba(fgColor);
+        if (tab.terminal.set_color_foreground_rgba) { // removed in vte 0.38
+            tab.terminal.set_color_foreground_rgba(fgColor);
         } else {
-            this._terminal.set_color_foreground(fgColor);
+            tab.terminal.set_color_foreground(fgColor);
         }
 
-        if (this._terminal.set_color_background_rgba) { // removed in vte 0.38
-            this._terminal.set_color_background_rgba(bgColor);
+        if (tab.terminal.set_color_background_rgba) { // removed in vte 0.38
+            tab.terminal.set_color_background_rgba(bgColor);
         } else {
-            this._terminal.set_color_background(bgColor);
+            tab.terminal.set_color_background(bgColor);
         }
 
-        if (this._terminalScrollbar.set_opacity) { // 3.7.10+
+        if (tab.terminal.set_opacity) { // 3.7.10+
             // starting from 3.7.10, all gtk widgets can have their opacity changed
             // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
             this._window.opacity = isTransparent ? 0.999 : 1.0;
-
-            this._terminal.opacity = isTransparent ? transparencyLevel : 1.0;
+            tab.terminal.opacity = isTransparent ? transparencyLevel : 1.0;
 
             // FIXME: not updating after setting change from (transparent to non-transparent)
-            this._terminal.backgroundOpacity = transparencyLevel;
-            this._terminal.backgroundTransparent = isTransparent;
+            tab.terminal.backgroundOpacity = transparencyLevel;
+            tab.terminal.backgroundTransparent = isTransparent;
 
-            this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
+           tab.scrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
+           this.notebook.set_opacity(isTransparent ? transparencyLevel : 1.0);
+
         } else {
             // making the window transparent also makes the font transparent which make it a bit more difficult
             // to read, but making the terminal transparent prevents the scrollbar from being styled correctly
             //
             // we try to do the best we can by using terminal transparency if there is no scrollbar and falling
             // back to window transparency if there is one
-            this._terminal.set_opacity(((isTransparent && !hasScrollbar) ? transparencyLevel : 1.0) * 0xffff);
+            tab.terminal.set_opacity(((isTransparent && !hasScrollbar) ? transparencyLevel : 1.0) * 0xffff);
             this._window.set_opacity((isTransparent && hasScrollbar) ? transparencyLevel : 1.0);
+            this.notebook.set_opacity((isTransparent && hasScrollbar) ? transparencyLevel : 1.0);
         }
 
-        this._terminalScrollbar.visible = hasScrollbar;
+        tab.scrollbar.visible = hasScrollbar;
     },
 
-    _updateCustomCommand: function() {
+    _updateTabsSupport: function() {
+      if (this._settings.get_boolean(ENABLE_TABS_SETTING_KEY)) {
+        this._isTabsEnabled = true;
+        this.notebook.set_show_tabs(true);
+      } else {
+        this._isTabsEnabled = false;
+        this.notebook.set_show_tabs(false);
+      }
+    },
+
+    _updateCustomCommand: function(tab) {
         // get the custom command
         let command;
 
@@ -496,12 +622,12 @@ const DropDownTerminal = new Lang.Class({
 
         // tries to fork the shell again if it fails last time (the user might be trying different values,
         // we do not want the terminal to get stuck)
-        if (this._lastForkFailed) {
-            this._forkUserShell();
+        if (tab.terminal._lastForkFailed) {
+          this._forkUserShell(tab.terminal);
         }
     },
 
-    _updateFocusMode: function() {
+    _updateFocusMode: function(tab) {
         this._focusMode = this._desktopSettings ? this._desktopSettings.get_string(WM_FOCUS_MODE_SETTING_KEY)
                                                 : FOCUS_MODE_CLICK;
     },
@@ -546,9 +672,9 @@ const DropDownTerminal = new Lang.Class({
         // Shift-F10 for Midnight Commander or an app like that)
         //
         // Note: we do not update the paste sensitivity as this requires API not available (Gdk.Atom and SELECTION_CLIPBOARD)
-        //       thus we do not handle copy sensitivity either (this makes more sense and is less code) 
+        //       thus we do not handle copy sensitivity either (this makes more sense and is less code)
         if (is_button && button == Gdk.BUTTON_SECONDARY) {
-            this._popup.popup(null, null, null, button, event.get_time());
+            terminal.popup.popup(null, null, null, button, event.get_time());
             return true;
         }
 
