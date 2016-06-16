@@ -1,8 +1,10 @@
 /* Container fixes */
+window,
 GtkWindow {
     background-color: rgba(0,0,0,0.0);
 }
 
+window *,
 GtkWindow * {
     box-shadow: none; /* removes the container's faint shadow */
 }
