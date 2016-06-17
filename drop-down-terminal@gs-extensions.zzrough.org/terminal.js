@@ -459,11 +459,6 @@ const DropDownTerminal = new Lang.Class({
             this._terminal.set_color_background(bgColor);
         }
 
-        // Note: if the terminal widget uses transparency the window widget has to be 100% transparent.
-        //       setting an invisble background colour is better than setting the opcaity, because changing
-        //       the opcaity also affects all child widgets
-        this._window.override_background_color(Gtk.StateType.NORMAL, isTransparent ? new Gdk.RGBA() : null);
-
         // Note: since the scrollbar has no children we can use opacity here
         this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
         this._terminalScrollbar.visible = hasScrollbar;
