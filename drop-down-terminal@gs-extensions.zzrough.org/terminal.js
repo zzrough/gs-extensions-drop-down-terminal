@@ -75,6 +75,7 @@ const COLOR_FOREGROUND_SETTING_KEY = "foreground-color";
 const COLOR_BACKGROUND_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
+const ENABLE_AUDIBLE_BELL_KEY = "enable-audible-bell";
 
 // gnome desktop wm settings
 const WM_PREFERENCES_SCHEMA = "org.gnome.desktop.wm.preferences";
@@ -207,6 +208,8 @@ const DropDownTerminal = new Lang.Class({
         this._settings.connect("changed::" + RUN_CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
         this._settings.connect("changed::" + CUSTOM_COMMAND_SETTING_KEY, Lang.bind(this, this._updateCustomCommand)),
 
+        this._settings.connect("changed::" + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, this._updateAudibleIndicator));
+
         // connect to gnome settings changes
         this._desktopSettings = Convenience.getInstalledSettings(WM_PREFERENCES_SCHEMA);
         if (this._desktopSettings != null) {
@@ -216,6 +219,7 @@ const DropDownTerminal = new Lang.Class({
         // applies the settings initially
         this._updateFont();
         this._updateOpacityAndColors();
+        this._updateAudibleIndicator();
         this._updateCustomCommand();
         this._updateFocusMode();
 
@@ -481,6 +485,11 @@ const DropDownTerminal = new Lang.Class({
         this._terminalScrollbar.visible = hasScrollbar;
     },
 
+    _updateAudibleIndicator: function () {
+        let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
+        this._terminal.set_audible_bell(enableBell);
+    },
+
     _updateCustomCommand: function() {
         // get the custom command
         let command;
@@ -546,7 +555,7 @@ const DropDownTerminal = new Lang.Class({
         // Shift-F10 for Midnight Commander or an app like that)
         //
         // Note: we do not update the paste sensitivity as this requires API not available (Gdk.Atom and SELECTION_CLIPBOARD)
-        //       thus we do not handle copy sensitivity either (this makes more sense and is less code) 
+        //       thus we do not handle copy sensitivity either (this makes more sense and is less code)
         if (is_button && button == Gdk.BUTTON_SECONDARY) {
             this._popup.popup(null, null, null, button, event.get_time());
             return true;

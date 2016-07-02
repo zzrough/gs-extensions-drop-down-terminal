@@ -16,6 +16,14 @@
       </description>
     </key>
 
+    <key name="enable-audible-bell" type="b">
+      <default>true</default>
+      <summary>Terminal bell</summary>
+      <description>
+        Whether to enable audible confirmation in terminal.
+      </description>
+    </key>
+
     <key name="enable-animation" type="b">
       <default>true</default>
       <summary>Enable the animation</summary>
