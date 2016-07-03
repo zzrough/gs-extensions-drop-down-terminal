@@ -457,6 +457,7 @@ const DropDownTerminal = new Lang.Class({
         // Note: by applying the transparency only to the background colour of the terminal, the text stays
         //       readable in any case
         bgColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha;
+
         if (this._terminal.set_color_background_rgba) { // removed in vte 0.38
             this._terminal.set_color_background_rgba(bgColor);
         } else {
