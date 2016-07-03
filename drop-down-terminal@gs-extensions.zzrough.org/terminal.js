@@ -454,34 +454,17 @@ const DropDownTerminal = new Lang.Class({
             this._terminal.set_color_foreground(fgColor);
         }
 
+        // Note: by applying the transparency only to the background colour of the terminal, the text stays
+        //       readable in any case
+        bgColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha;
         if (this._terminal.set_color_background_rgba) { // removed in vte 0.38
             this._terminal.set_color_background_rgba(bgColor);
         } else {
             this._terminal.set_color_background(bgColor);
         }
 
-        if (this._terminalScrollbar.set_opacity) { // 3.7.10+
-            // starting from 3.7.10, all gtk widgets can have their opacity changed
-            // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
-            this._window.opacity = isTransparent ? 0.999 : 1.0;
-
-            this._terminal.opacity = isTransparent ? transparencyLevel : 1.0;
-
-            // FIXME: not updating after setting change from (transparent to non-transparent)
-            this._terminal.backgroundOpacity = transparencyLevel;
-            this._terminal.backgroundTransparent = isTransparent;
-
-            this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
-        } else {
-            // making the window transparent also makes the font transparent which make it a bit more difficult
-            // to read, but making the terminal transparent prevents the scrollbar from being styled correctly
-            //
-            // we try to do the best we can by using terminal transparency if there is no scrollbar and falling
-            // back to window transparency if there is one
-            this._terminal.set_opacity(((isTransparent && !hasScrollbar) ? transparencyLevel : 1.0) * 0xffff);
-            this._window.set_opacity((isTransparent && hasScrollbar) ? transparencyLevel : 1.0);
-        }
-
+        // Note: since the scrollbar has no children we can use opacity here
+        this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
         this._terminalScrollbar.visible = hasScrollbar;
     },
 
