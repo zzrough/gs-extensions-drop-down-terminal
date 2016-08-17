@@ -105,10 +105,11 @@ v20 (2016-03-25)
 - support up to 3.20
 - add configurable position (top/bottom/left/right) (thanks to TonicArtos)
 
-v21 (2016-07-??)
+v21 (2016-08-17)
 - prepare support for 3.22 (thanks to MedicMomcilo)
 - add preference to toggle audible bell (thanks to Simon Flack)
 - refresh the readme screenshots (thanks to Dennis Schürholz)
 - fixed dash-to-dock compatibility (thanks to Tom Gehrke and Dennis Schürholz)
 - update CSS for gtk 3.20+ (thanks to Rom Grk)
 - new tips/scripts in the wiki (thanks to Rom Grk)
+- use the new gtk3 scrollbars (better look & feel)

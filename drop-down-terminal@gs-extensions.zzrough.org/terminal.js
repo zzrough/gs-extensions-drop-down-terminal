@@ -163,18 +163,16 @@ const DropDownTerminal = new Lang.Class({
         // creates the widgets and lays them out
         this._actionGroup = new Gtk.ActionGroup({name: "Main"});
         this._terminal = this._createTerminal();
-        this._terminalBox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
-        this._terminalScrollbar = new Gtk.Scrollbar({ orientation: Gtk.Orientation.VERTICAL,
-                                                      adjustment: this._terminal.get_vadjustment() });
+        this._terminalSw = new Gtk.ScrolledWindow({ hadjustment: this._terminal.get_hadjustment(),
+                                                    vadjustment: this._terminal.get_vadjustment() });
         this._window = this._createWindow();
         this._popup = this._createPopupAndActions(this._window, this._actionGroup);
 
-        this._terminalBox.pack_start(this._terminal, true, true, 0);
-        this._terminalBox.pack_end(this._terminalScrollbar, false, false, 0);
-        this._window.add(this._terminalBox);
+        this._terminalSw.add(this._terminal);
+        this._window.add(this._terminalSw);
 
         this._terminal.show();
-        this._terminalBox.show();
+        this._terminalSw.show();
 
         // gets the settings
         this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
@@ -464,9 +462,8 @@ const DropDownTerminal = new Lang.Class({
             this._terminal.set_color_background(bgColor);
         }
 
-        // Note: since the scrollbar has no children we can use opacity here
-        this._terminalScrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
-        this._terminalScrollbar.visible = hasScrollbar;
+        this._terminalSw.set_policy(Gtk.PolicyType.AUTOMATIC,
+                                    hasScrollbar ? Gtk.PolicyType.ALWAYS : Gtk.PolicyType.NEVER);
     },
 
     _updateAudibleIndicator: function () {

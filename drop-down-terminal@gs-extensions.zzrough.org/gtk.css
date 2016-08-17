@@ -9,8 +9,12 @@ GtkWindow * {
     box-shadow: none; /* removes the container's faint shadow */
 }
 
-.scrollbar {
-    border-width: 0;
+/* Do not display the undershoot */
+scrolledwindow undershoot.top,
+scrolledwindow undershoot.right,
+scrolledwindow undershoot.bottom,
+scrolledwindow undershoot.left {
+    background-image: none;
 }
 
 /* Mini Reset for best cross-theme compatibility */
