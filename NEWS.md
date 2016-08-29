@@ -114,3 +114,7 @@ v21 (2016-08-17)
 - new tips/scripts in the wiki (thanks to Rom Grk)
 - use the new gtk3 scrollbars (better look & feel)
 - drop support for gnome 3.12 (even Debian is on 3.13 since Jessie)
+
+v22 (2016-08-29)
+- bugfix: [regression on 3.14 (github #158)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/158)
+
