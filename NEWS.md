@@ -118,3 +118,5 @@ v21 (2016-08-17)
 v22 (2016-08-29)
 - bugfix: [regression on 3.14 (github #158)](https://github.com/zzrough/gs-extensions-drop-down-terminal/issues/158)
 
+v23 (2017-01-23)
+- support for 3.22 (thanks to palopezv)
