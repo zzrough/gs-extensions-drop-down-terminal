@@ -478,10 +478,9 @@ const DropDownTerminalExtension = new Lang.Class({
         let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         // computes the window geometry except the height
-        let panelBox = Main.layoutManager.panelBox;
+        let panel = Main.panel;
         let sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY);
-        let panelHeight = Main.layoutManager.panelBox.height;
-
+        let panelHeight = panel.height;
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
         let screen = global.screen.get_monitor_geometry(global.screen.get_primary_monitor());
         let bbox = Main.legacyTray ? Main.legacyTray.actor : screen;
@@ -495,28 +494,28 @@ const DropDownTerminalExtension = new Lang.Class({
         switch (terminalPosition) {
             case LEFT_EDGE:
                 this._windowX = x1;
-                this._windowY = panelBox.y == y1 ? y1 + panelBox.height: y1;
+                this._windowY = panel.y == y1 ? y1 + panel.height: y1;
                 this._windowWidth = this._evaluateSizeSpec(sizeSpec, false);
-                this._windowHeight = panelBox.y == y1 ? screenHeight - panelHeight : screenHeight;
+                this._windowHeight = panel.y == y1 ? screenHeight - panelHeight : screenHeight;
                 break;
             case RIGHT_EDGE:
                 let width = this._evaluateSizeSpec(sizeSpec, false);
                 this._windowX = x2 - width;
-                this._windowY = panelBox.y == y1 ? y1 + panelBox.height: y1;
+                this._windowY = panel.y == y1 ? y1 + panel.height: y1;
                 this._windowWidth = width;
-                this._windowHeight = panelBox.y == y1 ? screenHeight - panelHeight : screenHeight;
+                this._windowHeight = panel.y == y1 ? screenHeight - panelHeight : screenHeight;
                 break;
             case BOTTOM_EDGE:
                 let height = this._evaluateSizeSpec(sizeSpec, true);
                 this._windowX = x1;
-                this._windowY = panelBox.y + panelBox.height == y2 ? y2 - panelBox.height - height: y2 - height;
+                this._windowY = panel.y + panel.height == y2 ? y2 - panel.height - height: y2 - height;
                 this._windowWidth = screenWidth;
                 this._windowHeight = height;
                 break;
             default:
             case TOP_EDGE:
                 this._windowX = x1;
-                this._windowY = panelBox.y == y1 ? y1 + panelBox.height: y1;
+                this._windowY = panel.y == y1 ? y1 + panel.height: y1;
                 this._windowWidth = screenWidth;
                 this._windowHeight = this._evaluateSizeSpec(sizeSpec, true);
                 break;
