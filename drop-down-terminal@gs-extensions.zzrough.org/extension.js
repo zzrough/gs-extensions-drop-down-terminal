@@ -803,9 +803,8 @@ const DropDownTerminalExtension = new Lang.Class({
             let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
             if (vertical) {
-                let monitorHeight = Main.layoutManager.primaryMonitor.height / scaleFactor;
-                let panelHeight = Main.layoutManager.panelBox.height;
-                return parseInt((monitorHeight - panelHeight) * value / 100.0);
+                let usableHeight = (Main.layoutManager.primaryMonitor.height - Main.layoutManager.panelBox.height + 1) / scaleFactor;
+                return parseInt(usableHeight * value / 100.0);
             } else {
                 let monitorWidth = Main.layoutManager.primaryMonitor.width / scaleFactor;
                 return parseInt(monitorWidth * value / 100.0);
