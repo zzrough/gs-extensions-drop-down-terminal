@@ -221,6 +221,12 @@ const DropDownTerminal = new Lang.Class({
           });
         });
 
+        let updateBellSettings = Lang.bind(this, function() {
+          this._applyToAllTabs(function(tab) {
+            this._updateAudibleIndicator(tab)
+          });
+        });
+
         [
           SCROLLBAR_VISIBLE_SETTING_KEY,
           TRANSPARENCY_LEVEL_SETTING_KEY,
@@ -239,7 +245,7 @@ const DropDownTerminal = new Lang.Class({
         }));
 
         this._settings.connect("changed::" + ENABLE_TABS_SETTING_KEY, Lang.bind(this, this._updateTabsSupport));
-        this._settings.connect("changed::" + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, this._updateAudibleIndicator));
+        this._settings.connect("changed::" + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, updateBellSettings));
 
         // connect to gnome settings changes
         this._desktopSettings = Convenience.getInstalledSettings(WM_PREFERENCES_SCHEMA);
@@ -579,9 +585,9 @@ const DropDownTerminal = new Lang.Class({
       }
     },
 
-    _updateAudibleIndicator: function () {
+    _updateAudibleIndicator: function (tab) {
         let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
-        this._terminal.set_audible_bell(enableBell);
+        tab.terminal.set_audible_bell(enableBell);
     },
 
     _updateCustomCommand: function(tab) {
