@@ -75,6 +75,7 @@ const COLOR_FOREGROUND_SETTING_KEY = "foreground-color";
 const COLOR_BACKGROUND_SETTING_KEY = "background-color";
 const RUN_CUSTOM_COMMAND_SETTING_KEY = "run-custom-command";
 const CUSTOM_COMMAND_SETTING_KEY = "custom-command";
+const ENABLE_AUDIBLE_BELL_KEY = "enable-audible-bell";
 const ENABLE_TABS_SETTING_KEY = "enable-tabs";
 
 // gnome desktop wm settings
@@ -136,6 +137,7 @@ const UriHandlingProperties = [
     { pattern: "(?:news:|man:|info:)[[:alnum:]\\Q^_{|}~!\"#$%&'()*+,./;:=?`\\E]+", flavor: UriFlavor.AsIs }
 ];
 
+
 // terminal class
 const DropDownTerminal = new Lang.Class({
     Name: "DropDownTerminal",
@@ -159,8 +161,8 @@ const DropDownTerminal = new Lang.Class({
         }
 
         Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+        
         this._window = this._createWindow();
-
 
         // Tabs shortcuts
         this._window.connect('key-press-event', Lang.bind(this, function(window, event) {
@@ -174,7 +176,7 @@ const DropDownTerminal = new Lang.Class({
             if ((defaultMask & mask) === Gdk.ModifierType.CONTROL_MASK) {
               switch(Gdk.keyval_to_upper(key)) {
                 case Gdk.KEY_T:
-                  this.addTab('Terminal ' + this.tabEnumerator++);
+                  this.addTab('Shell No. ' + this.tabEnumerator++);
                   return Gdk.EVENT_STOP;
               }
             }
@@ -206,21 +208,12 @@ const DropDownTerminal = new Lang.Class({
         this._interfaceSettings = new Gio.Settings({schema_id: "org.gnome.desktop.interface"});
 
         this._updateTabsSupport();
-        // connect to the settings changes
-
-        this._interfaceSettings.connect("changed::" + FONT_NAME_SETTING_KEY, Lang.bind(this, function() {
-          this._applyToAllTabs(function(tab) {
-            Convenience.throttle(200, this, Convenience.gdkRunner(Lang.bind(this, function() {
-             this._updateFont(tab);
-            })));
-          });
-        }));
 
         let updateAppearance = Lang.bind(this, function() {
           this._applyToAllTabs(function(tab) {
             Convenience.runInGdk(Lang.bind(this, function() { this._updateOpacityAndColors(tab) }));
           });
-        })
+        });
 
         let updateCommand = Lang.bind(this, function() {
           this._applyToAllTabs(function(tab) {
@@ -245,7 +238,8 @@ const DropDownTerminal = new Lang.Class({
           this._settings.connect("changed::" + key, updateCommand);
         }));
 
-        this._settings.connect("changed::" + ENABLE_TABS_SETTING_KEY, Lang.bind(this, this._updateTabsSupport)),
+        this._settings.connect("changed::" + ENABLE_TABS_SETTING_KEY, Lang.bind(this, this._updateTabsSupport));
+        this._settings.connect("changed::" + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, this._updateAudibleIndicator));
 
         // connect to gnome settings changes
         this._desktopSettings = Convenience.getInstalledSettings(WM_PREFERENCES_SCHEMA);
@@ -264,14 +258,14 @@ const DropDownTerminal = new Lang.Class({
         this._bus = Gio.DBusExportedObject.wrapJSObject(DropDownTerminalIface, this);
         this._bus.export(Gio.DBus.session, "/org/zzrough/GsExtensions/DropDownTerminal");
 
-        this.addTab('Terminal ' + this.tabEnumerator++);
+        this.addTab('Shell No. ' + this.tabEnumerator++);
     },
 
     get Pid() {
         return Convenience.getPid();
     },
 
-    _applyToAllTabs: function(cb) {
+     _applyToAllTabs: function(cb) {
       this.tabs.forEach(Lang.bind(this, cb));
     },
 
@@ -323,25 +317,22 @@ const DropDownTerminal = new Lang.Class({
       return tab;
     },
 
-    _createTerminalTab: function() {
+     _createTerminalTab: function() {
         let terminal = this._createTerminalView();
-        let terminalBox = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
-        let terminalScrollbar = new Gtk.Scrollbar({ orientation: Gtk.Orientation.VERTICAL,
-                                                    adjustment: terminal.get_vadjustment() })
+        
+        let terminalBox = new Gtk.ScrolledWindow({ hadjustment: terminal.get_hadjustment(),   
+                                                   vadjustment: terminal.get_vadjustment() });
 
         let actionGroup = new Gtk.ActionGroup({name: "Main"});
-
-        terminalBox.pack_start(terminal, true, true, 0);
-        terminalBox.pack_end(terminalScrollbar, false, false, 0);
+        terminalBox.add(terminal);
 
         return {
           terminal: terminal,
-          container: terminalBox,
-          scrollbar: terminalScrollbar,
+          container: terminalBox,          
           actionGroup: actionGroup
         }
     },
-
+    
     SetGeometry: function(x, y, width, height) {
         let [currentX, currentY] = this._window.get_position();
         let [currentWidth, currentHeight] = this._window.get_size();
@@ -405,7 +396,7 @@ const DropDownTerminal = new Lang.Class({
         if (terminal.set_word_chars) {
             terminal.set_word_chars("-A-Za-z0-9_$.+!*(),;:@&=?/~#%");
         }
-
+ 
         terminal.set_encoding("UTF-8");
         terminal.connect("eof", Lang.bind(this, function() {
           if (this.notebook.get_n_pages() === 1) return this._forkUserShell(terminal);
@@ -434,11 +425,10 @@ const DropDownTerminal = new Lang.Class({
        this.notebook.remove_page(pageNum);
        let removedTabs = this.tabs.splice(pageNum, 1);
        if (removedTabs.length) {
-         removedTab = removedTabs[0];
+         let removedTab = removedTabs[0];
          removedTab.terminal.popup.destroy();
          removedTab.terminal.destroy();
-         removedTab.container.destroy();
-         removedTab.scrollbar.destroy();
+         removedTab.container.destroy();         
        }
        return removedTab;
     },
@@ -542,6 +532,7 @@ const DropDownTerminal = new Lang.Class({
     _updateFont: function(tab) {
         let fontDescStr = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
         let fontDesc = Pango.FontDescription.from_string(fontDescStr);
+
         tab.terminal.set_font(fontDesc);
     },
 
@@ -557,12 +548,16 @@ const DropDownTerminal = new Lang.Class({
         //       and passing a GdkRGBA would raise an exception
         let fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
         let bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
-
+        
         if (tab.terminal.set_color_foreground_rgba) { // removed in vte 0.38
             tab.terminal.set_color_foreground_rgba(fgColor);
         } else {
             tab.terminal.set_color_foreground(fgColor);
         }
+
+        // Note: by applying the transparency only to the background colour of the terminal, the text stays
+        //       readable in any case
+        bgColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha;
 
         if (tab.terminal.set_color_background_rgba) { // removed in vte 0.38
             tab.terminal.set_color_background_rgba(bgColor);
@@ -570,31 +565,8 @@ const DropDownTerminal = new Lang.Class({
             tab.terminal.set_color_background(bgColor);
         }
 
-        if (tab.terminal.set_opacity) { // 3.7.10+
-            // starting from 3.7.10, all gtk widgets can have their opacity changed
-            // https://git.gnome.org/browse/gtk+/commit/?id=e12d3cea4751435556f6d122be9033a33576895c
-            this._window.opacity = isTransparent ? 0.999 : 1.0;
-            tab.terminal.opacity = isTransparent ? transparencyLevel : 1.0;
-
-            // FIXME: not updating after setting change from (transparent to non-transparent)
-            tab.terminal.backgroundOpacity = transparencyLevel;
-            tab.terminal.backgroundTransparent = isTransparent;
-
-           tab.scrollbar.set_opacity(isTransparent ? transparencyLevel : 1.0);
-           this.notebook.set_opacity(isTransparent ? transparencyLevel : 1.0);
-
-        } else {
-            // making the window transparent also makes the font transparent which make it a bit more difficult
-            // to read, but making the terminal transparent prevents the scrollbar from being styled correctly
-            //
-            // we try to do the best we can by using terminal transparency if there is no scrollbar and falling
-            // back to window transparency if there is one
-            tab.terminal.set_opacity(((isTransparent && !hasScrollbar) ? transparencyLevel : 1.0) * 0xffff);
-            this._window.set_opacity((isTransparent && hasScrollbar) ? transparencyLevel : 1.0);
-            this.notebook.set_opacity((isTransparent && hasScrollbar) ? transparencyLevel : 1.0);
-        }
-
-        tab.scrollbar.visible = hasScrollbar;
+        tab.container.set_policy(Gtk.PolicyType.AUTOMATIC,
+                                    hasScrollbar ? Gtk.PolicyType.ALWAYS : Gtk.PolicyType.NEVER);        
     },
 
     _updateTabsSupport: function() {
@@ -605,6 +577,11 @@ const DropDownTerminal = new Lang.Class({
         this._isTabsEnabled = false;
         this.notebook.set_show_tabs(false);
       }
+    },
+
+    _updateAudibleIndicator: function () {
+        let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
+        this._terminal.set_audible_bell(enableBell);
     },
 
     _updateCustomCommand: function(tab) {
@@ -622,9 +599,9 @@ const DropDownTerminal = new Lang.Class({
 
         // tries to fork the shell again if it fails last time (the user might be trying different values,
         // we do not want the terminal to get stuck)
-        if (tab.terminal._lastForkFailed) {
+       if (tab.terminal._lastForkFailed) {
           this._forkUserShell(tab.terminal);
-        }
+       }
     },
 
     _updateFocusMode: function(tab) {

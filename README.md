@@ -10,7 +10,8 @@ Screenshots
 ![Terminal](https://github.com/zzrough/gs-extensions-drop-down-terminal/raw/master/screenshot-term.png)
 
 ### Preferences
-![Preferences](https://github.com/zzrough/gs-extensions-drop-down-terminal/raw/master/screenshot-prefs.png)
+![Preferences](https://github.com/zzrough/gs-extensions-drop-down-terminal/raw/master/screenshot-prefs-1.png)
+![Preferences](https://github.com/zzrough/gs-extensions-drop-down-terminal/raw/master/screenshot-prefs-2.png)
 
 Additional shortcuts
 --------------------

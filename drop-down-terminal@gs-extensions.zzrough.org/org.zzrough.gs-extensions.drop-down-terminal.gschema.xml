@@ -16,6 +16,14 @@
       </description>
     </key>
 
+    <key name="enable-audible-bell" type="b">
+      <default>true</default>
+      <summary>Terminal bell</summary>
+      <description>
+        Whether to enable audible confirmation in terminal.
+      </description>
+    </key>
+
     <key name="enable-animation" type="b">
       <default>true</default>
       <summary>Enable the animation</summary>
@@ -155,10 +163,10 @@
     </key>
 
     <key name="enable-tabs" type="b">
-      <default>true</default>
-      <summary>Enable tabs support</summary>
+      <default>false</default>
+      <summary>Enable tabs</summary>
       <description>
-        Whether to enable or disable the tabs support.
+        Whether to enable or disable the tabs
       </description>
     </key>
   </schema>

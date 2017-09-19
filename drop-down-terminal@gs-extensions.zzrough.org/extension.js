@@ -484,10 +484,11 @@ const DropDownTerminalExtension = new Lang.Class({
 
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
         let screen = global.screen.get_monitor_geometry(global.screen.get_primary_monitor());
-        let x1 = screen.x / scaleFactor;
-        let y1 = screen.y / scaleFactor;
-        let screenHeight = screen.height / scaleFactor;
-        let screenWidth = screen.width / scaleFactor;
+        let bbox = Main.legacyTray ? Main.legacyTray.actor : screen;
+        let x1 = bbox.x / scaleFactor;
+        let y1 = bbox.y / scaleFactor;
+        let screenHeight = bbox.height / scaleFactor;
+        let screenWidth = bbox.width / scaleFactor;
         let x2 = x1 + screenWidth;
         let y2 = y1 + screenHeight;
 
