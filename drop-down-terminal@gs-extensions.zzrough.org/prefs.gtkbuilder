@@ -921,11 +921,12 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;CTRL+T&lt;/b&gt; -  Open a new tab
-&lt;b&gt;ALT+LEFT&lt;/b&gt; - Switch to a previous tab
-&lt;b&gt;ALT+RIGHT&lt;/b&gt; - Switch to a next tab
-&lt;b&gt;Middle mouse button&lt;/b&gt; -  Close tab
-</property>
+                    <property name="label" translatable="yes">
+                        &lt;b&gt;Ctrl+T&lt;/b&gt; -  Open a new tab
+                        &lt;b&gt;Alt+Left&lt;/b&gt; - Switch to the previous tab
+                        &lt;b&gt;Alt+Right&lt;/b&gt; - Switch to the next tab
+                        &lt;b&gt;Middle mouse button&lt;/b&gt; -  Close tab
+                    </property>
                     <property name="use_markup">True</property>
                     <property name="wrap">True</property>
                   </object>
