@@ -176,7 +176,7 @@ const DropDownTerminal = new Lang.Class({
             if ((defaultMask & mask) === Gdk.ModifierType.CONTROL_MASK) {
               switch(Gdk.keyval_to_upper(key)) {
                 case Gdk.KEY_T:
-                  this.addTab('Shell No. ' + this.tabEnumerator++);
+                  this.addTab();
                   return Gdk.EVENT_STOP;
               }
             }
@@ -201,7 +201,13 @@ const DropDownTerminal = new Lang.Class({
         this.notebook.set_scrollable(true);
         this.notebook.show()
 
-        this._window.add(this.notebook);
+        let plusButton = new Gtk.Button({label: "+"});
+        plusButton.connect("clicked", Lang.bind(this, this.addTab))
+
+        this.notebook.set_action_widget(plusButton, Gtk.PackType.END);
+        
+        this._window.add(this.notebook);        
+        plusButton.show();
 
         // gets the settings
         this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
@@ -264,7 +270,7 @@ const DropDownTerminal = new Lang.Class({
         this._bus = Gio.DBusExportedObject.wrapJSObject(DropDownTerminalIface, this);
         this._bus.export(Gio.DBus.session, "/org/zzrough/GsExtensions/DropDownTerminal");
 
-        this.addTab('Shell No. ' + this.tabEnumerator++);
+        this.addTab();
     },
 
     get Pid() {
@@ -286,7 +292,8 @@ const DropDownTerminal = new Lang.Class({
         }));
     },
 
-    addTab: function(tabName) {
+    addTab: function() {
+      let tabName = 'Shell No. ' + this.tabEnumerator++;
       let tab = this._createTerminalTab();
       let eventBox = new Gtk.EventBox();
 
@@ -430,8 +437,9 @@ const DropDownTerminal = new Lang.Class({
     _removeTab: function(pageNum) {
        this.notebook.remove_page(pageNum);
        let removedTabs = this.tabs.splice(pageNum, 1);
+       let removedTab = null
        if (removedTabs.length) {
-         let removedTab = removedTabs[0];
+         removedTab = removedTabs[0];
          removedTab.terminal.popup.destroy();
          removedTab.terminal.destroy();
          removedTab.container.destroy();         
