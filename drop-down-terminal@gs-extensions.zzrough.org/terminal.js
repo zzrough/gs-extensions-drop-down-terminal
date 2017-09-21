@@ -173,7 +173,7 @@ const DropDownTerminal = new Lang.Class({
             let [isSymbol, key] = event.get_keyval();
 
 
-            if ((defaultMask & mask) === Gdk.ModifierType.CONTROL_MASK) {
+            if ((defaultMask & mask) === Gdk.ModifierType.CONTROL_MASK + Gdk.ModifierType.SHIFT_MASK) {
               switch(Gdk.keyval_to_upper(key)) {
                 case Gdk.KEY_T:
                   this.addTab();
