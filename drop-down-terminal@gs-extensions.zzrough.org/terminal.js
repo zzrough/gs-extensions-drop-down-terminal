@@ -16,6 +16,10 @@
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 const Lang = imports.lang;
 
+imports.gi.versions.Gdk = "3.0";
+imports.gi.versions.GdkX11 = "3.0";
+imports.gi.versions.Gtk = "3.0";
+
 const Pango = imports.gi.Pango;
 const Gdk = imports.gi.Gdk;
 const GdkX11 = imports.gi.GdkX11;

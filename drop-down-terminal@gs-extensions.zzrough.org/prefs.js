@@ -18,6 +18,8 @@
 const Lang = imports.lang;
 const Gettext = imports.gettext.domain('drop-down-terminal');
 
+imports.gi.versions.Gtk = "3.0";
+
 const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 const Gio = imports.gi.Gio;
