@@ -723,7 +723,7 @@ const DropDownTerminal = new Lang.Class({
         delete env["GNOME_DESKTOP_ICON"];
 
         env["COLORTERM"] = "drop-down-terminal";
-        env["TERM"] = "xterm";
+        env["TERM"] = "xterm-256color";
 
         // gets an array of key=value pairs
         let envArray = [];
