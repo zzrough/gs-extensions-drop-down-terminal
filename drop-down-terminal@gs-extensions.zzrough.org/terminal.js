@@ -141,7 +141,6 @@ const UriHandlingProperties = [
 // terminal class
 const DropDownTerminal = new Lang.Class({
     Name: "DropDownTerminal",
-    tabEnumerator: 1,
     tabs: [],
 
     _init: function() {
@@ -293,8 +292,9 @@ const DropDownTerminal = new Lang.Class({
     },
 
     addTab: function() {
-      let tabName = 'Shell No. ' + this.tabEnumerator++;
       let tab = this._createTerminalTab();
+      tab.number = this.tabs.length ? Math.max(...(this.tabs.map(tab => tab.number))) + 1 : 1;
+      let tabName = 'Shell No. ' + tab.number;
       let eventBox = new Gtk.EventBox();
 
       let label = new Gtk.Label({ halign: Gtk.Align.CENTER, label: tabName, valign: Gtk.Align.CENTER });
@@ -394,6 +394,9 @@ const DropDownTerminal = new Lang.Class({
 
     _createTerminalView: function() {
         let terminal = new Vte.Terminal();
+      
+        let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
+        terminal.set_audible_bell(enableBell);
 
         terminal.set_can_focus(true);
         terminal.set_allow_bold(true);
