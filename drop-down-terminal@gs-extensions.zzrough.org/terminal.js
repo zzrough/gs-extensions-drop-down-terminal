@@ -173,7 +173,7 @@ const DropDownTerminal = new Lang.Class({
             if (!this._isTabsEnabled) return;
 
             let defaultMask = Gtk.accelerator_get_default_mod_mask()
-            let [isModified, mask] = event.get_state(true);
+            let [isModified, mask] = event.get_state();
             let [isSymbol, key] = event.get_keyval();
 
 
@@ -399,6 +399,7 @@ const DropDownTerminal = new Lang.Class({
 
     _createTerminalView: function() {
         let terminal = new Vte.Terminal();
+
       
         let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
         terminal.set_audible_bell(enableBell);
@@ -417,7 +418,7 @@ const DropDownTerminal = new Lang.Class({
         if (terminal.set_word_chars) {
             terminal.set_word_chars("-A-Za-z0-9_$.+!*(),;:@&=?/~#%");
         }
- 
+
         terminal.set_encoding("UTF-8");
         terminal.connect("eof", Lang.bind(this, function() {
           if (this.notebook.get_n_pages() === 1) return this._forkUserShell(terminal);
