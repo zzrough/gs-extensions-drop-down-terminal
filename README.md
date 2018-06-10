@@ -1,17 +1,17 @@
 gs-extensions-drop-down-terminal
 ================================
 
-Drop Down Terminal extension for the Gnome Shell
+Drop Down Terminal extension for the Gnome Shell with basic tabs support
 
 Screenshots
 -----------
 
 ### Terminal
-![Terminal](https://github.com/zzrough/gs-extensions-drop-down-terminal/raw/master/screenshot-term.png)
+![Terminal](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-term.png)
 
 ### Preferences
-![Preferences](https://github.com/zzrough/gs-extensions-drop-down-terminal/raw/master/screenshot-prefs-1.png)
-![Preferences](https://github.com/zzrough/gs-extensions-drop-down-terminal/raw/master/screenshot-prefs-2.png)
+![Preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-1.png)
+![Preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-2.png)
 
 Additional shortcuts
 --------------------
