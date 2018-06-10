@@ -1,8 +1,9 @@
-gs-extensions-drop-down-terminal
+Gnome shell drop-down-terminal extension with tabs
 ================================
 
-Drop Down Terminal extension for the Gnome Shell with basic tabs support
-This is a fork from https://github.com/zzrough/gs-extensions-drop-down-terminal
+Drop Down Terminal extension for the Gnome Shell with basic **tabs support**.
+
+*This is a fork from https://github.com/zzrough/gs-extensions-drop-down-terminal*
 
 Screenshots
 -----------
