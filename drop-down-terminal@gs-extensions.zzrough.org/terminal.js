@@ -294,7 +294,7 @@ const DropDownTerminal = new Lang.Class({
     addTab: function() {
       let tab = this._createTerminalTab();
       tab.number = this.tabs.length ? Math.max(...(this.tabs.map(tab => tab.number))) + 1 : 1;
-      let tabName = 'Shell No. ' + this.tabEnumerator++;
+      let tabName = 'Shell No. ' + tab.number;
       let eventBox = new Gtk.EventBox();
 
       let label = new Gtk.Label({ halign: Gtk.Align.CENTER, label: tabName, valign: Gtk.Align.CENTER });
