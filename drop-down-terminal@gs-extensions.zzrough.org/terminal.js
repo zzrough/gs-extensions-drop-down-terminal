@@ -59,6 +59,7 @@ const PopupUi =
         <popup name="TerminalPopup">   \
             <menuitem action="Copy"/>  \
             <menuitem action="Paste"/> \
+            <menuitem action="Close"/> \
         </popup>                       \
     </ui>';
 
@@ -493,6 +494,11 @@ const DropDownTerminal = new Lang.Class({
         // creates the actions and fills the action group
         this._createAction("Copy", "Copy", Gtk.STOCK_COPY, "<shift><control>C", group, Lang.bind(term, term.copy_clipboard));
         this._createAction("Paste", "Paste", Gtk.STOCK_PASTE, "<shift><control>V", group, Lang.bind(term, term.paste_clipboard));
+        this._createAction("Close", "Close", Gtk.STOCK_STOP, "<shift><control>D", group, () => {
+          if (this.notebook.get_n_pages() === 1) return this._forkUserShell(tab.terminal);
+          let pageNum = this.notebook.page_num(tab.container);
+          this._removeTab(pageNum);
+        });
 
         // creates the UI manager
         let uiManager = new Gtk.UIManager();
@@ -504,6 +510,7 @@ const DropDownTerminal = new Lang.Class({
 
         return uiManager.get_widget("/TerminalPopup");
     },
+
 
     _forkUserShell: function(terminal) {
         terminal.reset(false, true);
