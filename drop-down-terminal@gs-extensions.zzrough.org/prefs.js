@@ -18,8 +18,6 @@
 const Lang = imports.lang;
 const Gettext = imports.gettext.domain('drop-down-terminal');
 
-imports.gi.versions.Gtk = "3.0";
-
 const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 const Gio = imports.gi.Gio;
@@ -32,6 +30,8 @@ const Convenience = Me.imports.convenience;
 
 // setting keys
 const ENABLE_ANIMATION_SETTING_KEY = "enable-animation";
+const OPENING_ANIMATION_TIME_SETTING_KEY = "opening-animation-time";
+const CLOSING_ANIMATION_TIME_SETTING_KEY = "closing-animation-time";
 const TRANSPARENT_TERMINAL_SETTING_KEY = "transparent-terminal";
 const SCROLLBAR_VISIBLE_SETTING_KEY = "scrollbar-visible";
 const TERMINAL_SIZE_SETTING_KEY = "terminal-size";
@@ -85,6 +85,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             // gets the interesting builder objects
             let mainNotebook = builder.get_object("main-notebook");
             let enableAnimationCheckButton = builder.get_object("enable-animation-checkbutton");
+            let openingAnimationTimeSpinButton = builder.get_object("opening-animation-time-spinbutton");
+            let closingAnimationTimeSpinButton = builder.get_object("closing-animation-time-spinbutton");
             let transparentTerminalCheckButton = builder.get_object("transparent-terminal-checkbutton");
             let scrollbarVisibleCheckButton = builder.get_object("scrollbar-visible-checkbutton");
             let terminalSizeEntry = builder.get_object("terminal-size-entry");
@@ -106,7 +108,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
             this._runCustomCommandCheckButton = builder.get_object("run-custom-command-checkbutton");
             this._customCommandBox = builder.get_object("custom-command-box");
             this._customCommandEntry = builder.get_object("custom-command-entry");
-           
+
 
             // packs the main box
             this.pack_start(mainNotebook, true, true, 0);
@@ -134,6 +136,17 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
             // binds the animation enablement setting
             this._settings.bind(ENABLE_ANIMATION_SETTING_KEY, enableAnimationCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
+
+            // binds the animation time settings
+            openingAnimationTimeSpinButton.connect('value-changed', Lang.bind(this, function(button) {
+                this._settings.set_uint(OPENING_ANIMATION_TIME_SETTING_KEY, button.get_value_as_int());
+            }));
+            openingAnimationTimeSpinButton.set_value(this._settings.get_uint(OPENING_ANIMATION_TIME_SETTING_KEY))
+
+            closingAnimationTimeSpinButton.connect('value-changed', Lang.bind(this, function(button) {
+                this._settings.set_uint(CLOSING_ANIMATION_TIME_SETTING_KEY, button.get_value_as_int());
+            }));
+            closingAnimationTimeSpinButton.set_value(this._settings.get_uint(CLOSING_ANIMATION_TIME_SETTING_KEY))
 
             // binds the terminal transparency setting
             this._settings.bind(TRANSPARENT_TERMINAL_SETTING_KEY, transparentTerminalCheckButton, "active", Gio.SettingsBindFlags.DEFAULT);
@@ -322,4 +335,3 @@ function buildPrefsWidget() {
 
     return widget;
 }
-
