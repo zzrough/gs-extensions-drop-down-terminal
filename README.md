@@ -5,6 +5,13 @@ Drop Down Terminal extension for the Gnome Shell with basic **tabs support**.
 
 *This is a fork from https://github.com/zzrough/gs-extensions-drop-down-terminal*
 
+Install
+-----------
+
+    $ git clone https://github.com/bigbn/gs-extensions-drop-down-terminal.git /tmp/drop-down-terminal
+    $ cp -R /tmp/drop-down-terminal/drop-down-terminal@gs-extensions.zzrough.org ~/.local/share/gnome-shell/extensions/
+
+
 Screenshots
 -----------
 
