@@ -207,7 +207,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._checkDependencies();
 
         // animation setup
-        this._display = global.screen.get_display();
+        this._display = global.screen ? global.screen.get_display() : global.display;
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
         this._actorMappedHandlerId = global.window_manager.connect("map", Lang.bind(this, this._windowMapped));
 
@@ -475,6 +475,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _updateWindowGeometry: function() {
+        let screenProxy = global.screen || global.display
         let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         // computes the window geometry except the height
@@ -483,7 +484,7 @@ const DropDownTerminalExtension = new Lang.Class({
         let panelHeight = Main.layoutManager.panelBox.height;
 
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let screen = global.screen.get_monitor_geometry(global.screen.get_primary_monitor());
+        let screen = screenProxy.get_monitor_geometry(screenProxy.get_primary_monitor());
         let bbox = Main.legacyTray ? Main.legacyTray.actor : screen;
         let x1 = bbox.x / scaleFactor;
         let y1 = bbox.y / scaleFactor;
