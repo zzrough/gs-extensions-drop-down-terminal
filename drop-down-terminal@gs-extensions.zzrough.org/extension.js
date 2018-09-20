@@ -211,7 +211,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._checkDependencies();
 
         // animation setup
-        this._display = global.screen.get_display();
+        this._display = global.screen ? global.screen.get_display() : global.display;
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
         this._actorMappedHandlerId = global.window_manager.connect("map", Lang.bind(this, this._windowMapped));
 
@@ -479,6 +479,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _updateWindowGeometry: function() {
+        let screenProxy = global.screen || global.display
         let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         // computes the window geometry except the height
@@ -487,7 +488,7 @@ const DropDownTerminalExtension = new Lang.Class({
         let panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0;
 
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let workarea = Main.layoutManager.getWorkAreaForMonitor(global.screen.get_primary_monitor());
+        let workarea = Main.layoutManager.getWorkAreaForMonitor(screenProxy.get_primary_monitor());
         let x1 = workarea.x / scaleFactor;
         let y1 = workarea.y / scaleFactor;
         let screenHeight = workarea.height / scaleFactor;
@@ -538,7 +539,7 @@ const DropDownTerminalExtension = new Lang.Class({
     _bindShortcut: function() {
         if (Main.wm.addKeybinding && Shell.ActionMode) // introduced in 3.16
             Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
-                                  Shell.ActionMode.NORMAL | Shell.ActionMode.MESSAGE_TRAY,
+                                  Shell.ActionMode.NORMAL,
                                   Lang.bind(this, this._toggle));
         else if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced in 3.7.5
             Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
