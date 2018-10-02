@@ -479,7 +479,7 @@ const DropDownTerminalExtension = new Lang.Class({
     },
 
     _updateWindowGeometry: function() {
-        let screenProxy = global.screen || global.display
+        let screenProxy = global.screen || global.display;
         let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         // computes the window geometry except the height
