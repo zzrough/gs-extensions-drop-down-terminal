@@ -120,3 +120,6 @@ v22 (2016-08-29)
 
 v23 (2017-01-23)
 - support for 3.22 (thanks to palopezv)
+
+v24 (2018-11-11)
+- support for 3.30 (thanks to Herbert Snorrason)
