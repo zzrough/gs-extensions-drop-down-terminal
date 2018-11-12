@@ -207,7 +207,7 @@ const DropDownTerminalExtension = new Lang.Class({
         this._checkDependencies();
 
         // animation setup
-        this._display = global.screen ? global.screen.get_display() : global.display;
+        this._display = typeof global.screen === "undefined" ? global.display : global.screen.get_display();
         this._windowCreatedHandlerId = this._display.connect("window-created", Lang.bind(this, this._windowCreated));
         this._actorMappedHandlerId = global.window_manager.connect("map", Lang.bind(this, this._windowMapped));
 
