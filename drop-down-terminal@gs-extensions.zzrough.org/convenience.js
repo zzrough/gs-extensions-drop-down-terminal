@@ -15,53 +15,51 @@
 
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
-const Lang = imports.lang;
-const MainLoop = imports.mainloop;
+const Lang = imports.lang
+const MainLoop = imports.mainloop
 
-imports.gi.versions.Gdk = "3.0";
-imports.gi.versions.Gtk = "3.0";
+imports.gi.versions.Gdk = '3.0'
+imports.gi.versions.Gtk = '3.0'
 
-const Gdk = imports.gi.Gdk;
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const Gtk = imports.gi.Gtk;
+const Gdk = imports.gi.Gdk
+const Gio = imports.gi.Gio
+const GLib = imports.gi.GLib
+const Gtk = imports.gi.Gtk
 
+const GLIB_VERSION = GLib.MAJOR_VERSION * 10000 +
+                   GLib.MINOR_VERSION * 100 +
+                   GLib.MICRO_VERSION
 
-const GLIB_VERSION = GLib.MAJOR_VERSION * 10000
-                   + GLib.MINOR_VERSION * 100
-                   + GLib.MICRO_VERSION;
+const GTK_VERSION = Gtk.MAJOR_VERSION * 10000 +
+                  Gtk.MINOR_VERSION * 100 +
+                  Gtk.MICRO_VERSION
 
-const GTK_VERSION = Gtk.MAJOR_VERSION * 10000
-                  + Gtk.MINOR_VERSION * 100
-                  + Gtk.MICRO_VERSION;
+function getSettings (extensionPath, extensionId) {
+  let defaultSource = Gio.SettingsSchemaSource.get_default()
+  let source = Gio.SettingsSchemaSource.new_from_directory(extensionPath, defaultSource, false) // trusted = false
 
+  let schemaId = 'org.zzrough.gs-extensions.' + extensionId
+  let schema = source.lookup(schemaId, false) // recursive = false
 
-function getSettings(extensionPath, extensionId) {
-    let defaultSource = Gio.SettingsSchemaSource.get_default();
-    let source = Gio.SettingsSchemaSource.new_from_directory(extensionPath, defaultSource, false); // trusted = false
+  if (!schema) {
+    throw new Error('Schema ' + schemaId + ' could not be found in the path ' + extensionPath)
+  }
 
-    let schemaId = 'org.zzrough.gs-extensions.' + extensionId;
-    let schema = source.lookup(schemaId, false); // recursive = false
-
-    if (!schema) {
-       throw new Error("Schema " + schemaId + " could not be found in the path " + extensionPath); 
-    }
-
-    return new Gio.Settings({
-        settings_schema: schema
-    });
+  return new Gio.Settings({
+    settings_schema: schema
+  })
 }
 
-function getInstalledSettings(schema) {
-    let installedSchemas = Gio.Settings.list_schemas();
+function getInstalledSettings (schema) {
+  let installedSchemas = Gio.Settings.list_schemas()
 
-    for (let i in installedSchemas) {
-        if (installedSchemas[i] == schema) {
-            return Gio.Settings.new(installedSchemas[i]);
-        }
+  for (let i in installedSchemas) {
+    if (installedSchemas[i] == schema) {
+      return Gio.Settings.new(installedSchemas[i])
     }
+  }
 
-    return null;
+  return null
 }
 
 /*
@@ -77,19 +75,18 @@ function getInstalledSettings(schema) {
  * @func: the delegate function to call in the mainloop
  * @args: the possible args, or null or undefined if no argument should be passed
  */
-function throttle(interval, scope, func, args) {
-    if (func._throttlingId !== undefined) {
-        MainLoop.source_remove(func._throttlingId);
-    }
+function throttle (interval, scope, func, args) {
+  if (func._throttlingId !== undefined) {
+    MainLoop.source_remove(func._throttlingId)
+  }
 
-    func._throttlingId = MainLoop.timeout_add(interval, function() {
-        func.apply(scope, args);
-        delete func._throttlingId;
+  func._throttlingId = MainLoop.timeout_add(interval, function () {
+    func.apply(scope, args)
+    delete func._throttlingId
 
-        return false;
-    });
+    return false
+  })
 }
-
 
 /**
  * Adds the specified idle function to be processed by the GDK thread, with
@@ -97,32 +94,29 @@ function throttle(interval, scope, func, args) {
  *
  * @func: the function to execute within the GDK lock
  */
-function runInGdk(func) {
-    Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, func);
+function runInGdk (func) {
+  Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE, func)
 }
-
 
 /**
  * Creates a runner used to execute a function in the GDK thread.
  *
  * @func: the function to execute within the GDK lock
  */
-function gdkRunner(func) {
-    return function() {
-        runInGdk(func);
-    };
+function gdkRunner (func) {
+  return function () {
+    runInGdk(func)
+  }
 }
-
 
 /**
  * Returns the pid of the active process.
  *
  * @return the pid
  */
-function getPid() {
-    return new Gio.Credentials().get_unix_pid();
+function getPid () {
+  return new Gio.Credentials().get_unix_pid()
 }
-
 
 /**
  * Parses a Gdk.RGBA color of the form "#rgb",
@@ -130,9 +124,8 @@ function getPid() {
  *
  * @return the color parsed
  */
-function parseRgbaColor(spec) {
-    let col = new Gdk.RGBA();
-    col.parse(spec);
-    return col;
+function parseRgbaColor (spec) {
+  let col = new Gdk.RGBA()
+  col.parse(spec)
+  return col
 }
-
