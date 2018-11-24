@@ -1,9 +1,0 @@
-{
-  "id": "drop-down-terminal",
-  "uuid": "drop-down-terminal@gs-extensions.zzrough.org",
-  "name": "Drop Down Terminal",
-  "description": "Drop down terminal toggled by a keystroke (the key above tab by default) for advanced users.",
-  "shell-version": ["3.14", "3.16", "3.18", "3.19.91", "3.19.92", "3.20", "3.21.1", "3.21.2", "3.21.3", "3.21.4", "3.22", "3.24", "3.26", "3.26.1", "3.26.2", "3.28.0", "3.28.1", "3.28.2", "3.30.0" ],
-  "url": "https://github.com/zzrough/gs-extensions-drop-down-terminal"
-}
-

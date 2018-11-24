@@ -16,7 +16,7 @@
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
 const Lang = imports.lang
-const Gettext = imports.gettext.domain('drop-down-terminal')
+const Gettext = imports.gettext.domain('drop-down-terminal-x')
 const Mainloop = imports.mainloop
 
 imports.gi.versions.Gdk = '3.0'
@@ -53,8 +53,8 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
   'window-open-animation-scale-in@mengzhuo.org'
 ]
 
-const TERMINAL_WINDOW_ACTOR_NAME = 'dropDownTerminalWindow'
-const TERMINAL_WINDOW_WM_CLASS = 'DropDownTerminalWindow'
+const TERMINAL_WINDOW_ACTOR_NAME = 'dropDownTerminalXWindow'
+const TERMINAL_WINDOW_WM_CLASS = 'DropDownTerminalXXWindow'
 const DEBUG = false
 
 const FIRST_START_SETTING_KEY = 'first-start'
@@ -74,9 +74,9 @@ const BOTTOM_EDGE = 3
 const SHELL_VERSION = 10 * parseFloat('0.' + Config.PACKAGE_VERSION.split('.').join('')).toFixed(10)
 
 // dbus interface
-const DropDownTerminalIface =
+const DropDownTerminalXIface =
     '<node>                                                       \
-     <interface name="org.zzrough.GsExtensions.DropDownTerminal"> \
+     <interface name="pro.bigbn.DropDownTerminalX"> \
         <property name="Pid" type="i" access="read"/>             \
         <method name="SetGeometry">                               \
             <arg name="x" type="i" direction="in"/>               \
@@ -139,7 +139,7 @@ const MissingVteDialog = new Lang.Class({
   Name: 'MissingDepsDialog',
 
   _init: function () {
-    this._delegate = new ModalDialog.ModalDialog({styleClass: 'modal-dialog'})
+    this._delegate = new ModalDialog.ModalDialog({ styleClass: 'modal-dialog' })
 
     this._delegate.setButtons([{ label: _('Close'),
       action: Lang.bind(this._delegate, this._delegate.close),
@@ -182,8 +182,8 @@ const MissingVteDialog = new Lang.Class({
 })
 
 // extension class
-const DropDownTerminalExtension = new Lang.Class({
-  Name: 'DropDownTerminalExtension',
+const DropDownTerminalXExtension = new Lang.Class({
+  Name: 'DropDownTerminalXExtension',
 
   _init: function () {
     // retrieves the settings
@@ -257,7 +257,7 @@ const DropDownTerminalExtension = new Lang.Class({
     this._bindShortcut()
 
     // registers the bus name watch
-    this._busWatchId = Gio.DBus.session.watch_name('org.zzrough.GsExtensions.DropDownTerminal',
+    this._busWatchId = Gio.DBus.session.watch_name('pro.bigbn.DropDownTerminalX',
       Gio.BusNameWatcherFlags.NONE,
       Lang.bind(this, this._busNameAppeared),
       Lang.bind(this, this._busNameVanished),
@@ -723,9 +723,9 @@ const DropDownTerminalExtension = new Lang.Class({
 
   _busNameAppeared: function (connection, name, nameOwner) {
     // creates a dbus proxy on the interface exported by the child process
-    let DropDownTerminalDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalIface)
+    let DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface)
 
-    this._busProxy = new DropDownTerminalDBusProxy(Gio.DBus.session, 'org.zzrough.GsExtensions.DropDownTerminal', '/org/zzrough/GsExtensions/DropDownTerminal')
+    this._busProxy = new DropDownTerminalXDBusProxy(Gio.DBus.session, 'pro.bigbn.DropDownTerminalX', '/org/zzrough/GsExtensions/DropDownTerminalX')
 
     // connects to the Failure signal to report errors
     this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, [name, cause]) {
@@ -900,5 +900,5 @@ const DropDownTerminalExtension = new Lang.Class({
 
 // extension init hook
 function init () {
-  return new DropDownTerminalExtension()
+  return new DropDownTerminalXExtension()
 }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-	<enum id="org.zzrough.gs-extensions.drop-down-terminal.terminal-position">
+	<enum id="pro.bigbn.drop-down-terminal-x.terminal-position">
 		<value nick="Top" value="0" />
 		<value nick="Left" value="1" />
 		<value nick="Right" value="2" />
 		<value nick="Bottom" value="3" />
 	</enum>
-  <schema path="/org/zzrough/gs-extensions/drop-down-terminal/" id="org.zzrough.gs-extensions.drop-down-terminal">
+  <schema path="/pro/bigbn/drop-down-terminal-x/" id="pro.bigbn.drop-down-terminal-x">
     <key name="first-start" type="b">
       <default>true</default>
       <summary>An internal key that must not be changed manually</summary>
@@ -99,7 +99,7 @@
       </description>
     </key>
 
-    <key name="terminal-position" enum="org.zzrough.gs-extensions.drop-down-terminal.terminal-position">
+    <key name="terminal-position" enum="pro.bigbn.drop-down-terminal-x.terminal-position">
       <default>'Top'</default>
       <summary>The terminal window position</summary>
       <description>

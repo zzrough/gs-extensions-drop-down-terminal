@@ -38,7 +38,7 @@ function getSettings (extensionPath, extensionId) {
   let defaultSource = Gio.SettingsSchemaSource.get_default()
   let source = Gio.SettingsSchemaSource.new_from_directory(extensionPath, defaultSource, false) // trusted = false
 
-  let schemaId = 'org.zzrough.gs-extensions.' + extensionId
+  let schemaId = 'pro.bigbn.' + extensionId
   let schema = source.lookup(schemaId, false) // recursive = false
 
   if (!schema) {

@@ -31,9 +31,9 @@ const Vte = imports.gi.Vte
 const Convenience = imports.convenience
 
 // dbus interface
-const DropDownTerminalIface =
+const DropDownTerminalXIface =
    '<node>                                                        \
-    <interface name="org.zzrough.GsExtensions.DropDownTerminal">  \
+    <interface name="pro.bigbn.DropDownTerminalX">  \
         <property name="Pid" type="i" access="read"/>             \
         <method name="SetGeometry">                               \
             <arg name="x" type="i" direction="in"/>               \
@@ -62,8 +62,8 @@ const PopupUi =
     </ui>'
 
 // constants for the location of the extension
-const EXTENSION_ID = 'drop-down-terminal'
-const EXTENSION_UUID = EXTENSION_ID + '@gs-extensions.zzrough.org'
+const EXTENSION_ID = 'drop-down-terminal-x'
+const EXTENSION_UUID = EXTENSION_ID + '@bigbn.pro'
 const EXTENSION_PATH = ARGV[0] || GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/' + EXTENSION_UUID
 
 // constants for the settings
@@ -138,8 +138,8 @@ const UriHandlingProperties = [
 ]
 
 // terminal class
-const DropDownTerminal = new Lang.Class({
-  Name: 'DropDownTerminal',
+const DropDownTerminalX = new Lang.Class({
+  Name: 'DropDownTerminalX',
   tabs: [],
 
   _init: function () {
@@ -198,7 +198,7 @@ const DropDownTerminal = new Lang.Class({
     this.notebook.set_scrollable(true)
     this.notebook.show()
 
-    let plusButton = new Gtk.Button({label: '+'})
+    let plusButton = new Gtk.Button({ label: '+' })
     plusButton.connect('clicked', Lang.bind(this, this.addTab))
 
     this.notebook.set_action_widget(plusButton, Gtk.PackType.END)
@@ -208,7 +208,7 @@ const DropDownTerminal = new Lang.Class({
 
     // gets the settings
     this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID)
-    this._interfaceSettings = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'})
+    this._interfaceSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' })
 
     this._updateTabsSupport()
 
@@ -257,15 +257,15 @@ const DropDownTerminal = new Lang.Class({
     }
 
     // asks the session bus to own the interface name
-    Gio.DBus.session.own_name('org.zzrough.GsExtensions.DropDownTerminal',
+    Gio.DBus.session.own_name('pro.bigbn.DropDownTerminalX',
       Gio.BusNameOwnerFlags.NONE,
       null,
       null
     )
 
     // exports the interface
-    this._bus = Gio.DBusExportedObject.wrapJSObject(DropDownTerminalIface, this)
-    this._bus.export(Gio.DBus.session, '/org/zzrough/GsExtensions/DropDownTerminal')
+    this._bus = Gio.DBusExportedObject.wrapJSObject(DropDownTerminalXIface, this)
+    this._bus.export(Gio.DBus.session, '/org/zzrough/GsExtensions/DropDownTerminalX')
 
     this.addTab()
   },
@@ -334,7 +334,7 @@ const DropDownTerminal = new Lang.Class({
     let terminalBox = new Gtk.ScrolledWindow({ hadjustment: terminal.get_hadjustment(),
       vadjustment: terminal.get_vadjustment() })
 
-    let actionGroup = new Gtk.ActionGroup({name: 'Main'})
+    let actionGroup = new Gtk.ActionGroup({ name: 'Main' })
     terminalBox.add(terminal)
 
     return {
@@ -450,11 +450,11 @@ const DropDownTerminal = new Lang.Class({
 
   _createWindow: function () {
     let screen = Gdk.Screen.get_default()
-    let window = new Gtk.Window({type: Gtk.WindowType.TOPLEVEL})
+    let window = new Gtk.Window({ type: Gtk.WindowType.TOPLEVEL })
 
     window.set_title('Drop Down Terminal')
     window.set_icon_name('utilities-terminal')
-    window.set_wmclass('Drop Down Terminal', 'DropDownTerminalWindow')
+    window.set_wmclass('Drop Down Terminal', 'DropDownTerminalXWindow')
     window.set_decorated(false)
     window.set_skip_taskbar_hint(true)
     window.set_skip_pager_hint(true)
@@ -721,7 +721,7 @@ const DropDownTerminal = new Lang.Class({
     delete env['LINES']
     delete env['GNOME_DESKTOP_ICON']
 
-    env['COLORTERM'] = 'drop-down-terminal'
+    env['COLORTERM'] = 'drop-down-terminal-x'
     env['TERM'] = 'xterm-256color'
 
     // gets an array of key=value pairs
@@ -735,7 +735,7 @@ const DropDownTerminal = new Lang.Class({
   },
 
   _createAction: function (name, label, stockId, accel, actionGroup, callback) {
-    let action = new Gtk.Action({name: name, label: label, stock_id: stockId})
+    let action = new Gtk.Action({ name: name, label: label, stock_id: stockId })
     action.connect('activate', callback)
     actionGroup.add_action_with_accel(action, accel)
 
@@ -750,8 +750,8 @@ Gtk.init(null, 0)
 Gtk.Settings.get_default()['gtk-application-prefer-dark-theme'] = true
 
 // creates the terminal
-let terminal = new DropDownTerminal()
-GLib.set_prgname('drop-down-terminal')
+let terminal = new DropDownTerminalX()
+GLib.set_prgname('drop-down-terminal-x')
 
 // starts the main loop
 Gtk.main()

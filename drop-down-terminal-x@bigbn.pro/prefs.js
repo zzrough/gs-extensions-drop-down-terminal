@@ -16,7 +16,7 @@
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 
 const Lang = imports.lang
-const Gettext = imports.gettext.domain('drop-down-terminal')
+const Gettext = imports.gettext.domain('drop-down-terminal-x')
 
 const GLib = imports.gi.GLib
 const GObject = imports.gi.GObject
@@ -228,7 +228,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
   },
 
   _configureOtherShortcutTreeView: function (treeView) {
-    let renderer = new Gtk.CellRendererAccel({editable: true})
+    let renderer = new Gtk.CellRendererAccel({ editable: true })
     renderer.connect('accel-edited', Lang.bind(this, this._otherShortcutAccelEdited))
     renderer.connect('accel-cleared', Lang.bind(this, this._otherShortcutAccelCleared))
 
