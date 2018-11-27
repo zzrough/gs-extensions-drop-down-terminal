@@ -54,7 +54,7 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
 ]
 
 const TERMINAL_WINDOW_ACTOR_NAME = 'dropDownTerminalXWindow'
-const TERMINAL_WINDOW_WM_CLASS = 'DropDownTerminalXXWindow'
+const TERMINAL_WINDOW_WM_CLASS = 'DropDownTerminalXWindow'
 const DEBUG = false
 
 const FIRST_START_SETTING_KEY = 'first-start'
@@ -725,7 +725,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     // creates a dbus proxy on the interface exported by the child process
     let DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface)
 
-    this._busProxy = new DropDownTerminalXDBusProxy(Gio.DBus.session, 'pro.bigbn.DropDownTerminalX', '/org/zzrough/GsExtensions/DropDownTerminalX')
+    this._busProxy = new DropDownTerminalXDBusProxy(Gio.DBus.session, 'pro.bigbn.DropDownTerminalX', '/pro/bigbn/DropDownTerminalX')
 
     // connects to the Failure signal to report errors
     this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, [name, cause]) {

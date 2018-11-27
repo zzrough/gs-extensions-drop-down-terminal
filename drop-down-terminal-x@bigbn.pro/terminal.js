@@ -265,7 +265,7 @@ const DropDownTerminalX = new Lang.Class({
 
     // exports the interface
     this._bus = Gio.DBusExportedObject.wrapJSObject(DropDownTerminalXIface, this)
-    this._bus.export(Gio.DBus.session, '/org/zzrough/GsExtensions/DropDownTerminalX')
+    this._bus.export(Gio.DBus.session, '/pro/bigbn/DropDownTerminalX')
 
     this.addTab()
   },
