@@ -289,10 +289,14 @@ const DropDownTerminalX = new Lang.Class({
     }))
   },
 
+  _getTabName (tabNumber, tabLabel = 'shell') {
+    return `${tabNumber}: [${tabLabel}]`
+  },
+
   addTab: function () {
     let tab = this._createTerminalTab()
     tab.number = this.tabs.length ? Math.max(...(this.tabs.map(tab => tab.number))) + 1 : 1
-    let tabName = 'Shell No. ' + tab.number
+    let tabName = this._getTabName(tab.number)
     let eventBox = new Gtk.EventBox()
 
     let label = new Gtk.Label({ halign: Gtk.Align.CENTER, label: tabName, valign: Gtk.Align.CENTER })
@@ -303,6 +307,14 @@ const DropDownTerminalX = new Lang.Class({
 
     this.tabs.push(tab)
     this.notebook.append_page(tab.container, eventBox)
+
+    tab.terminal.connect('window-title-changed', () => {
+      let tabLabel = String(tab.terminal.get_window_title()).replace(':~', '')
+      let [prompt, path] = tabLabel.split(':')
+      let dirs = path ? path.split('/') : [null]
+      let lastDir = dirs[dirs.length - 1]
+      label.set_label(this._getTabName(tab.number, [prompt, lastDir].join(' ')))
+    })
 
     // CLose tab on middle mouse button click
     eventBox.connect('button-press-event', Lang.bind(this, function (widget, event) {
