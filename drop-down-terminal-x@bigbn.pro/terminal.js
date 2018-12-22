@@ -293,28 +293,53 @@ const DropDownTerminalX = new Lang.Class({
     return `${tabNumber}: [${tabLabel}]`
   },
 
+  _buildRenameForm (onSave = () => {}) {
+    let vbox = new Gtk.VBox({ homogeneous: false, orientation: Gtk.Orientation.HORIZONTAL, spacing: 5 })
+    let entry = new Gtk.Entry()
+    let saveButton = new Gtk.Button({ label: 'OK' })
+
+    vbox.pack_start(entry, true, true, 0)
+    vbox.pack_start(saveButton, true, true, 0)
+    entry.connect('activate', () => onSave(entry.get_text()))
+    saveButton.connect('clicked', () => onSave(entry.get_text()))
+    return vbox
+  },
+
+  _changeTabLabel (tab) {
+    let labelText = tab.name || String(tab.terminal.get_window_title()).replace(':~', '')
+    let [prompt, path] = labelText.split(':')
+    let dirs = path ? path.split('/') : [null]
+    let lastDir = dirs[dirs.length - 1]
+    if (lastDir && lastDir.length > 30) lastDir = lastDir.substring(0, 30) + '...'
+    tab.label.set_label(this._getTabName(tab.number, [prompt, lastDir].filter(s => s).join(' ')))
+  },
+
   addTab: function () {
     let tab = this._createTerminalTab()
     tab.number = this.tabs.length ? Math.max(...(this.tabs.map(tab => tab.number))) + 1 : 1
     let tabName = this._getTabName(tab.number)
     let eventBox = new Gtk.EventBox()
 
-    let label = new Gtk.Label({ halign: Gtk.Align.CENTER, label: tabName, valign: Gtk.Align.CENTER })
-    eventBox.add(label)
-    label.show()
+    tab.label = new Gtk.Label({ halign: Gtk.Align.CENTER, label: tabName, valign: Gtk.Align.CENTER })
+
+    tab.popover = new Gtk.Popover()
+    let form = this._buildRenameForm((newName) => {
+      tab.name = newName
+      this._changeTabLabel(tab)
+      tab.popover.popdown()
+    })
+    tab.popover.add(form)
+    tab.popover.set_position(Gtk.PositionType.BOTTOM)
+
+    eventBox.add(tab.label)
+    tab.label.show()
 
     tab.terminal.popup = this._createPopupAndActions(tab)
 
     this.tabs.push(tab)
     this.notebook.append_page(tab.container, eventBox)
 
-    tab.terminal.connect('window-title-changed', () => {
-      let tabLabel = String(tab.terminal.get_window_title()).replace(':~', '')
-      let [prompt, path] = tabLabel.split(':')
-      let dirs = path ? path.split('/') : [null]
-      let lastDir = dirs[dirs.length - 1]
-      label.set_label(this._getTabName(tab.number, [prompt, lastDir].join(' ')))
-    })
+    tab.terminal.connect('window-title-changed', () => this._changeTabLabel(tab))
 
     // CLose tab on middle mouse button click
     eventBox.connect('button-press-event', Lang.bind(this, function (widget, event) {
@@ -323,6 +348,12 @@ const DropDownTerminalX = new Lang.Class({
         if (this.notebook.get_n_pages() === 1) return this._forkUserShell(tab.terminal)
         let pageNum = this.notebook.page_num(tab.container)
         this._removeTab(pageNum)
+      }
+
+      if (event.get_event_type() === Gdk.EventType.DOUBLE_BUTTON_PRESS || button === Gdk.BUTTON_SECONDARY) {
+        tab.popover.set_relative_to(eventBox)
+        tab.popover.show_all()
+        tab.popover.popup()
       }
     }))
 
