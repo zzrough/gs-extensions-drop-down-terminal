@@ -314,7 +314,7 @@ const DropDownTerminalX = new Lang.Class({
     tab.label.set_label(this._getTabName(tab.number, [prompt, lastDir].filter(s => s).join(' ')))
   },
 
-  addTab: function () {
+  addTab () {
     let tab = this._createTerminalTab()
     tab.number = this.tabs.length ? Math.max(...(this.tabs.map(tab => tab.number))) + 1 : 1
     let tabName = this._getTabName(tab.number)
@@ -342,7 +342,7 @@ const DropDownTerminalX = new Lang.Class({
     tab.terminal.connect('window-title-changed', () => this._changeTabLabel(tab))
 
     // CLose tab on middle mouse button click
-    eventBox.connect('button-press-event', Lang.bind(this, function (widget, event) {
+    eventBox.connect('button-press-event', (widget, event) => {
       let [isNumberDelivered, button] = event.get_button()
       if (button === Gdk.BUTTON_MIDDLE) {
         if (this.notebook.get_n_pages() === 1) return this._forkUserShell(tab.terminal)
@@ -355,7 +355,7 @@ const DropDownTerminalX = new Lang.Class({
         tab.popover.show_all()
         tab.popover.popup()
       }
-    }))
+    })
 
     tab.container.show()
     tab.terminal.show()
@@ -371,19 +371,37 @@ const DropDownTerminalX = new Lang.Class({
     return tab
   },
 
-  _createTerminalTab: function () {
+  _createTerminalTab () {
     let terminal = this._createTerminalView()
 
-    let terminalBox = new Gtk.ScrolledWindow({ hadjustment: terminal.get_hadjustment(),
-      vadjustment: terminal.get_vadjustment() })
+    let onExit = terminal.connect('child-exited', () => {
+      if (this.notebook.get_n_pages() === 1) return this._forkUserShell(terminal)
+      let pageNum = this.notebook.get_current_page()
+      this._removeTab(pageNum)
+    })
+
+    let onRelease = terminal.connect('button-release-event', this._terminalButtonReleased.bind(this))
+    let onPress = terminal.connect('button-press-event', this._terminalButtonPressed.bind(this))
+    let onRefresh = terminal.connect('refresh-window', this._refreshWindow.bind(this))
+
+    let container = new Gtk.ScrolledWindow({
+      hadjustment: terminal.get_hadjustment(),
+      vadjustment: terminal.get_vadjustment()
+    })
 
     let actionGroup = new Gtk.ActionGroup({ name: 'Main' })
-    terminalBox.add(terminal)
+    container.add(terminal)
 
     return {
-      terminal: terminal,
-      container: terminalBox,
-      actionGroup: actionGroup
+      terminal,
+      actionGroup,
+      container,
+      eventHandlers: {
+        onExit,
+        onRelease,
+        onPress,
+        onRefresh
+      }
     }
   },
 
@@ -455,22 +473,6 @@ const DropDownTerminalX = new Lang.Class({
     }
 
     terminal.set_encoding('UTF-8')
-    terminal.connect('eof', Lang.bind(this, function () {
-      if (this.notebook.get_n_pages() === 1) return this._forkUserShell(terminal)
-      let pageNum = this.notebook.get_current_page()
-      this._removeTab(pageNum)
-    }))
-
-    terminal.connect('child-exited', Lang.bind(this, function () {
-      if (this.notebook.get_n_pages() === 1) return this._forkUserShell(terminal)
-      let pageNum = this.notebook.get_current_page()
-      this._removeTab(pageNum)
-    }))
-
-    terminal.connect('button-release-event', Lang.bind(this, this._terminalButtonReleased))
-    terminal.connect('button-press-event', Lang.bind(this, this._terminalButtonPressed))
-    terminal.connect('refresh-window', Lang.bind(this, this._refreshWindow))
-
     // FIXME: we get weird colors when we apply tango colors
     //
     // terminal.set_colors(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
@@ -478,12 +480,15 @@ const DropDownTerminalX = new Lang.Class({
     return terminal
   },
 
-  _removeTab: function (pageNum) {
+  _removeTab (pageNum) {
     this.notebook.remove_page(pageNum)
     let removedTabs = this.tabs.splice(pageNum, 1)
     let removedTab = null
     if (removedTabs.length) {
       removedTab = removedTabs[0]
+      for (let eventId in removedTab.eventHandlers) {
+        removedTab.terminal.disconnect(removedTab.eventHandlers[eventId])
+      }
       removedTab.terminal.popup.destroy()
       removedTab.terminal.destroy()
       removedTab.container.destroy()
