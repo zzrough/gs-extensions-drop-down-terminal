@@ -338,6 +338,7 @@ const DropDownTerminalX = new Lang.Class({
 
     this.tabs.push(tab)
     this.notebook.append_page(tab.container, eventBox)
+    this.notebook.set_tab_reorderable(tab.container, true)
 
     tab.terminal.connect('window-title-changed', () => this._changeTabLabel(tab))
 
