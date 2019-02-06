@@ -99,6 +99,38 @@
       </description>
     </key>
 
+    <key name="terminal-left-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window left padding</summary>
+      <description>
+        The terminal window left padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="terminal-right-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window right padding</summary>
+      <description>
+        The terminal window right padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="terminal-top-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window top padding</summary>
+      <description>
+        The terminal window top padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="terminal-bottom-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window bottom padding</summary>
+      <description>
+        The terminal window bottom padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
     <key name="terminal-position" enum="pro.bigbn.drop-down-terminal-x.terminal-position">
       <default>'Top'</default>
       <summary>The terminal window position</summary>
