@@ -34,6 +34,7 @@ const CLOSING_ANIMATION_TIME_SETTING_KEY = 'closing-animation-time'
 const TRANSPARENT_TERMINAL_SETTING_KEY = 'transparent-terminal'
 const SCROLLBAR_VISIBLE_SETTING_KEY = 'scrollbar-visible'
 const TERMINAL_SIZE_SETTING_KEY = 'terminal-size'
+const TERMINAL_PADDING_SETTING_KEY = 'terminal-padding'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
 const TRANSPARENCY_LEVEL_SETTING_KEY = 'transparency-level'
 const SHORTCUT_TYPE_SETTING_KEY = 'shortcut-type'
@@ -89,6 +90,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
       let scrollbarVisibleCheckButton = builder.get_object('scrollbar-visible-checkbutton')
       let terminalSizeEntry = builder.get_object('terminal-size-entry')
       let terminalSizeResetButton = builder.get_object('terminal-size-reset-button')
+      let terminalPaddingEntry = builder.get_object('terminal-padding-entry')
+      let terminalPaddingResetButton = builder.get_object('terminal-padding-reset-button')
       let transparencyLevelSpinButton = builder.get_object('transparency-level-spinbutton')
       let defaultShortcutRadioButton = builder.get_object('default-shortcut-radiobutton')
       let enableToggleOnScrollCheckButton = builder.get_object('enable-toggle-on-scroll-checkbutton')
@@ -127,6 +130,23 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
         terminalSizeEntry['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
       }))
 
+      // gives a hint on invalid window height input (does not prevent from writing a wrong value)
+      terminalPaddingEntry.connect('changed', Lang.bind(this, function () {
+        let match = terminalPaddingEntry.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i)
+        let valid = (match !== null)
+
+        if (valid) {
+          let value = parseInt(match[1])
+          let type = match[2]
+
+          valid = (type.toLowerCase() == 'px') ? (value > 0)
+            : (value > 0 && value <= 100)
+        }
+
+        terminalPaddingEntry['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
+        terminalPaddingEntry['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
+      }))
+
       // configure the tree view column and creates the unique row of the model
       this._configureOtherShortcutTreeView(this._otherShortcutTreeView)
       this._otherShortcutRowIter = this._otherShortcutListStore.append()
@@ -157,6 +177,10 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
       // binds the terminal height setting
       this._settings.bind(TERMINAL_SIZE_SETTING_KEY, terminalSizeEntry, 'text', Gio.SettingsBindFlags.DEFAULT)
       terminalSizeResetButton.connect('clicked', Lang.bind(this, function () { this._settings.reset(TERMINAL_SIZE_SETTING_KEY) }))
+
+      // binds the terminal padding setting
+      this._settings.bind(TERMINAL_PADDING_SETTING_KEY, terminalPaddingEntry, 'text', Gio.SettingsBindFlags.DEFAULT)
+      terminalPaddingResetButton.connect('clicked', Lang.bind(this, function () { this._settings.reset(TERMINAL_PADDING_SETTING_KEY) }))
 
       // binds the custom shortcut setting
       this._settings.connect('changed::' + OTHER_SHORTCUT_SETTING_KEY, Lang.bind(this, this._otherShortcutSettingChanged))
