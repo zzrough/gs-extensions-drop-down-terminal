@@ -62,6 +62,10 @@ const ENABLE_ANIMATION_SETTING_KEY = 'enable-animation'
 const OPENING_ANIMATION_TIME_SETTING_KEY = 'opening-animation-time'
 const CLOSING_ANIMATION_TIME_SETTING_KEY = 'closing-animation-time'
 const TERMINAL_SIZE_SETTING_KEY = 'terminal-size'
+const TERMINAL_LEFT_PADDING_SETTING_KEY = 'terminal-left-padding'
+const TERMINAL_RIGHT_PADDING_SETTING_KEY = 'terminal-right-padding'
+const TERMINAL_TOP_PADDING_SETTING_KEY = 'terminal-top-padding'
+const TERMINAL_BOTTOM_PADDING_SETTING_KEY = 'terminal-bottom-padding'
 const REAL_SHORTCUT_SETTING_KEY = 'real-shortcut'
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
@@ -231,6 +235,38 @@ const DropDownTerminalXExtension = new Lang.Class({
       this._settings.connect('changed::' + TERMINAL_SIZE_SETTING_KEY, Lang.bind(this, function () {
         if (this._windowActor !== null) {
           debug('size changed')
+          this._windowActor.remove_clip()
+          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
+        }
+      })),
+
+      this._settings.connect('changed::' + TERMINAL_LEFT_PADDING_SETTING_KEY, Lang.bind(this, function () {
+        if (this._windowActor !== null) {
+          debug('left padding changed')
+          this._windowActor.remove_clip()
+          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
+        }
+      })),
+
+      this._settings.connect('changed::' + TERMINAL_RIGHT_PADDING_SETTING_KEY, Lang.bind(this, function () {
+        if (this._windowActor !== null) {
+          debug('right padding changed')
+          this._windowActor.remove_clip()
+          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
+        }
+      })),
+
+      this._settings.connect('changed::' + TERMINAL_TOP_PADDING_SETTING_KEY, Lang.bind(this, function () {
+        if (this._windowActor !== null) {
+          debug('top padding changed')
+          this._windowActor.remove_clip()
+          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
+        }
+      })),
+
+      this._settings.connect('changed::' + TERMINAL_BOTTOM_PADDING_SETTING_KEY, Lang.bind(this, function () {
+        if (this._windowActor !== null) {
+          debug('bottom padding changed')
           this._windowActor.remove_clip()
           Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
         }
@@ -479,6 +515,10 @@ const DropDownTerminalXExtension = new Lang.Class({
     // computes the window geometry except the height
     let panelBox = Main.layoutManager.panelBox
     let sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY)
+    let leftPaddingSpec = this._settings.get_string(TERMINAL_LEFT_PADDING_SETTING_KEY)
+    let rightPaddingSpec = this._settings.get_string(TERMINAL_RIGHT_PADDING_SETTING_KEY)
+    let topPaddingSpec = this._settings.get_string(TERMINAL_TOP_PADDING_SETTING_KEY)
+    let bottomPaddingSpec = this._settings.get_string(TERMINAL_BOTTOM_PADDING_SETTING_KEY)
     let panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0
 
     let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor
@@ -489,6 +529,10 @@ const DropDownTerminalXExtension = new Lang.Class({
     let screenWidth = workarea.width / scaleFactor
     let x2 = x1 + screenWidth
     let y2 = y1 + screenHeight
+    let leftPadding = this._evaluateSizeSpec(leftPaddingSpec, false)
+    let rightPadding = this._evaluateSizeSpec(rightPaddingSpec, false)
+    let topPadding = this._evaluateSizeSpec(topPaddingSpec, true)
+    let bottomPadding = this._evaluateSizeSpec(bottomPaddingSpec, true)
 
     switch (terminalPosition) {
       case LEFT_EDGE:
@@ -519,6 +563,11 @@ const DropDownTerminalXExtension = new Lang.Class({
         this._windowHeight = this._evaluateSizeSpec(sizeSpec, true)
         break
     }
+
+    this._windowX = this._windowX + leftPadding
+    this._windowY = this._windowY + topPadding
+    this._windowWidth = this._windowWidth - leftPadding - rightPadding
+    this._windowHeight = this._windowHeight - topPadding - bottomPadding
 
     // applies the change dynamically if the terminal is already spawn
     if (this._busProxy !== null && this._windowHeight !== null) {
