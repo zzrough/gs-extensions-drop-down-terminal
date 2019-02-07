@@ -62,7 +62,6 @@ const ENABLE_ANIMATION_SETTING_KEY = 'enable-animation'
 const OPENING_ANIMATION_TIME_SETTING_KEY = 'opening-animation-time'
 const CLOSING_ANIMATION_TIME_SETTING_KEY = 'closing-animation-time'
 const TERMINAL_SIZE_SETTING_KEY = 'terminal-size'
-const TERMINAL_PADDING_SETTING_KEY = 'terminal-padding'
 const REAL_SHORTCUT_SETTING_KEY = 'real-shortcut'
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
@@ -232,14 +231,6 @@ const DropDownTerminalXExtension = new Lang.Class({
       this._settings.connect('changed::' + TERMINAL_SIZE_SETTING_KEY, Lang.bind(this, function () {
         if (this._windowActor !== null) {
           debug('size changed')
-          this._windowActor.remove_clip()
-          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-        }
-      })),
-
-      this._settings.connect('changed::' + TERMINAL_PADDING_SETTING_KEY, Lang.bind(this, function () {
-        if (this._windowActor !== null) {
-          debug('padding changed')
           this._windowActor.remove_clip()
           Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
         }
@@ -488,7 +479,6 @@ const DropDownTerminalXExtension = new Lang.Class({
     // computes the window geometry except the height
     let panelBox = Main.layoutManager.panelBox
     let sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY)
-    let paddingSpec = this._settings.get_string(TERMINAL_PADDING_SETTING_KEY)
     let panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0
 
     let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor
@@ -499,38 +489,33 @@ const DropDownTerminalXExtension = new Lang.Class({
     let screenWidth = workarea.width / scaleFactor
     let x2 = x1 + screenWidth
     let y2 = y1 + screenHeight
-    let padding = 0
 
     switch (terminalPosition) {
       case LEFT_EDGE:
-        padding = this._evaluateSizeSpec(paddingSpec, false)
         this._windowX = x1
-        this._windowY = y1 + padding
+        this._windowY = y1
         this._windowWidth = this._evaluateSizeSpec(sizeSpec, false)
-        this._windowHeight = screenHeight - (2 * padding)
+        this._windowHeight = screenHeight
         break
       case RIGHT_EDGE:
-        padding = this._evaluateSizeSpec(paddingSpec, false)
         let width = this._evaluateSizeSpec(sizeSpec, false)
         this._windowX = x2 - width
-        this._windowY = y1 + padding
+        this._windowY = y1
         this._windowWidth = width
-        this._windowHeight = screenHeight - (2 * padding)
+        this._windowHeight = screenHeight
         break
       case BOTTOM_EDGE:
-        padding = this._evaluateSizeSpec(paddingSpec, true)
         let height = this._evaluateSizeSpec(sizeSpec, true)
-        this._windowX = x1 + padding
+        this._windowX = x1
         this._windowY = y2 - height
-        this._windowWidth = screenWidth - (2 * padding)
+        this._windowWidth = screenWidth
         this._windowHeight = height
         break
       default:
       case TOP_EDGE:
-        padding =this._evaluateSizeSpec(paddingSpec, true)
-        this._windowX = x1 + padding
+        this._windowX = x1
         this._windowY = y1
-        this._windowWidth = screenWidth - (2 * padding)
+        this._windowWidth = screenWidth
         this._windowHeight = this._evaluateSizeSpec(sizeSpec, true)
         break
     }
