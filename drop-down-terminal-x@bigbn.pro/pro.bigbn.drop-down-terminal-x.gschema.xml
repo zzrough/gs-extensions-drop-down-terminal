@@ -99,14 +99,6 @@
       </description>
     </key>
 
-    <key name="terminal-padding" type="s">
-      <default><![CDATA['400px']]></default>
-      <summary>The terminal window padding</summary>
-      <description>
-        The terminal window padding in pixels (400px for instance) or in percentage (30% for instance). The size value is used for the height or width if the position is top/bottom, or left/right.
-      </description>
-    </key>
-
     <key name="terminal-position" enum="pro.bigbn.drop-down-terminal-x.terminal-position">
       <default>'Top'</default>
       <summary>The terminal window position</summary>
