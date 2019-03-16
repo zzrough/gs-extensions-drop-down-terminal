@@ -34,6 +34,26 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="cursorTypesStore">
+    <columns>
+      <column type="gchararray"/>
+      <column type="gint"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Block</col>
+        <col id="1">0</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">I-Beam</col>
+        <col id="1">1</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Underline</col>
+        <col id="1">2</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkAdjustment" id="opening-animation-time-adjustment">
     <property name="upper">2000</property>
     <property name="value">250</property>
@@ -696,8 +716,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="vexpand">True</property>
-                            <property name="label" translatable="yes">&lt;small&gt;This key is the one above "Tab" on many keyboard layouts, like good old &lt;a href="https://en.wikipedia.org/wiki/Quake_%28video_game%29" title="A bit of history"&gt;Quake&lt;/a&gt;.
-Tip: Alt + this key allows to cycle between the windows of an application.&lt;/small&gt;</property>
+                            <property name="label" translatable="yes">&lt;small&gt;This key is the one above "Tab" on many keyboard layouts, like good old &lt;a href="https://en.wikipedia.org/wiki/Quake_%28video_game%29" title="A bit of history"&gt;Quake&lt;/a&gt;.&#13;&#10;Tip: Alt + this key allows to cycle between the windows of an application.&lt;/small&gt;</property>
                             <property name="use_markup">True</property>
                             <property name="xalign">0</property>
                           </object>
@@ -1075,6 +1094,76 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFrame" id="frame6">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label_xalign">0</property>
+            <property name="shadow_type">none</property>
+            <child>
+              <object class="GtkAlignment" id="alignment7">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="top_padding">0</property>
+                <property name="left_padding">0</property>
+                <child>
+                  <object class="GtkGrid" id="grid2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="row_spacing">6</property>
+                    <property name="column_spacing">6</property>
+                    <child>
+                      <object class="GtkLabel" id="cursor-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="label" translatable="yes">Cursor type</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cursor-combobox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">cursorTypesStore</property>
+                        <property name="active">0</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cursorcellrenderertext"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">3</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel" id="label21">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">&lt;b&gt;Cursor&lt;/b&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">6</property>
             <property name="position">2</property>
           </packing>
         </child>

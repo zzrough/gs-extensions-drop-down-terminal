@@ -71,6 +71,7 @@ const FONT_NAME_SETTING_KEY = 'monospace-font-name'
 const TRANSPARENCY_LEVEL_SETTING_KEY = 'transparency-level'
 const TRANSPARENT_TERMINAL_SETTING_KEY = 'transparent-terminal'
 const SCROLLBAR_VISIBLE_SETTING_KEY = 'scrollbar-visible'
+const TERMINAL_CURSOR_SETTING_KEY = 'terminal-cursor'
 const COLOR_FOREGROUND_SETTING_KEY = 'foreground-color'
 const COLOR_BACKGROUND_SETTING_KEY = 'background-color'
 const RUN_CUSTOM_COMMAND_SETTING_KEY = 'run-custom-command'
@@ -457,6 +458,9 @@ const DropDownTerminalX = new Lang.Class({
 
     let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY)
     terminal.set_audible_bell(enableBell)
+
+    let cursorShape = this._settings.get_enum(TERMINAL_CURSOR_SETTING_KEY)
+    terminal.set_cursor_shape(cursorShape)
 
     terminal.set_can_focus(true)
     terminal.set_allow_bold(true)
