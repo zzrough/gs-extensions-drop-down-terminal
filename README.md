@@ -25,7 +25,7 @@ Screenshots
 ![Terminal](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-term.png)
 
 ### Preferences
-![Genearal preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-1.png)
+![General preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-1.png)
 ![Terminal preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-2.png)
 ![Tabs preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-3.png)
 ![Tabs renaming](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-rename-4.png)

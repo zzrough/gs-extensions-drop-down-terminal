@@ -39,6 +39,7 @@ const TERMINAL_RIGHT_PADDING_SETTING_KEY = 'terminal-right-padding'
 const TERMINAL_TOP_PADDING_SETTING_KEY = 'terminal-top-padding'
 const TERMINAL_BOTTOM_PADDING_SETTING_KEY = 'terminal-bottom-padding'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
+const TERMINAL_CURSOR_SETTING_KEY = 'terminal-cursor'
 const TRANSPARENCY_LEVEL_SETTING_KEY = 'transparency-level'
 const SHORTCUT_TYPE_SETTING_KEY = 'shortcut-type'
 const OTHER_SHORTCUT_SETTING_KEY = 'other-shortcut'
@@ -106,7 +107,8 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
       let enableToggleOnScrollCheckButton = builder.get_object('enable-toggle-on-scroll-checkbutton')
       let foregroundColorResetButton = builder.get_object('foreground-color-reset-button')
       let backgroundColorResetButton = builder.get_object('background-color-reset-button')
-	        let positionComboBox = builder.get_object('position-combobox')
+      let positionComboBox = builder.get_object('position-combobox')
+      let cursorComboBox = builder.get_object('cursor-combobox')
       let enableAudibleBellCheckButton = builder.get_object('enable-audible-bell-checkbutton')
       let enableTabsCheckButton = builder.get_object('enable-tabs-checkbutton')
 
@@ -321,6 +323,12 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 	    positionComboBox.connect('changed', Lang.bind(this, function (widget) {
 		    this._settings.set_enum(TERMINAL_POSITION_SETTING_KEY, widget.get_active())
 	    }))
+
+      // binds the terminal cursor type setting
+      cursorComboBox.set_active(this._settings.get_enum(TERMINAL_CURSOR_SETTING_KEY))
+      cursorComboBox.connect('changed', Lang.bind(this, function (widget) {
+        this._settings.set_enum(TERMINAL_CURSOR_SETTING_KEY, widget.get_active())
+      }))
     }
   },
 
