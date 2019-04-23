@@ -9,7 +9,7 @@
   }, 
   "husky": {
     "hooks": {
-      "pre-push": "npm archive"
+      "pre-push": "npm run archive"
     }
   },
   "repository": {
