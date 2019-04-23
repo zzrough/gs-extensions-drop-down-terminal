@@ -1,0 +1,46 @@
+/* Container fixes */
+window,
+GtkWindow {
+    background-color: rgba(0,0,0,0.0);
+}
+
+window *,
+GtkWindow * {
+    box-shadow: none; /* removes the container's faint shadow */
+}
+
+/* Do not display the undershoot */
+scrolledwindow undershoot.top,
+scrolledwindow undershoot.right,
+scrolledwindow undershoot.bottom,
+scrolledwindow undershoot.left {
+    background-image: none;
+}
+
+/* Mini Reset for best cross-theme compatibility */
+.menu,
+.menu .menuitem {
+    padding: 0;
+    margin: 0;
+    border-color: #a5a5a5;
+    border-style: solid;
+    border-width: 0;
+    background-color: #383d3d;
+}
+
+.menu {
+    color: white;
+    border-radius: 3px;
+    padding: 1.4em 0;
+}
+
+.menu .menuitem {
+    font-family: "Cantarell";
+    font-size: 11px;
+    padding: 0.5em 4.75em 0.5em 0.78em;
+}
+
+.menu .menuitem:active,
+.menu .menuitem:hover {
+    background-color: #4a4f4f;
+}

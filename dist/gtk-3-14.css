@@ -1,0 +1,40 @@
+/* Container fixes */
+GtkWindow {
+    background-color: rgba(0,0,0,0.0);
+}
+
+GtkWindow * {
+    box-shadow: none; /* removes the container's faint shadow */
+}
+
+.scrollbar.trough {
+    background-color: #000;
+}
+
+/* Mini Reset for best cross-theme compatibility */
+.menu,
+.menu .menuitem {
+    padding: 0;
+    margin: 0;
+    border-color: #a5a5a5;
+    border-style: solid;
+    background-color: #000;
+}
+
+.menu {
+    color: white;
+    border-width: 2px;
+    border-radius: 8px;
+    padding: 1.4em 0;
+}
+
+.menu .menuitem {
+    border-width: 0 2px;
+    font: Cantarell 11; 
+    padding: 0.5em 4.75em 0.5em 0.78em;
+}
+
+.menu .menuitem:active,
+.menu .menuitem:hover {
+    background-color: #4c4c4c;
+}

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+	<enum id="pro.bigbn.drop-down-terminal-x.terminal-position">
+		<value nick="Top" value="0" />
+		<value nick="Left" value="1" />
+		<value nick="Right" value="2" />
+		<value nick="Bottom" value="3" />
+	</enum>
+	
+	<enum id="pro.bigbn.drop-down-terminal-x.terminal-cursor">
+		<value nick="Block" value="0" />
+		<value nick="IBeam" value="1" />
+		<value nick="Underline" value="2" />
+	</enum>
+
+  <schema path="/pro/bigbn/drop-down-terminal-x/" id="pro.bigbn.drop-down-terminal-x">
+    <key name="first-start" type="b">
+      <default>true</default>
+      <summary>An internal key that must not be changed manually</summary>
+      <description>
+        Whether this is the first start of the extension or not. It is used to display a welcome message
+        and/or open preferences.
+      </description>
+    </key>
+
+    <key name="enable-audible-bell" type="b">
+      <default>true</default>
+      <summary>Terminal bell</summary>
+      <description>
+        Whether to enable audible confirmation in terminal.
+      </description>
+    </key>
+
+    <key name="enable-animation" type="b">
+      <default>true</default>
+      <summary>Enable the animation</summary>
+      <description>
+        Whether to enable or disable the opening/closing animation.
+      </description>
+    </key>
+
+    <key name="opening-animation-time" type="u">
+      <default>250</default>
+      <summary>The opening animation time in ms</summary>
+      <description>
+        The opening animation time in milliseconds or zero for no opening animation.
+      </description>
+    </key>
+
+    <key name="closing-animation-time" type="u">
+      <default>250</default>
+      <summary>The closing animation time in ms</summary>
+      <description>
+        The closing animation time in milliseconds or zero for no closing animation.
+      </description>
+    </key>
+
+    <key name="transparent-terminal" type="b">
+      <default>true</default>
+      <summary>Enable the terminal window transparency</summary>
+      <description>
+        Whether to enable terminal transparency (true) or keep the terminal opaque (false).
+      </description>
+    </key>
+
+    <key name="transparency-level" type="u">
+      <default>94</default>
+      <summary>The transparency level</summary>
+      <description>
+        The transparency level between 0 (fully transparent) and 100 (fully opaque), which is
+        only used if 'transparent-terminal' is set.
+      </description>
+    </key>
+
+    <key name="foreground-color" type="s">
+      <default><![CDATA['#aaaaaa']]></default>
+      <summary>The terminal foreground (default text) color</summary>
+      <description>
+        The terminal foreground color for normal text as hexadecimal value in the form "#rgb",
+        "#rrggbb", "#rrrgggbbb" or "#rrrrggggbbbb".
+      </description>
+    </key>
+
+    <key name="background-color" type="s">
+      <default><![CDATA['#000000']]></default>
+      <summary>The terminal background color</summary>
+      <description>
+        The terminal background color as hexadecimal value in the form "#rgb", "#rrggbb",
+        "#rrrgggbbb" or "#rrrrggggbbbb".
+      </description>
+    </key>
+
+    <key name="scrollbar-visible" type="b">
+      <default>false</default>
+      <summary>Enable the terminal scrollbar</summary>
+      <description>
+         Whether the terminal scrollbar is visible (true) or hidden (false).
+      </description>
+    </key>
+
+    <key name="terminal-size" type="s">
+      <default><![CDATA['400px']]></default>
+      <summary>The terminal window position</summary>
+      <description>
+	      The terminal window size in pixels (400px for instance) or in percentage (30% for instance). The size value is used for the height or width if the position is top/bottom, or left/right.
+      </description>
+    </key>
+
+    <key name="terminal-left-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window left padding</summary>
+      <description>
+        The terminal window left padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="terminal-right-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window right padding</summary>
+      <description>
+        The terminal window right padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="terminal-top-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window top padding</summary>
+      <description>
+        The terminal window top padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="terminal-bottom-padding" type="s">
+      <default><![CDATA['1px']]></default>
+      <summary>The terminal window bottom padding</summary>
+      <description>
+        The terminal window bottom padding in pixels (400px for instance) or in percentage (30% for instance).
+      </description>
+    </key>
+
+    <key name="terminal-position" enum="pro.bigbn.drop-down-terminal-x.terminal-position">
+      <default>'Top'</default>
+      <summary>The terminal window position</summary>
+      <description>
+	      The edge of the screen to which the terminal window is aligned.
+      </description>
+    </key>
+
+		<key name="terminal-cursor" enum="pro.bigbn.drop-down-terminal-x.terminal-cursor">
+      <default>'Block'</default>
+      <summary>The terminal cursor type</summary>
+      <description>
+	      The type of the cursor used by the terminal.
+      </description>
+    </key>
+
+    <key name="shortcut-type" type="s">
+      <default><![CDATA['default']]></default>
+      <choices>
+        <choice value="default"/>
+        <choice value="other"/>
+      </choices>
+      <summary>The shortcut type 'default' or 'other'</summary>
+      <description>
+        The type of shortcut used to open and close the terminal. If 'other' is set, the definition must be set
+        in the 'other-shortcut' key.
+      </description>
+    </key>
+
+    <key name="other-shortcut" type="as">
+      <default><![CDATA[['F12']]]></default>
+      <summary>The manual shortcut used to toggle the terminal</summary>
+      <description>
+        The shortcut used to open and close the terminal if shortcut-type is 'other'.
+      </description>
+    </key>
+
+    <key name="enable-toggle-on-scroll" type="b">
+      <default>false</default>
+      <summary>Enable toggling by scrolling the top bar</summary>
+      <description>
+        Whether to enable toggling by scrolling on the top bar of the primary screen.
+      </description>
+    </key>
+
+    <key name="real-shortcut" type="as">
+      <default><![CDATA[['Above_Tab']]]></default>
+      <summary>An internal key that must not be changed manually</summary>
+      <description>
+        'Above_Tab' is displayed as 'Disabled' in a GtkCellRendererAccel and that really looks bad.
+        This is why there is this special key which is the final, real shortcut used, and which is not displayed
+        in the preferences UI.
+      </description>
+    </key>
+
+    <key name="run-custom-command" type="b">
+      <default>false</default>
+      <summary>Whether to run a custom command or the default</summary>
+      <description>
+        Whether to use the custom command set in the 'custom-command' key or not (the user shell is used instead).
+      </description>
+    </key>
+
+    <key name="custom-command" type="s">
+      <default>''</default>
+      <summary>The custom command to launch</summary>
+      <description>
+        The custom command to launch in the terminal, only used if the 'run-custom-command' key value is 'true'.
+      </description>
+    </key>
+
+    <key name="enable-tabs" type="b">
+      <default>false</default>
+      <summary>Enable tabs</summary>
+      <description>
+        Whether to enable or disable the tabs
+      </description>
+    </key>
+  </schema>
+</schemalist>
