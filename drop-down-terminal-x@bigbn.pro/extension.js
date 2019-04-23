@@ -841,10 +841,10 @@ const DropDownTerminalXExtension = new Lang.Class({
     let value = parseInt(match[1])
     let type = match[2]
 
-    if (type.toLowerCase() == 'px') {
-      return (value > 0) ? value : null
+    if (type.toLowerCase() === 'px') {
+      return (value >= 0) ? value : null
     } else {
-      if (value <= 0 || value > 100) {
+      if (value < 0 || value > 100) {
         return null
       }
 
