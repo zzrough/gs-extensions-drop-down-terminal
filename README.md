@@ -1,10 +1,8 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7SN5R9UBSZ7LE)
 
-Gnome shell drop-down-terminal extension with tabs
-================================
+<div align="center"><img src='https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/head.png' /></div>
 
-Drop Down Terminal extension for the Gnome Shell with basic **tabs support**.
-
+---
 *This is a fork from https://github.com/zzrough/gs-extensions-drop-down-terminal*
 
 Install
@@ -31,4 +29,3 @@ Screenshots
 ![Terminal preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-2.png)
 ![Tabs preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-3.png)
 ![Tabs renaming](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-rename-4.png)
-
