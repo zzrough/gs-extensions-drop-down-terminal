@@ -1,6 +1,6 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7SN5R9UBSZ7LE)
 
-<div align="center"><img src='https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/head.png' /></div>
+<div align="center"><img src='https://github.com/bigbn/drop-down-terminal-x/raw/master/head.png' /></div>
 
 ---
 *This is a fork from https://github.com/zzrough/gs-extensions-drop-down-terminal*
