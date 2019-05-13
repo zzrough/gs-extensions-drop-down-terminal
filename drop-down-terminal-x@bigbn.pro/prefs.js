@@ -123,92 +123,14 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
 
       // packs the main box
       this.pack_start(mainNotebook, true, true, 0)
-
       // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-      terminalSizeEntry.connect('changed', Lang.bind(this, function () {
-        let match = terminalSizeEntry.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i)
-        let valid = (match !== null)
+      terminalSizeEntry.connect('changed', this._validatePaddingValue(terminalSizeEntry, true));
 
-        if (valid) {
-          let value = parseInt(match[1])
-          let type = match[2]
-
-          valid = (type.toLowerCase() == 'px') ? (value > 0)
-            : (value > 0 && value <= 100)
-        }
-
-        terminalSizeEntry['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
-        terminalSizeEntry['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
-      }))
-
-      // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-      terminalLeftPaddingEntry.connect('changed', Lang.bind(this, function () {
-        let match = terminalLeftPaddingEntry.get_text().trim().match(/^(\d*)\s*(px|%)$/i)
-        let valid = (match !== null)
-
-        if (valid) {
-          let value = parseInt(match[1])
-          let type = match[2]
-
-          valid = (type.toLowerCase() == 'px') ? (value >= 0)
-            : (value >= 0 && value < 100)
-        }
-
-        terminalLeftPaddingEntry['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
-        terminalLeftPaddingEntry['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
-      }))
-
-      // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-      terminalRightPaddingEntry.connect('changed', Lang.bind(this, function () {
-        let match = terminalRightPaddingEntry.get_text().trim().match(/^(\d*)\s*(px|%)$/i)
-        let valid = (match !== null)
-
-        if (valid) {
-          let value = parseInt(match[1])
-          let type = match[2]
-
-          valid = (type.toLowerCase() == 'px') ? (value >= 0)
-            : (value >= 0 && value < 100)
-        }
-
-        terminalRightPaddingEntry['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
-        terminalRightPaddingEntry['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
-      }))
-
-      // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-      terminalTopPaddingEntry.connect('changed', Lang.bind(this, function () {
-        let match = terminalTopPaddingEntry.get_text().trim().match(/^(\d*)\s*(px|%)$/i)
-        let valid = (match !== null)
-
-        if (valid) {
-          let value = parseInt(match[1])
-          let type = match[2]
-
-          valid = (type.toLowerCase() == 'px') ? (value >= 0)
-            : (value >= 0 && value < 100)
-        }
-
-        terminalTopPaddingEntry['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
-        terminalTopPaddingEntry['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
-      }))
-
-
-      // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-      terminalBottomPaddingEntry.connect('changed', Lang.bind(this, function () {
-        let match = terminalBottomPaddingEntry.get_text().trim().match(/^(\d*)\s*(px|%)$/i)
-        let valid = (match !== null)
-
-        if (valid) {
-          let value = parseInt(match[1])
-          let type = match[2]
-
-          valid = (type.toLowerCase() == 'px') ? (value >= 0)
-            : (value >= 0 && value < 100)
-        }
-
-        terminalBottomPaddingEntry['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
-        terminalBottomPaddingEntry['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
-      }))
+      [ terminalLeftPaddingEntry,
+        terminalRightPaddingEntry,
+        terminalTopPaddingEntry,
+        terminalBottomPaddingEntry
+      ].array.forEach(view => view.connect('changed', () => this._validatePaddingValue(view)))
 
       // configure the tree view column and creates the unique row of the model
       this._configureOtherShortcutTreeView(this._otherShortcutTreeView)
@@ -330,6 +252,25 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
         this._settings.set_enum(TERMINAL_CURSOR_SETTING_KEY, widget.get_active())
       }))
     }
+  },
+
+  _validatePaddingValue (view, strictMode) {
+    let match = view.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i)
+    let valid = (match !== null)
+
+    if (valid) {
+      let value = parseInt(match[1])
+      let type = match[2]
+
+      if (type.toLowerCase() === 'px') {
+        valid = strictMode ? (value > 0) : (value >= 0)
+      } else {
+        valid = strictMode ? (value > 0 && value <= 100) : (value >= 0 && value <= 100)
+      }
+    }
+
+    view['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
+    view['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
   },
 
   _configureOtherShortcutTreeView: function (treeView) {
