@@ -2,7 +2,6 @@
 
 <div align="center"><img src='https://github.com/bigbn/drop-down-terminal-x/raw/master/head.png' /></div>
 
----
 *This is a fork from https://github.com/zzrough/gs-extensions-drop-down-terminal*
 
 Install
