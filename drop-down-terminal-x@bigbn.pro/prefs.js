@@ -124,13 +124,13 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
       // packs the main box
       this.pack_start(mainNotebook, true, true, 0)
       // gives a hint on invalid window height input (does not prevent from writing a wrong value)
-      terminalSizeEntry.connect('changed', this._validatePaddingValue(terminalSizeEntry, true));
+      terminalSizeEntry.connect('changed', () => this._validatePaddingValue(terminalSizeEntry, true));
 
       [ terminalLeftPaddingEntry,
         terminalRightPaddingEntry,
         terminalTopPaddingEntry,
         terminalBottomPaddingEntry
-      ].array.forEach(view => view.connect('changed', () => this._validatePaddingValue(view)))
+      ].forEach(view => view.connect('changed', () => this._validatePaddingValue(view)))
 
       // configure the tree view column and creates the unique row of the model
       this._configureOtherShortcutTreeView(this._otherShortcutTreeView)
@@ -255,7 +255,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
   },
 
   _validatePaddingValue (view, strictMode) {
-    let match = view.get_text().trim().match(/^([1-9]\d*)\s*(px|%)$/i)
+    let match = view.get_text().trim().match(/^([0-9]\d*)\s*(px|%)$/i)
     let valid = (match !== null)
 
     if (valid) {
