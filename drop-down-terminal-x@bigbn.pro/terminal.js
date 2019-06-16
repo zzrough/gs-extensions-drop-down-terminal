@@ -164,6 +164,7 @@ const DropDownTerminalX = new Lang.Class({
     this._window = this._createWindow()
 
     // Tabs shortcuts
+    /*
     this._window.connect('key-press-event', Lang.bind(this, function (window, event) {
       if (!this._isTabsEnabled) return
 
@@ -190,7 +191,7 @@ const DropDownTerminalX = new Lang.Class({
         }
       }
     })
-    )
+    ) */
 
     // Notebook - is the default gnome tabs widget
     this.notebook = new Gtk.Notebook()

@@ -282,7 +282,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
       this._settings.connect('changed::' + TOGGLE_SHORTCUT_SETTING_KEY, Lang.bind(this, function () {
         this._unbindShortcut()
-        this._bindShortcut()
+        this._bindShortcut(TOGGLE_SHORTCUT_SETTING_KEY, this._toggle)
       }))
     ]
 
@@ -290,7 +290,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._updateAnimationProperties()
     this._updateToggleOnScroll()
     this._updateWindowGeometry()
-    this._bindShortcut()
+    this._bindShortcut(TOGGLE_SHORTCUT_SETTING_KEY, this._toggle)
 
     // registers the bus name watch
     this._busWatchId = Gio.DBus.session.watch_name('pro.bigbn.DropDownTerminalX',
@@ -579,26 +579,11 @@ const DropDownTerminalXExtension = new Lang.Class({
     return false
   },
 
-  _bindShortcut: function () {
-    if (Main.wm.addKeybinding && Shell.ActionMode) // introduced in 3.16
-    {
-      Main.wm.addKeybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
-        Shell.ActionMode.NORMAL,
-        Lang.bind(this, this._toggle))
-    } else if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced in 3.7.5
-    {
-      Main.wm.addKeybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
-        Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY,
-        Lang.bind(this, this._toggle))
-    } else if (Main.wm.addKeybinding && Main.KeybindingMode) // introduced in 3.7.2
-    {
-      Main.wm.addKeybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
-        Main.KeybindingMode.NORMAL | Main.KeybindingMode.MESSAGE_TRAY,
-        Lang.bind(this, this._toggle))
-    } else {
-      global.display.add_keybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
-        Lang.bind(this, this._toggle))
-    }
+  _bindShortcut: function (key, action) {
+    // introduced in 3.16
+    if (Main.wm.addKeybinding && Shell.ActionMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, action.call(this))
+    // introduced in 3.7.5
+    else if (Main.wm.addKeybinding && Shell.KeyBindingMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY, action.call(this))
   },
 
   _unbindShortcut: function () {
