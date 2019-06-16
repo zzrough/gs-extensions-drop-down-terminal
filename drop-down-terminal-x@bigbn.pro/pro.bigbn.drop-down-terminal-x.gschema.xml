@@ -162,6 +162,39 @@
       </description>
     </key>
 
+    <key name="new-tab-shortcut" type="as">
+      <default><![CDATA[['<Primary><Shift>t']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="prev-tab-shortcut" type="as">
+      <default><![CDATA[['<Alt>Left']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="next-tab-shortcut" type="as">
+      <default><![CDATA[['<Alt>Right']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="close-tab-shortcut" type="as">
+      <default><![CDATA[['<Primary><Alt>x']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+
     <key name="enable-toggle-on-scroll" type="b">
       <default>false</default>
       <summary>Enable toggling by scrolling the top bar</summary>
