@@ -466,8 +466,6 @@ Tip: Alt + this key allows to cycle between the windows of an application.&lt;/s
       <object class="GtkBox" id="main-box2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="margin_left">12</property>
-        <property name="margin_right">12</property>
         <property name="margin_top">12</property>
         <property name="margin_bottom">12</property>
         <property name="orientation">vertical</property>
