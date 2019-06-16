@@ -14,6 +14,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
+// ['grave'] //RT
 
 const Lang = imports.lang
 const Gettext = imports.gettext.domain('drop-down-terminal-x')
@@ -39,9 +40,7 @@ const TERMINAL_BOTTOM_PADDING_SETTING_KEY = 'terminal-bottom-padding'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
 const TERMINAL_CURSOR_SETTING_KEY = 'terminal-cursor'
 const TRANSPARENCY_LEVEL_SETTING_KEY = 'transparency-level'
-const SHORTCUT_TYPE_SETTING_KEY = 'shortcut-type'
 const OTHER_SHORTCUT_SETTING_KEY = 'other-shortcut'
-const REAL_SHORTCUT_SETTING_KEY = 'real-shortcut'
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll'
 const FOREGROUND_COLOR_SETTING_KEY = 'foreground-color'
 const BACKGROUND_COLOR_SETTING_KEY = 'background-color'
@@ -50,9 +49,9 @@ const CUSTOM_COMMAND_SETTING_KEY = 'custom-command'
 const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell'
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs'
 
-// shortcut tree view columns
-const SHORTCUT_COLUMN_KEY = 0
-const SHORTCUT_COLUMN_MODS = 1
+// tree view columns
+const COLUMN_KEY = 0
+const COLUMN_MODS = 1
 
 // settings widget
 var DropDownTerminalSettingsWidget = new GObject.Class({
@@ -62,7 +61,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
   _init: function ({ path, metadata, convenience }) {
     this.parent()
-    
+
     log(path)
     log(metadata.id)
     log(convenience)
@@ -76,7 +75,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
     // creates the ui builder and add the main resource file
     let uiFilePath = path + '/prefs.gtkbuilder'
-    let builder = new Gtk.Builder()
+    let builder = this.builder = new Gtk.Builder()
 
     if (builder.add_from_file(uiFilePath) === 0) {
       log('could not load the ui file: %s'.format(uiFilePath))
@@ -116,9 +115,9 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
       this._foregroundColorButton = builder.get_object('foreground-color-button')
       this._backgroundColorButton = builder.get_object('background-color-button')
-      this._otherShortcutRadioButton = builder.get_object('other-shortcut-radiobutton')
-      this._otherShortcutTreeView = builder.get_object('other-shortcut-treeview')
-      this._otherShortcutListStore = builder.get_object('other-shortcut-liststore')
+      
+      this._makeShortcutEdit('other-shortcut-treeview', 'other-shortcut-liststore', OTHER_SHORTCUT_SETTING_KEY)
+
       this._runCustomCommandCheckButton = builder.get_object('run-custom-command-checkbutton')
       this._customCommandBox = builder.get_object('custom-command-box')
       this._customCommandEntry = builder.get_object('custom-command-entry')
@@ -133,10 +132,6 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
         terminalTopPaddingEntry,
         terminalBottomPaddingEntry
       ].forEach(view => view.connect('changed', () => this._validatePaddingValue(view)))
-
-      // configure the tree view column and creates the unique row of the model
-      this._configureOtherShortcutTreeView(this._otherShortcutTreeView)
-      this._otherShortcutRowIter = this._otherShortcutListStore.append()
 
       // binds the animation enablement setting
       this._settings.bind(ENABLE_ANIMATION_SETTING_KEY, enableAnimationCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
@@ -180,19 +175,6 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       // binds the terminal padding setting
       this._settings.bind(TERMINAL_BOTTOM_PADDING_SETTING_KEY, terminalBottomPaddingEntry, 'text', Gio.SettingsBindFlags.DEFAULT)
       terminalBottomPaddingResetButton.connect('clicked', Lang.bind(this, function () { this._settings.reset(TERMINAL_BOTTOM_PADDING_SETTING_KEY) }))
-
-      // binds the custom shortcut setting
-      this._settings.connect('changed::' + OTHER_SHORTCUT_SETTING_KEY, Lang.bind(this, this._otherShortcutSettingChanged))
-      this._otherShortcutSettingChanged()
-
-      // binds the shortcut type (too bad bind_with_mapping is not introspectable)
-      this._settings.connect('changed::' + SHORTCUT_TYPE_SETTING_KEY, Lang.bind(this, this._shortcutTypeSettingChanged))
-      this._shortcutTypeSettingChanged()
-
-      this._otherShortcutRadioButton.connect('notify::active', Lang.bind(this, function () {
-        this._settings.set_string(SHORTCUT_TYPE_SETTING_KEY, this._otherShortcutRadioButton['active'] ? 'other' : 'default')
-        this._shortcutTypeSettingChanged()
-      }))
 
       // binds the toggle on scroll setting
       this._settings.bind(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, enableToggleOnScrollCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
@@ -256,6 +238,41 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     }
   },
 
+  _makeShortcutEdit (widgetId, storeId, settingKey, defaultValue) {
+    let view = this.builder.get_object(widgetId)
+    let store = this.builder.get_object(storeId)
+    let renderer = new Gtk.CellRendererAccel({ editable: true })
+    let column = new Gtk.TreeViewColumn()
+    let iter = store.append()
+
+    let updateShortcutRow = (accel) => {
+      let [key, mods] = (accel !== null) ? Gtk.accelerator_parse(accel) : [0, 0]
+      store.set(iter, [COLUMN_KEY, COLUMN_MODS], [key, mods])
+    }
+
+    renderer.connect('accel-edited', (renderer, path, key, mods, hwCode) => {
+      let accel = Gtk.accelerator_name(key, mods)
+      updateShortcutRow(accel)
+      this._settings.set_strv(settingKey, [accel])
+    })
+
+    renderer.connect('accel-cleared', (renderer, path) => {
+      updateShortcutRow(null)
+      this._settings.set_strv(settingKey, [])
+    })
+
+    this._settings.connect('changed::' + settingKey, () => {
+      updateShortcutRow(this._settings.get_strv(settingKey)[0])
+    })
+
+    column.pack_start(renderer, true)
+    column.add_attribute(renderer, 'accel-key', COLUMN_KEY)
+    column.add_attribute(renderer, 'accel-mods', COLUMN_MODS)
+
+    view.append_column(column)
+    updateShortcutRow(this._settings.get_strv(settingKey)[0])
+  },
+
   _validatePaddingValue (view, strictMode) {
     let match = view.get_text().trim().match(/^([0-9]\d*)\s*(px|%)$/i)
     let valid = (match !== null)
@@ -273,62 +290,6 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
     view['secondary-icon-name'] = valid ? null : 'dialog-warning-symbolic'
     view['secondary-icon-tooltip-text'] = valid ? null : _('Invalid syntax or range')
-  },
-
-  _configureOtherShortcutTreeView: function (treeView) {
-    let renderer = new Gtk.CellRendererAccel({ editable: true })
-    renderer.connect('accel-edited', Lang.bind(this, this._otherShortcutAccelEdited))
-    renderer.connect('accel-cleared', Lang.bind(this, this._otherShortcutAccelCleared))
-
-    let column = new Gtk.TreeViewColumn()
-    column.pack_start(renderer, true)
-    column.add_attribute(renderer, 'accel-key', SHORTCUT_COLUMN_KEY)
-    column.add_attribute(renderer, 'accel-mods', 1)
-
-    treeView.append_column(column)
-  },
-
-  _shortcutTypeSettingChanged: function () {
-    let otherShortcutType = this._settings.get_string(SHORTCUT_TYPE_SETTING_KEY) === 'other'
-
-    if (this._otherShortcutRadioButton['active'] !== otherShortcutType) { // guards against endless notification cycle
-      this._otherShortcutRadioButton['active'] = otherShortcutType
-    }
-
-    this._otherShortcutTreeView.set_sensitive(otherShortcutType)
-    this._updateRealShortcut()
-  },
-
-  _otherShortcutSettingChanged: function () {
-    this._updateOtherShortcutRow(this._settings.get_strv(OTHER_SHORTCUT_SETTING_KEY)[0])
-    this._updateRealShortcut()
-  },
-
-  _otherShortcutAccelEdited: function (renderer, path, key, mods, hwCode) {
-    let accel = Gtk.accelerator_name(key, mods)
-
-    this._updateOtherShortcutRow(accel)
-    this._settings.set_strv(OTHER_SHORTCUT_SETTING_KEY, [accel])
-  },
-
-  _otherShortcutAccelCleared: function (renderer, path) {
-    this._updateOtherShortcutRow(null)
-    this._settings.set_strv(OTHER_SHORTCUT_SETTING_KEY, [])
-  },
-
-  _updateRealShortcut: function () {
-    let shortcutType = this._settings.get_string(SHORTCUT_TYPE_SETTING_KEY)
-
-    if (shortcutType === 'default') {
-      this._settings.reset(REAL_SHORTCUT_SETTING_KEY) // the default of this key is the default shortcut
-    } else {
-      this._settings.set_strv(REAL_SHORTCUT_SETTING_KEY, this._settings.get_strv(OTHER_SHORTCUT_SETTING_KEY))
-    }
-  },
-
-  _updateOtherShortcutRow: function (accel) {
-    let [key, mods] = (accel !== null) ? Gtk.accelerator_parse(accel) : [0, 0]
-    this._otherShortcutListStore.set(this._otherShortcutRowIter, [SHORTCUT_COLUMN_KEY, SHORTCUT_COLUMN_MODS], [key, mods])
   },
 
   _updateForegroundColorButton: function () {
@@ -353,7 +314,6 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
       try {
         let [parsed, args] = GLib.shell_parse_argv(customCommand)
-
         if (!parsed) {
           error = _('no argument found')
         }
