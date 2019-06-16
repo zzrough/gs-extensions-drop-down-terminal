@@ -60,6 +60,32 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkListStore" id="positions-liststore">
+    <columns>
+      <!-- column-name position-name -->
+      <column type="gchararray"/>
+      <!-- column-name position-value -->
+      <column type="gint"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Top</col>
+        <col id="1">0</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left</col>
+        <col id="1">1</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right</col>
+        <col id="1">2</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Bottom</col>
+        <col id="1">3</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="prev-tab-shortcut-liststore">
     <columns>
       <!-- column-name key -->
@@ -495,6 +521,7 @@
                       <object class="GtkComboBox" id="position-combobox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="model">positions-liststore</property>
                         <property name="active">0</property>
                         <child>
                           <object class="GtkCellRendererText" id="positioncellrenderertext1"/>
