@@ -32,34 +32,38 @@ const Convenience = imports.convenience
 
 // dbus interface
 const DropDownTerminalXIface =
-   '<node>                                                        \
-    <interface name="pro.bigbn.DropDownTerminalX">  \
-        <property name="Pid" type="i" access="read"/>             \
-        <method name="SetGeometry">                               \
-            <arg name="x" type="i" direction="in"/>               \
-            <arg name="y" type="i" direction="in"/>               \
-            <arg name="width" type="i" direction="in"/>           \
-            <arg name="height" type="i" direction="in"/>          \
-        </method>                                                 \
-        <method name="Toggle"/>                                   \
-        <method name="Focus"/>                                    \
-        <method name="Quit"/>                                     \
-        <signal name="Failure">                                   \
-            <arg type="s" name="name"/>                           \
-            <arg type="s" name="cause"/>                          \
-        </signal>                                                 \
-    </interface>                                                  \
-    </node>'
+   `<node>                                                        
+    <interface name="pro.bigbn.DropDownTerminalX">  
+        <property name="Pid" type="i" access="read"/>             
+        <method name="SetGeometry">                               
+            <arg name="x" type="i" direction="in"/>               
+            <arg name="y" type="i" direction="in"/>               
+            <arg name="width" type="i" direction="in"/>           
+            <arg name="height" type="i" direction="in"/>          
+        </method>                                                 
+        <method name="Toggle"/>                                   
+        <method name="Focus"/>                                    
+        <method name="NewTab"/>                                    
+        <method name="PrevTab"/>                                    
+        <method name="NextTab"/>                                    
+        <method name="CloseTab"/>                                    
+        <method name="Quit"/>                                     
+        <signal name="Failure">                                   
+            <arg type="s" name="name"/>                           
+            <arg type="s" name="cause"/>                          
+        </signal>                                                 
+    </interface>                                                  
+    </node>`
 
 // uimanager popup information
 const PopupUi =
-   '<ui>                               \
-        <popup name="TerminalPopup">   \
-            <menuitem action="Copy"/>  \
-            <menuitem action="Paste"/> \
-            <menuitem action="Close"/> \
-        </popup>                       \
-    </ui>'
+   `<ui>                               
+        <popup name="TerminalPopup">   
+            <menuitem action="Copy"/>  
+            <menuitem action="Paste"/> 
+            <menuitem action="Close"/> 
+        </popup>                       
+    </ui>`
 
 // constants for the location of the extension
 const EXTENSION_ID = 'drop-down-terminal-x'
@@ -162,36 +166,6 @@ const DropDownTerminalX = new Lang.Class({
     Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
     this._window = this._createWindow()
-
-    // Tabs shortcuts
-    /*
-    this._window.connect('key-press-event', Lang.bind(this, function (window, event) {
-      if (!this._isTabsEnabled) return
-
-      let defaultMask = Gtk.accelerator_get_default_mod_mask()
-      let [isModified, mask] = event.get_state()
-      let [isSymbol, key] = event.get_keyval()
-
-      if ((defaultMask & mask) === Gdk.ModifierType.CONTROL_MASK + Gdk.ModifierType.SHIFT_MASK) {
-        switch (Gdk.keyval_to_upper(key)) {
-          case Gdk.KEY_T:
-            this.addTab()
-            return Gdk.EVENT_STOP
-        }
-      }
-
-      if ((defaultMask & mask) === Gdk.ModifierType.MOD1_MASK) {
-        switch (key) {
-          case Gdk.KEY_Left:
-            this.notebook.prev_page()
-            return Gdk.EVENT_STOP
-          case Gdk.KEY_Right:
-            this.notebook.next_page()
-            return Gdk.EVENT_STOP
-        }
-      }
-    })
-    ) */
 
     // Notebook - is the default gnome tabs widget
     this.notebook = new Gtk.Notebook()
@@ -421,6 +395,28 @@ const DropDownTerminalX = new Lang.Class({
         this._window.resize(width, height)
       }
     }))
+  },
+
+  NewTab () {
+    if (!this._isTabsEnabled) return
+    this.addTab()
+  },
+
+  PrevTab () {
+    if (!this._isTabsEnabled) return
+    this.notebook.prev_page()
+  },
+
+  NextTab () {
+    if (!this._isTabsEnabled) return
+    this.notebook.next_page()
+  },
+
+  CloseTab () {
+    if (!this._isTabsEnabled) return
+    if (this.notebook.get_n_pages() === 1) return this._forkUserShell(this.tabs[0].terminal)
+    let pageNum = this.notebook.get_current_page()
+    this._removeTab(pageNum)
   },
 
   Toggle: function () {

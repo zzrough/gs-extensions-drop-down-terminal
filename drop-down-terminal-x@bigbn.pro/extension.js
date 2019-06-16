@@ -70,6 +70,11 @@ const TOGGLE_SHORTCUT_SETTING_KEY = 'other-shortcut'
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
 
+const NEW_TAB_SHORTCUT_SETTING_KEY = 'new-tab-shortcut'
+const PREV_TAB_SHORTCUT_SETTING_KEY = 'prev-tab-shortcut'
+const NEXT_TAB_SHORTCUT_SETTING_KEY = 'next-tab-shortcut'
+const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut'
+
 const TOP_EDGE = 0
 const LEFT_EDGE = 1
 const RIGHT_EDGE = 2
@@ -79,24 +84,28 @@ const SHELL_VERSION = 10 * parseFloat('0.' + Config.PACKAGE_VERSION.split('.').j
 
 // dbus interface
 const DropDownTerminalXIface =
-    '<node>                                                       \
-     <interface name="pro.bigbn.DropDownTerminalX"> \
-        <property name="Pid" type="i" access="read"/>             \
-        <method name="SetGeometry">                               \
-            <arg name="x" type="i" direction="in"/>               \
-            <arg name="y" type="i" direction="in"/>               \
-            <arg name="width" type="i" direction="in"/>           \
-            <arg name="height" type="i" direction="in"/>          \
-        </method>                                                 \
-        <method name="Toggle"/>                                   \
-        <method name="Focus"/>                                    \
-        <method name="Quit"/>                                     \
-        <signal name="Failure">                                   \
-            <arg type="s" name="name"/>                           \
-            <arg type="s" name="cause"/>                          \
-        </signal>                                                 \
-     </interface>                                                 \
-     </node>'
+    `<node>                                                       
+     <interface name="pro.bigbn.DropDownTerminalX"> 
+        <property name="Pid" type="i" access="read"/>             
+        <method name="SetGeometry">                               
+            <arg name="x" type="i" direction="in"/>               
+            <arg name="y" type="i" direction="in"/>               
+            <arg name="width" type="i" direction="in"/>           
+            <arg name="height" type="i" direction="in"/>          
+        </method>                                                 
+        <method name="Toggle"/>                                   
+        <method name="Focus"/>                                    
+        <method name="NewTab"/>                                    
+        <method name="PrevTab"/>                                    
+        <method name="NextTab"/>                                    
+        <method name="CloseTab"/>                                    
+        <method name="Quit"/>                                     
+        <signal name="Failure">                                   
+            <arg type="s" name="name"/>                           
+            <arg type="s" name="cause"/>                          
+        </signal>                                                 
+     </interface>                                                 
+     </node>`
 
 // helper to only log in debug mode
 function debug (text) { DEBUG && log('[DDT] ' + text) }
@@ -224,6 +233,15 @@ const DropDownTerminalXExtension = new Lang.Class({
     }))
 
     this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled))
+    let busRun = (actionName) => this._busProxy && this._busProxy[actionName]()
+
+    this.bindings = [
+      [TOGGLE_SHORTCUT_SETTING_KEY, this._toggle],
+      [NEW_TAB_SHORTCUT_SETTING_KEY, () => busRun('NewTabRemote')],
+      [PREV_TAB_SHORTCUT_SETTING_KEY, () => busRun('PrevTabRemote')],
+      [NEXT_TAB_SHORTCUT_SETTING_KEY, () => busRun('NextTabRemote')],
+      [CLOSE_TAB_SHORTCUT_SETTING_KEY, () => busRun('CloseTabRemote')]
+    ]
 
     // honours setting changes
     this._settingChangedHandlerIds = [
@@ -280,17 +298,20 @@ const DropDownTerminalXExtension = new Lang.Class({
         }
       })),
 
-      this._settings.connect('changed::' + TOGGLE_SHORTCUT_SETTING_KEY, Lang.bind(this, function () {
-        this._unbindShortcut()
-        this._bindShortcut(TOGGLE_SHORTCUT_SETTING_KEY, this._toggle)
-      }))
+      this.bindings.forEach(([key, action]) => {
+        this._settings.connect('changed::' + key, () => {
+          this._unbindShortcut(key)
+          this._bindShortcut(key, action)
+        })
+      })
     ]
 
     // applies the settings initially
     this._updateAnimationProperties()
     this._updateToggleOnScroll()
     this._updateWindowGeometry()
-    this._bindShortcut(TOGGLE_SHORTCUT_SETTING_KEY, this._toggle)
+    
+    this.bindings.forEach(([key, action]) => this._bindShortcut(key, action))
 
     // registers the bus name watch
     this._busWatchId = Gio.DBus.session.watch_name('pro.bigbn.DropDownTerminalX',
@@ -337,7 +358,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   disable: function () {
     // unbinds the shortcut
-    this._unbindShortcut()
+    this.bindings.forEach(([key]) => this._unbindShortcut(key))
 
     // removes the ctrl-alt-tab group
     if (this._windowActor !== null) {
@@ -581,14 +602,18 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _bindShortcut: function (key, action) {
     // introduced in 3.16
-    if (Main.wm.addKeybinding && Shell.ActionMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, action.call(this))
+    log('Binding action')
+    log(key)
+    log(action)
+
+    if (Main.wm.addKeybinding && Shell.ActionMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, action.bind(this))
     // introduced in 3.7.5
-    else if (Main.wm.addKeybinding && Shell.KeyBindingMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY, action.call(this))
+    else if (Main.wm.addKeybinding && Shell.KeyBindingMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY, action.bind(this))
   },
 
-  _unbindShortcut: function () {
-    if (Main.wm.removeKeybinding) // introduced in 3.7.2
-    { Main.wm.removeKeybinding(TOGGLE_SHORTCUT_SETTING_KEY) } else { global.display.remove_keybinding(TOGGLE_SHORTCUT_SETTING_KEY) }
+  _unbindShortcut: function (key) {
+    if (Main.wm.removeKeybinding) Main.wm.removeKeybinding(key)
+    else global.display.remove_keybinding(key)
   },
 
   _windowCreated: function (display, window) {
