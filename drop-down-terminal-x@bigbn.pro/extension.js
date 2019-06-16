@@ -66,7 +66,7 @@ const TERMINAL_LEFT_PADDING_SETTING_KEY = 'terminal-left-padding'
 const TERMINAL_RIGHT_PADDING_SETTING_KEY = 'terminal-right-padding'
 const TERMINAL_TOP_PADDING_SETTING_KEY = 'terminal-top-padding'
 const TERMINAL_BOTTOM_PADDING_SETTING_KEY = 'terminal-bottom-padding'
-const REAL_SHORTCUT_SETTING_KEY = 'real-shortcut'
+const TOGGLE_SHORTCUT_SETTING_KEY = 'other-shortcut'
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
 
@@ -280,7 +280,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         }
       })),
 
-      this._settings.connect('changed::' + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function () {
+      this._settings.connect('changed::' + TOGGLE_SHORTCUT_SETTING_KEY, Lang.bind(this, function () {
         this._unbindShortcut()
         this._bindShortcut()
       }))
@@ -582,28 +582,28 @@ const DropDownTerminalXExtension = new Lang.Class({
   _bindShortcut: function () {
     if (Main.wm.addKeybinding && Shell.ActionMode) // introduced in 3.16
     {
-      Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+      Main.wm.addKeybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
         Shell.ActionMode.NORMAL,
         Lang.bind(this, this._toggle))
     } else if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced in 3.7.5
     {
-      Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+      Main.wm.addKeybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
         Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY,
         Lang.bind(this, this._toggle))
     } else if (Main.wm.addKeybinding && Main.KeybindingMode) // introduced in 3.7.2
     {
-      Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+      Main.wm.addKeybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
         Main.KeybindingMode.NORMAL | Main.KeybindingMode.MESSAGE_TRAY,
         Lang.bind(this, this._toggle))
     } else {
-      global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
+      global.display.add_keybinding(TOGGLE_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE,
         Lang.bind(this, this._toggle))
     }
   },
 
   _unbindShortcut: function () {
     if (Main.wm.removeKeybinding) // introduced in 3.7.2
-    { Main.wm.removeKeybinding(REAL_SHORTCUT_SETTING_KEY) } else { global.display.remove_keybinding(REAL_SHORTCUT_SETTING_KEY) }
+    { Main.wm.removeKeybinding(TOGGLE_SHORTCUT_SETTING_KEY) } else { global.display.remove_keybinding(TOGGLE_SHORTCUT_SETTING_KEY) }
   },
 
   _windowCreated: function (display, window) {

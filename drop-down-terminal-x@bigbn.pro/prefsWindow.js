@@ -40,7 +40,7 @@ const TERMINAL_BOTTOM_PADDING_SETTING_KEY = 'terminal-bottom-padding'
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position'
 const TERMINAL_CURSOR_SETTING_KEY = 'terminal-cursor'
 const TRANSPARENCY_LEVEL_SETTING_KEY = 'transparency-level'
-const OTHER_SHORTCUT_SETTING_KEY = 'other-shortcut'
+const TOGGLE_SHORTCUT_SETTING_KEY = 'other-shortcut'
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll'
 const FOREGROUND_COLOR_SETTING_KEY = 'foreground-color'
 const BACKGROUND_COLOR_SETTING_KEY = 'background-color'
@@ -121,7 +121,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       this._foregroundColorButton = builder.get_object('foreground-color-button')
       this._backgroundColorButton = builder.get_object('background-color-button')
       
-      this._makeShortcutEdit('other-shortcut-treeview', 'shortcut-liststore', OTHER_SHORTCUT_SETTING_KEY)
+      this._makeShortcutEdit('other-shortcut-treeview', 'shortcut-liststore', TOGGLE_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('new-tab-shortcut-treeview', 'new-tab-shortcut-liststore', NEW_TAB_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('prev-tab-shortcut-treeview', 'prev-tab-shortcut-liststore', PREV_TAB_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('next-tab-shortcut-treeview', 'next-tab-shortcut-liststore', NEXT_TAB_SHORTCUT_SETTING_KEY)
