@@ -39,7 +39,14 @@
     </data>
   </object>
   <object class="GtkListStore" id="decrease-text-shortcut-liststore"/>
-  <object class="GtkListStore" id="increase-text-shortcut-liststore"/>
+  <object class="GtkListStore" id="increase-text-shortcut-liststore">
+    <columns>
+      <!-- column-name key -->
+      <column type="gint"/>
+      <!-- column-name mods -->
+      <column type="gint"/>
+    </columns>
+  </object>
   <object class="GtkListStore" id="monitors-liststore">
     <columns>
       <!-- column-name monitor -->
@@ -125,6 +132,7 @@
     <property name="visible">True</property>
     <property name="can_focus">True</property>
     <property name="tab_pos">left</property>
+    <property name="scrollable">True</property>
     <child>
       <object class="GtkBox" id="main-box">
         <property name="visible">True</property>
@@ -525,8 +533,8 @@
       <object class="GtkLabel" id="label10">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">General</property>
-        <property name="width_chars">12</property>
+        <property name="label" translatable="yes">General settings</property>
+        <property name="width_chars">15</property>
         <property name="xalign">0</property>
       </object>
       <packing>
@@ -1494,7 +1502,7 @@
                         <property name="can_focus">False</property>
                         <property name="hexpand">True</property>
                         <child>
-                          <object class="GtkTreeView" id="increase-text-shortcut">
+                          <object class="GtkTreeView" id="increase-text-shortcut-treeview">
                             <property name="name">increase-text-shortcut</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -1518,7 +1526,7 @@
                         <property name="can_focus">False</property>
                         <property name="hexpand">True</property>
                         <child>
-                          <object class="GtkTreeView" id="decrease-text-shortcut">
+                          <object class="GtkTreeView" id="decrease-text-shortcut-treeview">
                             <property name="name">decrease-text-shortcut</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>

@@ -195,6 +195,22 @@
     </key>
 
 
+    <key name="increase-text-shortcut" type="as">
+      <default><![CDATA[['<Primary><Alt>equal']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="decrease-text-shortcut" type="as">
+      <default><![CDATA[['<Primary><Alt>minus']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
     <key name="enable-toggle-on-scroll" type="b">
       <default>false</default>
       <summary>Enable toggling by scrolling the top bar</summary>

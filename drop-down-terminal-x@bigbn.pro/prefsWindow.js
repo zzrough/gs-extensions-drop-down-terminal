@@ -54,6 +54,9 @@ const PREV_TAB_SHORTCUT_SETTING_KEY = 'prev-tab-shortcut'
 const NEXT_TAB_SHORTCUT_SETTING_KEY = 'next-tab-shortcut'
 const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut'
 
+const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut'
+const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
+
 // tree view columns
 const COLUMN_KEY = 0
 const COLUMN_MODS = 1
@@ -120,12 +123,14 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
       this._foregroundColorButton = builder.get_object('foreground-color-button')
       this._backgroundColorButton = builder.get_object('background-color-button')
-      
+
       this._makeShortcutEdit('other-shortcut-treeview', 'shortcut-liststore', TOGGLE_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('new-tab-shortcut-treeview', 'new-tab-shortcut-liststore', NEW_TAB_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('prev-tab-shortcut-treeview', 'prev-tab-shortcut-liststore', PREV_TAB_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('next-tab-shortcut-treeview', 'next-tab-shortcut-liststore', NEXT_TAB_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('close-tab-shortcut-treeview', 'close-tab-shortcut-liststore', CLOSE_TAB_SHORTCUT_SETTING_KEY)
+      this._makeShortcutEdit('increase-text-shortcut-treeview', 'increase-text-shortcut-liststore', INCREASE_TEXT_SHORTCUT_SETTING_KEY)
+      this._makeShortcutEdit('decrease-text-shortcut-treeview', 'decrease-text-shortcut-liststore', DECREASE_TEXT_SHORTCUT_SETTING_KEY)
 
       this._runCustomCommandCheckButton = builder.get_object('run-custom-command-checkbutton')
       this._customCommandBox = builder.get_object('custom-command-box')

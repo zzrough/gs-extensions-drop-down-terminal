@@ -75,6 +75,9 @@ const PREV_TAB_SHORTCUT_SETTING_KEY = 'prev-tab-shortcut'
 const NEXT_TAB_SHORTCUT_SETTING_KEY = 'next-tab-shortcut'
 const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut'
 
+const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut'
+const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
+
 const TOP_EDGE = 0
 const LEFT_EDGE = 1
 const RIGHT_EDGE = 2
