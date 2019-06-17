@@ -251,5 +251,13 @@
       </description>
     </key>
 
+    <key name="hide-on-escape" type="b">
+      <default>false</default>
+      <summary>Hide on escape</summary>
+      <description>
+        Whether to enable or disable the "hide on escape" feature
+      </description>
+    </key>
+
   </schema>
 </schemalist>

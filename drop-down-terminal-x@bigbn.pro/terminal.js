@@ -85,6 +85,7 @@ const CUSTOM_COMMAND_SETTING_KEY = 'custom-command'
 const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell'
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs'
 const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus'
+const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape'
 
 // gnome desktop wm settings
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences'
@@ -229,6 +230,7 @@ const DropDownTerminalX = new Lang.Class({
 
     this._settings.connect('changed::' + ENABLE_TABS_SETTING_KEY, Lang.bind(this, this._updateTabsSupport))
     this._settings.connect('changed::' + HIDE_ON_UNFOCUS_SETTING_KEY, Lang.bind(this, this._updateUnfocusSupport))
+    this._settings.connect('changed::' + HIDE_ON_ESCAPE_SETTING_KEY, Lang.bind(this, this._updateEscapeSupport))
     this._settings.connect('changed::' + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, updateBellSettings))
 
     // connect to gnome settings changes
@@ -442,6 +444,13 @@ const DropDownTerminalX = new Lang.Class({
     }))
   },
 
+  _jentlyHide () {
+    Convenience.runInGdk(Lang.bind(this, function () {
+      this._window.hide()
+      return false
+    }))
+  },
+
   Focus: function () {
     // present the window in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(Lang.bind(this, function () {
@@ -545,8 +554,16 @@ const DropDownTerminalX = new Lang.Class({
     window.connect('delete-event', () => { window.hide(); return true })
     window.connect('destroy', Gtk.main_quit)
     window.connect('focus-out-event', () => {
-      if (this._isHideOnUnfocusEnabled) this.Toggle()
+      if (this._isHideOnUnfocusEnabled) this._jentlyHide()
       return true
+    })
+
+    window.connect('key-press-event', (widget, event, user_data) => {
+      if (this._isHideOnEscapeEnabled) {
+        let [success, keyval] = event.get_keyval() // integer
+        let keyname = Gdk.keyval_name(keyval) // string keyname      
+        if (keyname === 'Escape') this._jentlyHide()
+      }
     })
 
     return window
@@ -679,6 +696,16 @@ const DropDownTerminalX = new Lang.Class({
       this._isHideOnUnfocusEnabled = false
     }
   },
+
+
+  _updateEscapeSupport: function () {
+    if (this._settings.get_boolean(HIDE_ON_ESCAPE_SETTING_KEY)) {
+      this._isHideOnEscapeEnabled = true
+    } else {
+      this._isHideOnEscapeEnabled = false
+    }
+  },
+
 
   _updateAudibleIndicator: function (tab) {
     let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY)
