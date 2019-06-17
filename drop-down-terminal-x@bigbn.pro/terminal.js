@@ -84,6 +84,7 @@ const RUN_CUSTOM_COMMAND_SETTING_KEY = 'run-custom-command'
 const CUSTOM_COMMAND_SETTING_KEY = 'custom-command'
 const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell'
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs'
+const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus'
 
 // gnome desktop wm settings
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences'
@@ -189,6 +190,7 @@ const DropDownTerminalX = new Lang.Class({
     this._interfaceSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' })
 
     this._updateTabsSupport()
+    this._updateUnfocusSupport()
 
     let updateAppearance = Lang.bind(this, function () {
       this._applyToAllTabs(function (tab) {
@@ -226,6 +228,7 @@ const DropDownTerminalX = new Lang.Class({
     }))
 
     this._settings.connect('changed::' + ENABLE_TABS_SETTING_KEY, Lang.bind(this, this._updateTabsSupport))
+    this._settings.connect('changed::' + HIDE_ON_UNFOCUS_SETTING_KEY, Lang.bind(this, this._updateUnfocusSupport))
     this._settings.connect('changed::' + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, updateBellSettings))
 
     // connect to gnome settings changes
@@ -434,9 +437,7 @@ const DropDownTerminalX = new Lang.Class({
   Toggle: function () {
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(Lang.bind(this, function () {
-      this._window.visible ? this._window.hide()
-        : this._window.show()
-
+      this._window.visible ? this._window.hide() : this._window.show()
       return false
     }))
   },
@@ -541,8 +542,12 @@ const DropDownTerminalX = new Lang.Class({
     window.set_visual(screen.get_rgba_visual())
 
     window.connect('enter_notify_event', Lang.bind(this, this._windowMouseEnter))
-    window.connect('delete-event', function () { window.hide(); return true })
+    window.connect('delete-event', () => { window.hide(); return true })
     window.connect('destroy', Gtk.main_quit)
+    window.connect('focus-out-event', () => {
+      if (this._isHideOnUnfocusEnabled) this.Toggle()
+      return true
+    })
 
     return window
   },
@@ -664,6 +669,14 @@ const DropDownTerminalX = new Lang.Class({
     } else {
       this._isTabsEnabled = false
       this.notebook.set_show_tabs(false)
+    }
+  },
+
+  _updateUnfocusSupport: function () {
+    if (this._settings.get_boolean(HIDE_ON_UNFOCUS_SETTING_KEY)) {
+      this._isHideOnUnfocusEnabled = true
+    } else {
+      this._isHideOnUnfocusEnabled = false
     }
   },
 

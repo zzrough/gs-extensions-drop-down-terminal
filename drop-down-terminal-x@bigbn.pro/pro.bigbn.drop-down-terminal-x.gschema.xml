@@ -242,5 +242,14 @@
         Whether to enable or disable the tabs
       </description>
     </key>
+
+    <key name="hide-on-unfocus" type="b">
+      <default>false</default>
+      <summary>Hide on unfocus</summary>
+      <description>
+        Whether to enable or disable the "hide on unfocus" feature
+      </description>
+    </key>
+
   </schema>
 </schemalist>

@@ -48,6 +48,7 @@ const RUN_CUSTOM_COMMAND_SETTING_KEY = 'run-custom-command'
 const CUSTOM_COMMAND_SETTING_KEY = 'custom-command'
 const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell'
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs'
+const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus'
 
 const NEW_TAB_SHORTCUT_SETTING_KEY = 'new-tab-shortcut'
 const PREV_TAB_SHORTCUT_SETTING_KEY = 'prev-tab-shortcut'
@@ -120,6 +121,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       let cursorComboBox = builder.get_object('cursor-combobox')
       let enableAudibleBellCheckButton = builder.get_object('enable-audible-bell-checkbutton')
       let enableTabsCheckButton = builder.get_object('enable-tabs-checkbutton')
+      let enableHideOnUnfocusButton = builder.get_object('hide-on-unfocus-checkbutton')
 
       this._foregroundColorButton = builder.get_object('foreground-color-button')
       this._backgroundColorButton = builder.get_object('background-color-button')
@@ -169,6 +171,9 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
       // binds the tabs state setting
       this._settings.bind(ENABLE_TABS_SETTING_KEY, enableTabsCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
+
+      // binds the tabs state setting
+      this._settings.bind(HIDE_ON_UNFOCUS_SETTING_KEY, enableHideOnUnfocusButton, 'active', Gio.SettingsBindFlags.DEFAULT)
 
       // binds the terminal height setting
       this._settings.bind(TERMINAL_SIZE_SETTING_KEY, terminalSizeEntry, 'text', Gio.SettingsBindFlags.DEFAULT)
