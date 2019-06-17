@@ -47,6 +47,8 @@ const DropDownTerminalXIface =
         <method name="PrevTab"/>                                    
         <method name="NextTab"/>                                    
         <method name="CloseTab"/>                                    
+        <method name="IncreaseFontSize"/>                                    
+        <method name="DecreaseFontSize"/>                                    
         <method name="Quit"/>                                     
         <signal name="Failure">                                   
             <arg type="s" name="name"/>                           
@@ -419,6 +421,16 @@ const DropDownTerminalX = new Lang.Class({
     this._removeTab(pageNum)
   },
 
+  IncreaseFontSize () {
+    let terminal = this._getCurrentTerminal()
+    terminal.set_font_scale(terminal.get_font_scale() + 0.1)
+  },
+
+  DecreaseFontSize () {
+    let terminal = this._getCurrentTerminal()
+    terminal.set_font_scale(terminal.get_font_scale() - 0.1)
+  },
+
   Toggle: function () {
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(Lang.bind(this, function () {
@@ -448,6 +460,12 @@ const DropDownTerminalX = new Lang.Class({
 
   Quit: function () {
     Gtk.main_quit()
+  },
+
+  _getCurrentTerminal () {
+    let pageNum = this.notebook.get_current_page()
+    let terminal = this.tabs[pageNum].terminal
+    return terminal
   },
 
   _createTerminalView: function () {

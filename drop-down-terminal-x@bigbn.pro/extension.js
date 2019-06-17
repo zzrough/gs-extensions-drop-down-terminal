@@ -102,6 +102,8 @@ const DropDownTerminalXIface =
         <method name="PrevTab"/>                                    
         <method name="NextTab"/>                                    
         <method name="CloseTab"/>                                    
+        <method name="IncreaseFontSize"/>                                    
+        <method name="DecreaseFontSize"/>                                    
         <method name="Quit"/>                                     
         <signal name="Failure">                                   
             <arg type="s" name="name"/>                           
@@ -243,7 +245,9 @@ const DropDownTerminalXExtension = new Lang.Class({
       [NEW_TAB_SHORTCUT_SETTING_KEY, () => busRun('NewTabRemote')],
       [PREV_TAB_SHORTCUT_SETTING_KEY, () => busRun('PrevTabRemote')],
       [NEXT_TAB_SHORTCUT_SETTING_KEY, () => busRun('NextTabRemote')],
-      [CLOSE_TAB_SHORTCUT_SETTING_KEY, () => busRun('CloseTabRemote')]
+      [CLOSE_TAB_SHORTCUT_SETTING_KEY, () => busRun('CloseTabRemote')],
+      [INCREASE_TEXT_SHORTCUT_SETTING_KEY, () => busRun('IncreaseFontSizeRemote')],
+      [DECREASE_TEXT_SHORTCUT_SETTING_KEY, () => busRun('DecreaseFontSizeRemote')]
     ]
 
     // honours setting changes
