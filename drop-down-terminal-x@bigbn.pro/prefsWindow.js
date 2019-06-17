@@ -332,6 +332,6 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     }
 
     this._customCommandEntry['secondary-icon-name'] = error ? 'dialog-warning-symbolic' : null
-    this._customCommandEntry['secondary-icon-tooltip-text'] = error ? _('Error parsing command: %s').format(error) : null
+    this._customCommandEntry['secondary-icon-tooltip-text'] = error ? `Error parsing command: ${error}` : null
   }
 })
