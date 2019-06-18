@@ -78,6 +78,8 @@ const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut'
 const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut'
 const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
 
+const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor'
+
 const TOP_EDGE = 0
 const LEFT_EDGE = 1
 const RIGHT_EDGE = 2
@@ -252,61 +254,40 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     // honours setting changes
     this._settingChangedHandlerIds = [
-      this._settings.connect('changed::' + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
-      this._settings.connect('changed::' + OPENING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
-      this._settings.connect('changed::' + CLOSING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)),
       this._settings.connect('changed::' + ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, Lang.bind(this, this._updateToggleOnScroll)),
+      // -------------------------
+      ...[
+        ENABLE_ANIMATION_SETTING_KEY,
+        OPENING_ANIMATION_TIME_SETTING_KEY,
+        CLOSING_ANIMATION_TIME_SETTING_KEY
+      ].map((key) => {
+        return this._settings.connect('changed::' + key, () => this._updateAnimationProperties())
+      }),
 
-      this._settings.connect('changed::' + TERMINAL_SIZE_SETTING_KEY, Lang.bind(this, function () {
-        if (this._windowActor !== null) {
-          debug('size changed')
-          this._windowActor.remove_clip()
-          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-        }
-      })),
+      // -------------------------
 
-      this._settings.connect('changed::' + TERMINAL_LEFT_PADDING_SETTING_KEY, Lang.bind(this, function () {
-        if (this._windowActor !== null) {
-          debug('left padding changed')
-          this._windowActor.remove_clip()
-          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-        }
-      })),
+      ...[
+        [TERMINAL_SIZE_SETTING_KEY, 'size changed'],
+        [PRIMARY_MONITOR_SETTING_KEY, 'primary monitor changed'],
+        [TERMINAL_LEFT_PADDING_SETTING_KEY, 'left padding changed'],
+        [TERMINAL_RIGHT_PADDING_SETTING_KEY, 'right padding changed'],
+        [TERMINAL_TOP_PADDING_SETTING_KEY, 'top padding changed'],
+        [TERMINAL_BOTTOM_PADDING_SETTING_KEY, 'bottom padding changed'],
+        [TERMINAL_POSITION_SETTING_KEY, 'position changed']
+      ].map(([key, message]) => {
+        log(key, message)
+        return this._settings.connect('changed::' + key, () => {
+          if (this._windowActor !== null) {
+            log(message)
+            this._windowActor.remove_clip()
+            Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
+          }
+        })
+      }),
 
-      this._settings.connect('changed::' + TERMINAL_RIGHT_PADDING_SETTING_KEY, Lang.bind(this, function () {
-        if (this._windowActor !== null) {
-          debug('right padding changed')
-          this._windowActor.remove_clip()
-          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-        }
-      })),
-
-      this._settings.connect('changed::' + TERMINAL_TOP_PADDING_SETTING_KEY, Lang.bind(this, function () {
-        if (this._windowActor !== null) {
-          debug('top padding changed')
-          this._windowActor.remove_clip()
-          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-        }
-      })),
-
-      this._settings.connect('changed::' + TERMINAL_BOTTOM_PADDING_SETTING_KEY, Lang.bind(this, function () {
-        if (this._windowActor !== null) {
-          debug('bottom padding changed')
-          this._windowActor.remove_clip()
-          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-        }
-      })),
-
-      this._settings.connect('changed::' + TERMINAL_POSITION_SETTING_KEY, Lang.bind(this, function () {
-        if (this._windowActor !== null) {
-          debug('position changed')
-          this._windowActor.remove_clip()
-          Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-        }
-      })),
-
-      this.bindings.forEach(([key, action]) => {
-        this._settings.connect('changed::' + key, () => {
+      // -------------------------
+      ...this.bindings.map(([key, action]) => {
+        return this._settings.connect('changed::' + key, () => {
           this._unbindShortcut(key)
           this._bindShortcut(key, action)
         })
@@ -317,7 +298,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._updateAnimationProperties()
     this._updateToggleOnScroll()
     this._updateWindowGeometry()
-    
+
     this.bindings.forEach(([key, action]) => this._bindShortcut(key, action))
 
     // registers the bus name watch
@@ -536,9 +517,18 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._toggleOnScrollEnabled = this._settings.get_boolean(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY)
   },
 
+  _getCurrentMonitor () {
+    let screenProxy = global.screen || global.display
+    let monitorIndex = Number(this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY))
+    if (monitorIndex === -1) monitorIndex = screenProxy.get_primary_monitor()
+    return Main.layoutManager.monitors[monitorIndex]
+  },
+
   _updateWindowGeometry: function () {
     let screenProxy = global.screen || global.display
     let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY)
+
+    let monitor = this._getCurrentMonitor()
 
     // computes the window geometry except the height
     let panelBox = Main.layoutManager.panelBox
@@ -550,34 +540,35 @@ const DropDownTerminalXExtension = new Lang.Class({
     let panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0
 
     let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor
-    let workarea = Main.layoutManager.getWorkAreaForMonitor(screenProxy.get_primary_monitor())
+    let workarea = Main.layoutManager.getWorkAreaForMonitor(monitor.index)
+
     let x1 = workarea.x / scaleFactor
     let y1 = workarea.y / scaleFactor
     let screenHeight = workarea.height / scaleFactor
     let screenWidth = workarea.width / scaleFactor
     let x2 = x1 + screenWidth
     let y2 = y1 + screenHeight
-    let leftPadding = this._evaluateSizeSpec(leftPaddingSpec, false)
-    let rightPadding = this._evaluateSizeSpec(rightPaddingSpec, false)
-    let topPadding = this._evaluateSizeSpec(topPaddingSpec, true)
-    let bottomPadding = this._evaluateSizeSpec(bottomPaddingSpec, true)
+    let leftPadding = this._evaluateSizeSpec(monitor, leftPaddingSpec, false)
+    let rightPadding = this._evaluateSizeSpec(monitor, rightPaddingSpec, false)
+    let topPadding = this._evaluateSizeSpec(monitor, topPaddingSpec, true)
+    let bottomPadding = this._evaluateSizeSpec(monitor, bottomPaddingSpec, true)
 
     switch (terminalPosition) {
       case LEFT_EDGE:
         this._windowX = x1
         this._windowY = y1
-        this._windowWidth = this._evaluateSizeSpec(sizeSpec, false)
+        this._windowWidth = this._evaluateSizeSpec(monitor, sizeSpec, false)
         this._windowHeight = screenHeight
         break
       case RIGHT_EDGE:
-        let width = this._evaluateSizeSpec(sizeSpec, false)
+        let width = this._evaluateSizeSpec(monitor, sizeSpec, false)
         this._windowX = x2 - width
         this._windowY = y1
         this._windowWidth = width
         this._windowHeight = screenHeight
         break
       case BOTTOM_EDGE:
-        let height = this._evaluateSizeSpec(sizeSpec, true)
+        let height = this._evaluateSizeSpec(monitor, sizeSpec, true)
         this._windowX = x1
         this._windowY = y2 - height
         this._windowWidth = screenWidth
@@ -588,7 +579,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         this._windowX = x1
         this._windowY = y1
         this._windowWidth = screenWidth
-        this._windowHeight = this._evaluateSizeSpec(sizeSpec, true)
+        this._windowHeight = this._evaluateSizeSpec(monitor, sizeSpec, true)
         break
     }
 
@@ -847,7 +838,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._windowActor = actor
   },
 
-  _evaluateSizeSpec: function (heightSpec, vertical) {
+  _evaluateSizeSpec: function (monitor, heightSpec, vertical) {
     // updates the height from the height spec, so it's picked
     let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i)
 
@@ -868,18 +859,18 @@ const DropDownTerminalXExtension = new Lang.Class({
       let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor
 
       if (vertical) {
-        let monitorHeight = Main.layoutManager.primaryMonitor.height / scaleFactor
+        let monitorHeight = monitor.height / scaleFactor
         let panelHeight = Main.layoutManager.panelBox.height
         return parseInt((monitorHeight - panelHeight) * value / 100.0)
       } else {
-        let monitorWidth = Main.layoutManager.primaryMonitor.width / scaleFactor
+        let monitorWidth = monitor.width / scaleFactor
         return parseInt(monitorWidth * value / 100.0)
       }
     }
   },
 
   _updateClip: function () {
-    let monitor = Main.layoutManager.primaryMonitor
+    let monitor = this._getCurrentMonitor()
     let a = this._windowActor.allocation
     let clip = new Clutter.ActorBox({
       x1: Math.max(monitor.x, a.x1),
