@@ -23,6 +23,7 @@ const GLib = imports.gi.GLib
 const GObject = imports.gi.GObject
 const Gio = imports.gi.Gio
 const Gtk = imports.gi.Gtk
+const Gdk = imports.gi.Gdk
 
 const _ = Gettext.gettext
 
@@ -77,6 +78,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     log(convenience)
 
     this._convenience = convenience
+
     this.orientation = Gtk.Orientation.VERTICAL
     this.spacign = 0
 
@@ -135,6 +137,8 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       this._makeShortcutEdit('close-tab-shortcut-treeview', 'close-tab-shortcut-liststore', CLOSE_TAB_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('increase-text-shortcut-treeview', 'increase-text-shortcut-liststore', INCREASE_TEXT_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('decrease-text-shortcut-treeview', 'decrease-text-shortcut-liststore', DECREASE_TEXT_SHORTCUT_SETTING_KEY)
+
+      this._initMonitorWidgets()
 
       this._runCustomCommandCheckButton = builder.get_object('run-custom-command-checkbutton')
       this._customCommandBox = builder.get_object('custom-command-box')
@@ -348,5 +352,28 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
     this._customCommandEntry['secondary-icon-name'] = error ? 'dialog-warning-symbolic' : null
     this._customCommandEntry['secondary-icon-tooltip-text'] = error ? `Error parsing command: ${error}` : null
+  },
+
+  // Main.layoutManager.primaryMonitor
+  // Main.layoutManager.monitors
+  _initMonitorWidgets () {
+    let monitorComboxbox = this.builder.get_object('monitor-combobox')
+    let monitorListstore = this.builder.get_object('monitors-liststore')
+    
+    monitorListstore.set(monitorListstore.append(), [0, 1], [-1, _('Default (Primary monitor)')])
+    for (let i = 0, monitorNum = Gdk.Screen.get_default().get_n_monitors(); i < monitorNum; ++i) {
+      monitorListstore.set(monitorListstore.append(), [0, 1], [i, _('Monitor ') + (i + 1)])
+    }
+
+    monitorComboxbox.connect('changed', (entry) => {
+      let [success, iter] = monitorComboxbox.get_active_iter()
+      if (!success) return
+      let myValue = monitorListstore.get_value(iter, 0)
+      log(myValue)
+    })
+    
+    let renderer = new Gtk.CellRendererText()
+    monitorComboxbox.pack_start(renderer, true)
+    monitorComboxbox.add_attribute(renderer, 'text', 1)
   }
 })
