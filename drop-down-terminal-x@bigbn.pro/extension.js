@@ -521,7 +521,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     let screenProxy = global.screen || global.display
     let monitorIndex = Number(this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY))
     if (monitorIndex === -1) monitorIndex = screenProxy.get_primary_monitor()
-    return Main.layoutManager.monitors[monitorIndex]
+    return Main.layoutManager.monitors[monitorIndex] || Main.layoutManager.primaryMonitor
   },
 
   _updateWindowGeometry: function () {
