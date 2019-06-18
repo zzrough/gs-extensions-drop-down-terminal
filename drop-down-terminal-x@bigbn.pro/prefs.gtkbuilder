@@ -57,7 +57,7 @@
   <object class="GtkListStore" id="monitors-liststore">
     <columns>
       <!-- column-name index -->
-      <column type="gint"/>
+      <column type="gchararray"/>
       <!-- column-name name -->
       <column type="gchararray"/>
     </columns>
@@ -968,7 +968,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkCheckButton">
+                      <object class="GtkCheckButton" id="multi-monitor-checkbox">
                         <property name="label" translatable="yes">Multi-monitor mode</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>

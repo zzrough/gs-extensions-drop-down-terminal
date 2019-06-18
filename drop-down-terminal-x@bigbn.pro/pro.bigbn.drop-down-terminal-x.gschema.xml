@@ -259,5 +259,21 @@
       </description>
     </key>
 
+    <key name="primary-monitor" type="s">
+      <default><![CDATA['-1']]></default>
+      <summary>Primary monitor index</summary>
+      <description>
+        Specifies the index of the primary monitor (-1 = GNOME Primary Monitor).
+      </description>
+    </key>
+
+    <key name="multi-monitor-mode" type="b">
+      <default>false</default>
+      <summary>Multy monitor mode</summary>
+      <description>
+        Display terminal on all monitors
+      </description>
+    </key>
+
   </schema>
 </schemalist>

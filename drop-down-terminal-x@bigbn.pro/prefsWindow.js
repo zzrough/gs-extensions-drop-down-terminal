@@ -60,6 +60,9 @@ const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut'
 const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut'
 const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
 
+const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor'
+const MULTI_MONITOR_MODE_SETTING_KEY = 'multi-monitor-mode'
+
 // tree view columns
 const COLUMN_KEY = 0
 const COLUMN_MODS = 1
@@ -354,26 +357,44 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     this._customCommandEntry['secondary-icon-tooltip-text'] = error ? `Error parsing command: ${error}` : null
   },
 
-  // Main.layoutManager.primaryMonitor
-  // Main.layoutManager.monitors
   _initMonitorWidgets () {
     let monitorComboxbox = this.builder.get_object('monitor-combobox')
     let monitorListstore = this.builder.get_object('monitors-liststore')
-    
-    monitorListstore.set(monitorListstore.append(), [0, 1], [-1, _('Default (Primary monitor)')])
+    let multyMonitorCheckbox = this.builder.get_object('multi-monitor-checkbox')
+    let primaryMonitorIndex = this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY)
+    let monitors = []
+
+    monitorListstore.set(monitorListstore.append(), [0, 1], ['-1', _('Default (Primary monitor)')])
     for (let i = 0, monitorNum = Gdk.Screen.get_default().get_n_monitors(); i < monitorNum; ++i) {
-      monitorListstore.set(monitorListstore.append(), [0, 1], [i, _('Monitor ') + (i + 1)])
+      monitorListstore.set(monitorListstore.append(), [0, 1], [String(i), _('Monitor ') + (i + 1)])
+      monitors.push(i)
     }
+
+    monitorComboxbox.set_id_column(0)
+    monitorComboxbox.set_sensitive(!multyMonitorCheckbox.get_active())
+    multyMonitorCheckbox.connect('toggled', () => monitorComboxbox.set_sensitive(!multyMonitorCheckbox.get_active()))
+
+    monitorComboxbox.set_id_column(0)
+    monitorComboxbox.set_active_id(primaryMonitorIndex)
 
     monitorComboxbox.connect('changed', (entry) => {
       let [success, iter] = monitorComboxbox.get_active_iter()
       if (!success) return
-      let myValue = monitorListstore.get_value(iter, 0)
-      log(myValue)
+      let monitorIndex = monitorListstore.get_value(iter, 0)
+      this._settings.set_string(PRIMARY_MONITOR_SETTING_KEY, monitorIndex)
     })
-    
+
+    /*
+    if (monitors.length === 1) {
+      multyMonitorCheckbox.set_sensitive(false)
+      monitorComboxbox.set_sensitive(false)
+    }
+    */
+
     let renderer = new Gtk.CellRendererText()
     monitorComboxbox.pack_start(renderer, true)
     monitorComboxbox.add_attribute(renderer, 'text', 1)
+
+    this._settings.bind(MULTI_MONITOR_MODE_SETTING_KEY, multyMonitorCheckbox, 'active', Gio.SettingsBindFlags.DEFAULT)
   }
 })
