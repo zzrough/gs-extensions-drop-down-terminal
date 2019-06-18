@@ -153,25 +153,61 @@
 	      The type of the cursor used by the terminal.
       </description>
     </key>
-
-    <key name="shortcut-type" type="s">
-      <default><![CDATA['default']]></default>
-      <choices>
-        <choice value="default"/>
-        <choice value="other"/>
-      </choices>
-      <summary>The shortcut type 'default' or 'other'</summary>
+ 
+    <key name="other-shortcut" type="as">
+      <default><![CDATA[['grave']]]></default>
+      <summary>The manual shortcut used to toggle the terminal</summary>
       <description>
-        The type of shortcut used to open and close the terminal. If 'other' is set, the definition must be set
-        in the 'other-shortcut' key.
+        The shortcut used to open and close the terminal.
       </description>
     </key>
 
-    <key name="other-shortcut" type="as">
-      <default><![CDATA[['F12']]]></default>
-      <summary>The manual shortcut used to toggle the terminal</summary>
+    <key name="new-tab-shortcut" type="as">
+      <default><![CDATA[['<Primary><Shift>t']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
       <description>
-        The shortcut used to open and close the terminal if shortcut-type is 'other'.
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="prev-tab-shortcut" type="as">
+      <default><![CDATA[['<Alt>Left']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="next-tab-shortcut" type="as">
+      <default><![CDATA[['<Alt>Right']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="close-tab-shortcut" type="as">
+      <default><![CDATA[['<Primary><Alt>x']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+
+    <key name="increase-text-shortcut" type="as">
+      <default><![CDATA[['<Primary><Alt>equal']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
+      </description>
+    </key>
+
+    <key name="decrease-text-shortcut" type="as">
+      <default><![CDATA[['<Primary><Alt>minus']]]></default>
+      <summary>Shortcut used to toggle open new terminal tab</summary>
+      <description>
+        Shortcut used to toggle open new terminal tab
       </description>
     </key>
 
@@ -181,17 +217,7 @@
       <description>
         Whether to enable toggling by scrolling on the top bar of the primary screen.
       </description>
-    </key>
-
-    <key name="real-shortcut" type="as">
-      <default><![CDATA[['Above_Tab']]]></default>
-      <summary>An internal key that must not be changed manually</summary>
-      <description>
-        'Above_Tab' is displayed as 'Disabled' in a GtkCellRendererAccel and that really looks bad.
-        This is why there is this special key which is the final, real shortcut used, and which is not displayed
-        in the preferences UI.
-      </description>
-    </key>
+    </key>   
 
     <key name="run-custom-command" type="b">
       <default>false</default>
@@ -216,5 +242,38 @@
         Whether to enable or disable the tabs
       </description>
     </key>
+
+    <key name="hide-on-unfocus" type="b">
+      <default>false</default>
+      <summary>Hide on unfocus</summary>
+      <description>
+        Whether to enable or disable the "hide on unfocus" feature
+      </description>
+    </key>
+
+    <key name="hide-on-escape" type="b">
+      <default>false</default>
+      <summary>Hide on escape</summary>
+      <description>
+        Whether to enable or disable the "hide on escape" feature
+      </description>
+    </key>
+
+    <key name="primary-monitor" type="s">
+      <default><![CDATA['-1']]></default>
+      <summary>Primary monitor index</summary>
+      <description>
+        Specifies the index of the primary monitor (-1 = GNOME Primary Monitor).
+      </description>
+    </key>
+
+    <key name="multi-monitor-mode" type="b">
+      <default>false</default>
+      <summary>Multy monitor mode</summary>
+      <description>
+        Display terminal on all monitors
+      </description>
+    </key>
+
   </schema>
 </schemalist>

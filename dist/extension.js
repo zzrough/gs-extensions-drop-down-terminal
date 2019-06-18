@@ -6,6 +6,14 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } }
+
 // Copyright (C) 2012 Stéphane Démurget <stephane.demurget@free.fr>
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -58,33 +66,23 @@ const TERMINAL_LEFT_PADDING_SETTING_KEY = 'terminal-left-padding';
 const TERMINAL_RIGHT_PADDING_SETTING_KEY = 'terminal-right-padding';
 const TERMINAL_TOP_PADDING_SETTING_KEY = 'terminal-top-padding';
 const TERMINAL_BOTTOM_PADDING_SETTING_KEY = 'terminal-bottom-padding';
-const REAL_SHORTCUT_SETTING_KEY = 'real-shortcut';
+const TOGGLE_SHORTCUT_SETTING_KEY = 'other-shortcut';
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll';
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position';
+const NEW_TAB_SHORTCUT_SETTING_KEY = 'new-tab-shortcut';
+const PREV_TAB_SHORTCUT_SETTING_KEY = 'prev-tab-shortcut';
+const NEXT_TAB_SHORTCUT_SETTING_KEY = 'next-tab-shortcut';
+const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut';
+const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut';
+const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut';
+const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor';
 const TOP_EDGE = 0;
 const LEFT_EDGE = 1;
 const RIGHT_EDGE = 2;
 const BOTTOM_EDGE = 3;
 const SHELL_VERSION = 10 * parseFloat('0.' + Config.PACKAGE_VERSION.split('.').join('')).toFixed(10); // dbus interface
 
-const DropDownTerminalXIface = '<node>                                                       \
-     <interface name="pro.bigbn.DropDownTerminalX"> \
-        <property name="Pid" type="i" access="read"/>             \
-        <method name="SetGeometry">                               \
-            <arg name="x" type="i" direction="in"/>               \
-            <arg name="y" type="i" direction="in"/>               \
-            <arg name="width" type="i" direction="in"/>           \
-            <arg name="height" type="i" direction="in"/>          \
-        </method>                                                 \
-        <method name="Toggle"/>                                   \
-        <method name="Focus"/>                                    \
-        <method name="Quit"/>                                     \
-        <signal name="Failure">                                   \
-            <arg type="s" name="name"/>                           \
-            <arg type="s" name="cause"/>                          \
-        </signal>                                                 \
-     </interface>                                                 \
-     </node>'; // helper to only log in debug mode
+const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>                                                 \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
 
 function debug(text) {
   DEBUG && log('[DDT] ' + text);
@@ -182,6 +180,8 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._settings = Convenience.getSettings(Me.path, Me.metadata.id);
   },
   enable: function () {
+    var _this = this;
+
     // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
     this._childPid = null; // initializes other members used to toggle the terminal
 
@@ -204,61 +204,56 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect('notify::allocation', Lang.bind(this, function () {
       Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
     }));
-    this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled)); // honours setting changes
+    this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled));
 
-    this._settingChangedHandlerIds = [this._settings.connect('changed::' + ENABLE_ANIMATION_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)), this._settings.connect('changed::' + OPENING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)), this._settings.connect('changed::' + CLOSING_ANIMATION_TIME_SETTING_KEY, Lang.bind(this, this._updateAnimationProperties)), this._settings.connect('changed::' + ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, Lang.bind(this, this._updateToggleOnScroll)), this._settings.connect('changed::' + TERMINAL_SIZE_SETTING_KEY, Lang.bind(this, function () {
-      if (this._windowActor !== null) {
-        debug('size changed');
+    let busRun = function (actionName) {
+      return _this._busProxy && _this._busProxy[actionName]();
+    };
 
-        this._windowActor.remove_clip();
+    this.bindings = [[TOGGLE_SHORTCUT_SETTING_KEY, this._toggle], [NEW_TAB_SHORTCUT_SETTING_KEY, function () {
+      return busRun('NewTabRemote');
+    }], [PREV_TAB_SHORTCUT_SETTING_KEY, function () {
+      return busRun('PrevTabRemote');
+    }], [NEXT_TAB_SHORTCUT_SETTING_KEY, function () {
+      return busRun('NextTabRemote');
+    }], [CLOSE_TAB_SHORTCUT_SETTING_KEY, function () {
+      return busRun('CloseTabRemote');
+    }], [INCREASE_TEXT_SHORTCUT_SETTING_KEY, function () {
+      return busRun('IncreaseFontSizeRemote');
+    }], [DECREASE_TEXT_SHORTCUT_SETTING_KEY, function () {
+      return busRun('DecreaseFontSizeRemote');
+    }]]; // honours setting changes
 
-        Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-      }
-    })), this._settings.connect('changed::' + TERMINAL_LEFT_PADDING_SETTING_KEY, Lang.bind(this, function () {
-      if (this._windowActor !== null) {
-        debug('left padding changed');
+    this._settingChangedHandlerIds = [this._settings.connect('changed::' + ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, Lang.bind(this, this._updateToggleOnScroll))].concat(_toConsumableArray([ENABLE_ANIMATION_SETTING_KEY, OPENING_ANIMATION_TIME_SETTING_KEY, CLOSING_ANIMATION_TIME_SETTING_KEY].map(function (key) {
+      return _this._settings.connect('changed::' + key, function () {
+        return _this._updateAnimationProperties();
+      });
+    })), _toConsumableArray([[TERMINAL_SIZE_SETTING_KEY, 'size changed'], [PRIMARY_MONITOR_SETTING_KEY, 'primary monitor changed'], [TERMINAL_LEFT_PADDING_SETTING_KEY, 'left padding changed'], [TERMINAL_RIGHT_PADDING_SETTING_KEY, 'right padding changed'], [TERMINAL_TOP_PADDING_SETTING_KEY, 'top padding changed'], [TERMINAL_BOTTOM_PADDING_SETTING_KEY, 'bottom padding changed'], [TERMINAL_POSITION_SETTING_KEY, 'position changed']].map(function (_ref) {
+      let _ref2 = _slicedToArray(_ref, 2),
+          key = _ref2[0],
+          message = _ref2[1];
 
-        this._windowActor.remove_clip();
+      log(key, message);
+      return _this._settings.connect('changed::' + key, function () {
+        if (_this._windowActor !== null) {
+          log(message);
 
-        Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-      }
-    })), this._settings.connect('changed::' + TERMINAL_RIGHT_PADDING_SETTING_KEY, Lang.bind(this, function () {
-      if (this._windowActor !== null) {
-        debug('right padding changed');
+          _this._windowActor.remove_clip();
 
-        this._windowActor.remove_clip();
+          Convenience.throttle(100, _this, _this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
+        }
+      });
+    })), _toConsumableArray(this.bindings.map(function (_ref3) {
+      let _ref4 = _slicedToArray(_ref3, 2),
+          key = _ref4[0],
+          action = _ref4[1];
 
-        Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-      }
-    })), this._settings.connect('changed::' + TERMINAL_TOP_PADDING_SETTING_KEY, Lang.bind(this, function () {
-      if (this._windowActor !== null) {
-        debug('top padding changed');
+      return _this._settings.connect('changed::' + key, function () {
+        _this._unbindShortcut(key);
 
-        this._windowActor.remove_clip();
-
-        Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-      }
-    })), this._settings.connect('changed::' + TERMINAL_BOTTOM_PADDING_SETTING_KEY, Lang.bind(this, function () {
-      if (this._windowActor !== null) {
-        debug('bottom padding changed');
-
-        this._windowActor.remove_clip();
-
-        Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-      }
-    })), this._settings.connect('changed::' + TERMINAL_POSITION_SETTING_KEY, Lang.bind(this, function () {
-      if (this._windowActor !== null) {
-        debug('position changed');
-
-        this._windowActor.remove_clip();
-
-        Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-      }
-    })), this._settings.connect('changed::' + REAL_SHORTCUT_SETTING_KEY, Lang.bind(this, function () {
-      this._unbindShortcut();
-
-      this._bindShortcut();
-    }))]; // applies the settings initially
+        _this._bindShortcut(key, action);
+      });
+    }))); // applies the settings initially
 
     this._updateAnimationProperties();
 
@@ -266,8 +261,13 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     this._updateWindowGeometry();
 
-    this._bindShortcut(); // registers the bus name watch
+    this.bindings.forEach(function (_ref5) {
+      let _ref6 = _slicedToArray(_ref5, 2),
+          key = _ref6[0],
+          action = _ref6[1];
 
+      return _this._bindShortcut(key, action);
+    }); // registers the bus name watch
 
     this._busWatchId = Gio.DBus.session.watch_name('pro.bigbn.DropDownTerminalX', Gio.BusNameWatcherFlags.NONE, Lang.bind(this, this._busNameAppeared), Lang.bind(this, this._busNameVanished), null, null); // change the ctrl-alt-tab popup switcher to ignore our window as we will handle it ourself
     // (for the look and also because the focus switching needs a hack in our case)
@@ -303,9 +303,15 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._handleFirstStart();
   },
   disable: function () {
-    // unbinds the shortcut
-    this._unbindShortcut(); // removes the ctrl-alt-tab group
+    var _this2 = this;
 
+    // unbinds the shortcut
+    this.bindings.forEach(function (_ref7) {
+      let _ref8 = _slicedToArray(_ref7, 1),
+          key = _ref8[0];
+
+      return _this2._unbindShortcut(key);
+    }); // removes the ctrl-alt-tab group
 
     if (this._windowActor !== null) {
       Main.ctrlAltTabManager.removeGroup(this._windowActor);
@@ -471,10 +477,18 @@ const DropDownTerminalXExtension = new Lang.Class({
   _updateToggleOnScroll: function () {
     this._toggleOnScrollEnabled = this._settings.get_boolean(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY);
   },
+  _getCurrentMonitor: function () {
+    let screenProxy = global.screen || global.display;
+    let monitorIndex = Number(this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY));
+    if (monitorIndex === -1) monitorIndex = screenProxy.get_primary_monitor();
+    return Main.layoutManager.monitors[monitorIndex] || Main.layoutManager.primaryMonitor;
+  },
   _updateWindowGeometry: function () {
     let screenProxy = global.screen || global.display;
 
-    let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY); // computes the window geometry except the height
+    let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+
+    let monitor = this._getCurrentMonitor(); // computes the window geometry except the height
 
 
     let panelBox = Main.layoutManager.panelBox;
@@ -491,7 +505,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     let panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0;
     let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-    let workarea = Main.layoutManager.getWorkAreaForMonitor(screenProxy.get_primary_monitor());
+    let workarea = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
     let x1 = workarea.x / scaleFactor;
     let y1 = workarea.y / scaleFactor;
     let screenHeight = workarea.height / scaleFactor;
@@ -499,24 +513,24 @@ const DropDownTerminalXExtension = new Lang.Class({
     let x2 = x1 + screenWidth;
     let y2 = y1 + screenHeight;
 
-    let leftPadding = this._evaluateSizeSpec(leftPaddingSpec, false);
+    let leftPadding = this._evaluateSizeSpec(monitor, leftPaddingSpec, false);
 
-    let rightPadding = this._evaluateSizeSpec(rightPaddingSpec, false);
+    let rightPadding = this._evaluateSizeSpec(monitor, rightPaddingSpec, false);
 
-    let topPadding = this._evaluateSizeSpec(topPaddingSpec, true);
+    let topPadding = this._evaluateSizeSpec(monitor, topPaddingSpec, true);
 
-    let bottomPadding = this._evaluateSizeSpec(bottomPaddingSpec, true);
+    let bottomPadding = this._evaluateSizeSpec(monitor, bottomPaddingSpec, true);
 
     switch (terminalPosition) {
       case LEFT_EDGE:
         this._windowX = x1;
         this._windowY = y1;
-        this._windowWidth = this._evaluateSizeSpec(sizeSpec, false);
+        this._windowWidth = this._evaluateSizeSpec(monitor, sizeSpec, false);
         this._windowHeight = screenHeight;
         break;
 
       case RIGHT_EDGE:
-        let width = this._evaluateSizeSpec(sizeSpec, false);
+        let width = this._evaluateSizeSpec(monitor, sizeSpec, false);
 
         this._windowX = x2 - width;
         this._windowY = y1;
@@ -525,7 +539,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         break;
 
       case BOTTOM_EDGE:
-        let height = this._evaluateSizeSpec(sizeSpec, true);
+        let height = this._evaluateSizeSpec(monitor, sizeSpec, true);
 
         this._windowX = x1;
         this._windowY = y2 - height;
@@ -538,7 +552,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         this._windowX = x1;
         this._windowY = y1;
         this._windowWidth = screenWidth;
-        this._windowHeight = this._evaluateSizeSpec(sizeSpec, true);
+        this._windowHeight = this._evaluateSizeSpec(monitor, sizeSpec, true);
         break;
     }
 
@@ -555,27 +569,16 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     return false;
   },
-  _bindShortcut: function () {
-    if (Main.wm.addKeybinding && Shell.ActionMode) // introduced in 3.16
-      {
-        Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, Lang.bind(this, this._toggle));
-      } else if (Main.wm.addKeybinding && Shell.KeyBindingMode) // introduced in 3.7.5
-      {
-        Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE, Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY, Lang.bind(this, this._toggle));
-      } else if (Main.wm.addKeybinding && Main.KeybindingMode) // introduced in 3.7.2
-      {
-        Main.wm.addKeybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE, Main.KeybindingMode.NORMAL | Main.KeybindingMode.MESSAGE_TRAY, Lang.bind(this, this._toggle));
-      } else {
-      global.display.add_keybinding(REAL_SHORTCUT_SETTING_KEY, this._settings, Meta.KeyBindingFlags.NONE, Lang.bind(this, this._toggle));
-    }
+  _bindShortcut: function (key, action) {
+    // introduced in 3.16
+    log('Binding action');
+    log(key);
+    log(action);
+    if (Main.wm.addKeybinding && Shell.ActionMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, action.bind(this)); // introduced in 3.7.5
+    else if (Main.wm.addKeybinding && Shell.KeyBindingMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY, action.bind(this));
   },
-  _unbindShortcut: function () {
-    if (Main.wm.removeKeybinding) // introduced in 3.7.2
-      {
-        Main.wm.removeKeybinding(REAL_SHORTCUT_SETTING_KEY);
-      } else {
-      global.display.remove_keybinding(REAL_SHORTCUT_SETTING_KEY);
-    }
+  _unbindShortcut: function (key) {
+    if (Main.wm.removeKeybinding) Main.wm.removeKeybinding(key);else global.display.remove_keybinding(key);
   },
   _windowCreated: function (display, window) {
     // filter out the terminal window using its wmclass
@@ -736,10 +739,10 @@ const DropDownTerminalXExtension = new Lang.Class({
     let DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface);
     this._busProxy = new DropDownTerminalXDBusProxy(Gio.DBus.session, 'pro.bigbn.DropDownTerminalX', '/pro/bigbn/DropDownTerminalX'); // connects to the Failure signal to report errors
 
-    this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, _ref) {
-      let _ref2 = _slicedToArray(_ref, 2),
-          name = _ref2[0],
-          cause = _ref2[1];
+    this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, _ref9) {
+      let _ref10 = _slicedToArray(_ref9, 2),
+          name = _ref10[0],
+          cause = _ref10[1];
 
       debug('failure reported by the terminal: ' + cause);
 
@@ -785,7 +788,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     this._windowActor = actor;
   },
-  _evaluateSizeSpec: function (heightSpec, vertical) {
+  _evaluateSizeSpec: function (monitor, heightSpec, vertical) {
     // updates the height from the height spec, so it's picked
     let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
 
@@ -796,27 +799,28 @@ const DropDownTerminalXExtension = new Lang.Class({
     let value = parseInt(match[1]);
     let type = match[2];
 
-    if (type.toLowerCase() == 'px') {
-      return value > 0 ? value : null;
+    if (type.toLowerCase() === 'px') {
+      return value >= 0 ? value : null;
     } else {
-      if (value <= 0 || value > 100) {
+      if (value < 0 || value > 100) {
         return null;
       }
 
       let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
       if (vertical) {
-        let monitorHeight = Main.layoutManager.primaryMonitor.height / scaleFactor;
+        let monitorHeight = monitor.height / scaleFactor;
         let panelHeight = Main.layoutManager.panelBox.height;
         return parseInt((monitorHeight - panelHeight) * value / 100.0);
       } else {
-        let monitorWidth = Main.layoutManager.primaryMonitor.width / scaleFactor;
+        let monitorWidth = monitor.width / scaleFactor;
         return parseInt(monitorWidth * value / 100.0);
       }
     }
   },
   _updateClip: function () {
-    let monitor = Main.layoutManager.primaryMonitor;
+    let monitor = this._getCurrentMonitor();
+
     let a = this._windowActor.allocation;
     let clip = new Clutter.ActorBox({
       x1: Math.max(monitor.x, a.x1),

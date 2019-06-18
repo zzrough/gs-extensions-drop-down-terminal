@@ -121,3 +121,18 @@ function parseRgbaColor(spec) {
   return col;
 }
 
+class Console {
+  log(message) {
+    print('------------');
+
+    try {
+      print(JSON.stringify(message));
+    } catch (e) {
+      for (let prop in message) print(prop);
+    }
+  }
+
+}
+
+var console = new Console();
+

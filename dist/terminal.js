@@ -39,32 +39,9 @@ const Gtk = imports.gi.Gtk;
 const Vte = imports.gi.Vte;
 const Convenience = imports.convenience; // dbus interface
 
-const DropDownTerminalXIface = '<node>                                                        \
-    <interface name="pro.bigbn.DropDownTerminalX">  \
-        <property name="Pid" type="i" access="read"/>             \
-        <method name="SetGeometry">                               \
-            <arg name="x" type="i" direction="in"/>               \
-            <arg name="y" type="i" direction="in"/>               \
-            <arg name="width" type="i" direction="in"/>           \
-            <arg name="height" type="i" direction="in"/>          \
-        </method>                                                 \
-        <method name="Toggle"/>                                   \
-        <method name="Focus"/>                                    \
-        <method name="Quit"/>                                     \
-        <signal name="Failure">                                   \
-            <arg type="s" name="name"/>                           \
-            <arg type="s" name="cause"/>                          \
-        </signal>                                                 \
-    </interface>                                                  \
-    </node>'; // uimanager popup information
+const DropDownTerminalXIface = "<node>                                                        \n    <interface name=\"pro.bigbn.DropDownTerminalX\">  \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>                                                 \n    </interface>                                                  \n    </node>"; // uimanager popup information
 
-const PopupUi = '<ui>                               \
-        <popup name="TerminalPopup">   \
-            <menuitem action="Copy"/>  \
-            <menuitem action="Paste"/> \
-            <menuitem action="Close"/> \
-        </popup>                       \
-    </ui>'; // constants for the location of the extension
+const PopupUi = "<ui>                               \n        <popup name=\"TerminalPopup\">   \n            <menuitem action=\"Copy\"/>  \n            <menuitem action=\"Paste\"/> \n            <menuitem action=\"Close\"/> \n        </popup>                       \n    </ui>"; // constants for the location of the extension
 
 const EXTENSION_ID = 'drop-down-terminal-x';
 const EXTENSION_UUID = EXTENSION_ID + '@bigbn.pro';
@@ -80,7 +57,9 @@ const COLOR_BACKGROUND_SETTING_KEY = 'background-color';
 const RUN_CUSTOM_COMMAND_SETTING_KEY = 'run-custom-command';
 const CUSTOM_COMMAND_SETTING_KEY = 'custom-command';
 const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell';
-const ENABLE_TABS_SETTING_KEY = 'enable-tabs'; // gnome desktop wm settings
+const ENABLE_TABS_SETTING_KEY = 'enable-tabs';
+const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus';
+const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape'; // gnome desktop wm settings
 
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences';
 const WM_FOCUS_MODE_SETTING_KEY = 'focus-mode';
@@ -144,43 +123,7 @@ const DropDownTerminalX = new Lang.Class({
     }
 
     Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-    this._window = this._createWindow(); // Tabs shortcuts
-
-    this._window.connect('key-press-event', Lang.bind(this, function (window, event) {
-      if (!this._isTabsEnabled) return;
-      let defaultMask = Gtk.accelerator_get_default_mod_mask();
-
-      let _event$get_state = event.get_state(),
-          _event$get_state2 = _slicedToArray(_event$get_state, 2),
-          isModified = _event$get_state2[0],
-          mask = _event$get_state2[1];
-
-      let _event$get_keyval = event.get_keyval(),
-          _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
-          isSymbol = _event$get_keyval2[0],
-          key = _event$get_keyval2[1];
-
-      if ((defaultMask & mask) === Gdk.ModifierType.CONTROL_MASK + Gdk.ModifierType.SHIFT_MASK) {
-        switch (Gdk.keyval_to_upper(key)) {
-          case Gdk.KEY_T:
-            this.addTab();
-            return Gdk.EVENT_STOP;
-        }
-      }
-
-      if ((defaultMask & mask) === Gdk.ModifierType.MOD1_MASK) {
-        switch (key) {
-          case Gdk.KEY_Left:
-            this.notebook.prev_page();
-            return Gdk.EVENT_STOP;
-
-          case Gdk.KEY_Right:
-            this.notebook.next_page();
-            return Gdk.EVENT_STOP;
-        }
-      }
-    })); // Notebook - is the default gnome tabs widget
-
+    this._window = this._createWindow(); // Notebook - is the default gnome tabs widget
 
     this.notebook = new Gtk.Notebook();
     this.notebook.set_tab_pos(Gtk.PositionType.BOTTOM);
@@ -203,6 +146,8 @@ const DropDownTerminalX = new Lang.Class({
     });
 
     this._updateTabsSupport();
+
+    this._updateUnfocusSupport();
 
     let updateAppearance = Lang.bind(this, function () {
       this._applyToAllTabs(function (tab) {
@@ -229,6 +174,10 @@ const DropDownTerminalX = new Lang.Class({
     }));
 
     this._settings.connect('changed::' + ENABLE_TABS_SETTING_KEY, Lang.bind(this, this._updateTabsSupport));
+
+    this._settings.connect('changed::' + HIDE_ON_UNFOCUS_SETTING_KEY, Lang.bind(this, this._updateUnfocusSupport));
+
+    this._settings.connect('changed::' + HIDE_ON_ESCAPE_SETTING_KEY, Lang.bind(this, this._updateEscapeSupport));
 
     this._settings.connect('changed::' + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, updateBellSettings)); // connect to gnome settings changes
 
@@ -439,10 +388,46 @@ const DropDownTerminalX = new Lang.Class({
       }
     }));
   },
+  NewTab: function () {
+    if (!this._isTabsEnabled) return;
+    this.addTab();
+  },
+  PrevTab: function () {
+    if (!this._isTabsEnabled) return;
+    this.notebook.prev_page();
+  },
+  NextTab: function () {
+    if (!this._isTabsEnabled) return;
+    this.notebook.next_page();
+  },
+  CloseTab: function () {
+    if (!this._isTabsEnabled) return;
+    if (this.notebook.get_n_pages() === 1) return this._forkUserShell(this.tabs[0].terminal);
+    let pageNum = this.notebook.get_current_page();
+
+    this._removeTab(pageNum);
+  },
+  IncreaseFontSize: function () {
+    let terminal = this._getCurrentTerminal();
+
+    terminal.set_font_scale(terminal.get_font_scale() + 0.1);
+  },
+  DecreaseFontSize: function () {
+    let terminal = this._getCurrentTerminal();
+
+    terminal.set_font_scale(terminal.get_font_scale() - 0.1);
+  },
   Toggle: function () {
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(Lang.bind(this, function () {
       this._window.visible ? this._window.hide() : this._window.show();
+      return false;
+    }));
+  },
+  _jentlyHide: function () {
+    Convenience.runInGdk(Lang.bind(this, function () {
+      this._window.hide();
+
       return false;
     }));
   },
@@ -464,6 +449,11 @@ const DropDownTerminalX = new Lang.Class({
   },
   Quit: function () {
     Gtk.main_quit();
+  },
+  _getCurrentTerminal: function () {
+    let pageNum = this.notebook.get_current_page();
+    let terminal = this.tabs[pageNum].terminal;
+    return terminal;
   },
   _createTerminalView: function () {
     let terminal = new Vte.Terminal();
@@ -516,6 +506,8 @@ const DropDownTerminalX = new Lang.Class({
     return removedTab;
   },
   _createWindow: function () {
+    var _this3 = this;
+
     let screen = Gdk.Screen.get_default();
     let window = new Gtk.Window({
       type: Gtk.WindowType.TOPLEVEL
@@ -545,10 +537,27 @@ const DropDownTerminalX = new Lang.Class({
       return true;
     });
     window.connect('destroy', Gtk.main_quit);
+    window.connect('focus-out-event', function () {
+      if (_this3._isHideOnUnfocusEnabled) _this3._jentlyHide();
+      return true;
+    });
+    window.connect('key-press-event', function (widget, event, user_data) {
+      if (_this3._isHideOnEscapeEnabled) {
+        let _event$get_keyval = event.get_keyval(),
+            _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
+            success = _event$get_keyval2[0],
+            keyval = _event$get_keyval2[1]; // integer
+
+
+        let keyname = Gdk.keyval_name(keyval); // string keyname      
+
+        if (keyname === 'Escape') _this3._jentlyHide();
+      }
+    });
     return window;
   },
   _createPopupAndActions: function (tab) {
-    var _this3 = this;
+    var _this4 = this;
 
     // get some shortcuts
     let term = tab.terminal;
@@ -559,11 +568,11 @@ const DropDownTerminalX = new Lang.Class({
     this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, Lang.bind(term, term.paste_clipboard));
 
     this._createAction('Close', 'Close', Gtk.STOCK_STOP, '<shift><control>D', group, function () {
-      if (_this3.notebook.get_n_pages() === 1) return _this3._forkUserShell(tab.terminal);
+      if (_this4.notebook.get_n_pages() === 1) return _this4._forkUserShell(tab.terminal);
 
-      let pageNum = _this3.notebook.page_num(tab.container);
+      let pageNum = _this4.notebook.page_num(tab.container);
 
-      _this3._removeTab(pageNum);
+      _this4._removeTab(pageNum);
     }); // creates the UI manager
 
 
@@ -675,6 +684,20 @@ const DropDownTerminalX = new Lang.Class({
       this.notebook.set_show_tabs(false);
     }
   },
+  _updateUnfocusSupport: function () {
+    if (this._settings.get_boolean(HIDE_ON_UNFOCUS_SETTING_KEY)) {
+      this._isHideOnUnfocusEnabled = true;
+    } else {
+      this._isHideOnUnfocusEnabled = false;
+    }
+  },
+  _updateEscapeSupport: function () {
+    if (this._settings.get_boolean(HIDE_ON_ESCAPE_SETTING_KEY)) {
+      this._isHideOnEscapeEnabled = true;
+    } else {
+      this._isHideOnEscapeEnabled = false;
+    }
+  },
   _updateAudibleIndicator: function (tab) {
     let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
 
@@ -712,10 +735,10 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
   _terminalButtonReleased: function (terminal, event) {
-    let _event$get_state3 = event.get_state(),
-        _event$get_state4 = _slicedToArray(_event$get_state3, 2),
-        has_state = _event$get_state4[0],
-        state = _event$get_state4[1];
+    let _event$get_state = event.get_state(),
+        _event$get_state2 = _slicedToArray(_event$get_state, 2),
+        has_state = _event$get_state2[0],
+        state = _event$get_state2[1];
 
     let _event$get_button3 = event.get_button(),
         _event$get_button4 = _slicedToArray(_event$get_button3, 2),
