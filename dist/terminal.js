@@ -389,10 +389,12 @@ const DropDownTerminalX = new Lang.Class({
     }));
   },
   NewTab: function () {
+    if (!this._window.visible) return;
     if (!this._isTabsEnabled) return;
     this.addTab();
   },
   PrevTab: function () {
+    if (!this._window.visible) return;
     if (!this._isTabsEnabled) return;
     this.notebook.prev_page();
   },
@@ -401,6 +403,7 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.next_page();
   },
   CloseTab: function () {
+    if (!this._window.visible) return;
     if (!this._isTabsEnabled) return;
     if (this.notebook.get_n_pages() === 1) return this._forkUserShell(this.tabs[0].terminal);
     let pageNum = this.notebook.get_current_page();
@@ -408,11 +411,15 @@ const DropDownTerminalX = new Lang.Class({
     this._removeTab(pageNum);
   },
   IncreaseFontSize: function () {
+    if (!this._window.visible) return;
+
     let terminal = this._getCurrentTerminal();
 
     terminal.set_font_scale(terminal.get_font_scale() + 0.1);
   },
   DecreaseFontSize: function () {
+    if (!this._window.visible) return;
+
     let terminal = this._getCurrentTerminal();
 
     terminal.set_font_scale(terminal.get_font_scale() - 0.1);
@@ -549,7 +556,7 @@ const DropDownTerminalX = new Lang.Class({
             keyval = _event$get_keyval2[1]; // integer
 
 
-        let keyname = Gdk.keyval_name(keyval); // string keyname      
+        let keyname = Gdk.keyval_name(keyval); // string keyname
 
         if (keyname === 'Escape') _this3._jentlyHide();
       }
