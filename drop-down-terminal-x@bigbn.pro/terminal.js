@@ -405,11 +405,13 @@ const DropDownTerminalX = new Lang.Class({
   },
 
   NewTab () {
+    if (!this._window.visible) return
     if (!this._isTabsEnabled) return
     this.addTab()
   },
 
   PrevTab () {
+    if (!this._window.visible) return
     if (!this._isTabsEnabled) return
     this.notebook.prev_page()
   },
@@ -420,6 +422,7 @@ const DropDownTerminalX = new Lang.Class({
   },
 
   CloseTab () {
+    if (!this._window.visible) return
     if (!this._isTabsEnabled) return
     if (this.notebook.get_n_pages() === 1) return this._forkUserShell(this.tabs[0].terminal)
     let pageNum = this.notebook.get_current_page()
@@ -427,11 +430,13 @@ const DropDownTerminalX = new Lang.Class({
   },
 
   IncreaseFontSize () {
+    if (!this._window.visible) return
     let terminal = this._getCurrentTerminal()
     terminal.set_font_scale(terminal.get_font_scale() + 0.1)
   },
 
   DecreaseFontSize () {
+    if (!this._window.visible) return
     let terminal = this._getCurrentTerminal()
     terminal.set_font_scale(terminal.get_font_scale() - 0.1)
   },
@@ -561,7 +566,7 @@ const DropDownTerminalX = new Lang.Class({
     window.connect('key-press-event', (widget, event, user_data) => {
       if (this._isHideOnEscapeEnabled) {
         let [success, keyval] = event.get_keyval() // integer
-        let keyname = Gdk.keyval_name(keyval) // string keyname      
+        let keyname = Gdk.keyval_name(keyval) // string keyname
         if (keyname === 'Escape') this._jentlyHide()
       }
     })
@@ -697,7 +702,6 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
 
-
   _updateEscapeSupport: function () {
     if (this._settings.get_boolean(HIDE_ON_ESCAPE_SETTING_KEY)) {
       this._isHideOnEscapeEnabled = true
@@ -705,7 +709,6 @@ const DropDownTerminalX = new Lang.Class({
       this._isHideOnEscapeEnabled = false
     }
   },
-
 
   _updateAudibleIndicator: function (tab) {
     let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY)
