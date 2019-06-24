@@ -4,10 +4,7 @@
 
 *This is a fork from https://github.com/zzrough/gs-extensions-drop-down-terminal*
 
-Install
------------
-
-### A GNOME Shell drop down terminal with extra feautures
+## A GNOME Shell drop down terminal with extra feautures
 
 Includes
 
