@@ -7,9 +7,16 @@
 Install
 -----------
 
-### From extensions.gnome.org site
+### A GNOME Shell drop down terminal with extra feautures
 
-Just visit https://extensions.gnome.org/extension/1509/drop-down-terminal-x/ and click to install button.
+Includes
+
+- Tabs support
+- Multi-monitor support
+- Font scaling support
+- [Focus out] / [Escape pressed] events for hide
+
+[<img src="https://github.com/bigbn/drop-down-terminal-x/raw/master/get.png" height="100">](https://extensions.gnome.org/extension/1509/drop-down-terminal-x)
 
 ### Manual installation
 
