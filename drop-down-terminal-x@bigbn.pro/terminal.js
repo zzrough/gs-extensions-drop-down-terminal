@@ -15,6 +15,8 @@
 
 // Author: Stéphane Démurget <stephane.demurget@free.fr>
 const Lang = imports.lang
+const Gettext = imports.gettext.domain('drop-down-terminal-x')
+const _ = Gettext.gettext
 
 imports.gi.versions.Gdk = '3.0'
 imports.gi.versions.GdkX11 = '3.0'

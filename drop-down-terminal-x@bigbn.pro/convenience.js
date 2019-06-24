@@ -137,7 +137,7 @@ class Console {
       print(JSON.stringify(message))
     } catch (e) {
       for (let prop in message) print(prop)
-    }    
+    }
   }
 }
 

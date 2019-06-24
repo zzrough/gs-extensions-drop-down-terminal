@@ -131,6 +131,7 @@ const SouthBorderEffect = new Lang.Class({
 
   _init: function () {
     this.parent()
+    ExtensionUtils.initTranslations()
 
     this._color = new Cogl.Color()
 
@@ -214,6 +215,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
     this._childPid = null
 
+    log(_('Tabs') + '@')
     // initializes other members used to toggle the terminal
     this._busProxy = null
     this._windowActor = null

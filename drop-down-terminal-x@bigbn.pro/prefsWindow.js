@@ -76,9 +76,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
   _init: function ({ path, metadata, convenience }) {
     this.parent()
 
-    log(path)
-    log(metadata.id)
-    log(convenience)
+    log(_('Tabs'))
 
     this._convenience = convenience
 
@@ -366,7 +364,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
     monitorListstore.set(monitorListstore.append(), [0, 1], ['-1', _('Default (Primary monitor)')])
     for (let i = 0, monitorNum = Gdk.Screen.get_default().get_n_monitors(); i < monitorNum; ++i) {
-      monitorListstore.set(monitorListstore.append(), [0, 1], [String(i), _('Monitor ') + (i + 1)])
+      monitorListstore.set(monitorListstore.append(), [0, 1], [String(i), _('Monitor') + ' ' + (i + 1)])
       monitors.push(i)
     }
 

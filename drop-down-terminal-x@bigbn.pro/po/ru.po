@@ -1,0 +1,343 @@
+# Russian translations for PACKAGE package
+# Английские переводы для пакета PACKAGE.
+# Copyright (C) 2019 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#  <bigbn@mail.ru>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-06-23 14:34+0400\n"
+"PO-Revision-Date: 2019-06-23 14:34+0400\n"
+"Last-Translator:  <bigbn@mail.ru>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: extension.js:172
+msgid "Close"
+msgstr ""
+
+#: extension.js:182
+msgid "Vte library missing"
+msgstr ""
+
+#: extension.js:183
+msgid ""
+"The 'Drop Down Terminal' extension requires the Vte library (version >= "
+"0.31) and its gir typelib.\n"
+"\n"
+"Please install:\n"
+"    - on Fedora/Arch: the 'vte3' package (you certainly uninstalled it)\n"
+"    - on Debian/Ubuntu: the 'gir-1.2-vte-2.*' package (not installed by "
+"default)\n"
+"    - on openSUSE: the 'typelib-1_0-Vte-2.*' package (not installed by "
+"default)\n"
+"\n"
+"Then, log out."
+msgstr ""
+
+#: extension.js:655
+msgid "Drop Down Terminal"
+msgstr ""
+
+#: extension.js:733
+msgid "gjs not found in PATH"
+msgstr ""
+
+#: extension.js:745 extension.js:800
+msgid "Drop Down Terminal failed to start"
+msgstr ""
+
+#: extension.js:745
+#, python-format
+msgid "Cause: %s"
+msgstr ""
+
+#: extension.js:768
+msgid "Could not kill the Drop Down Terminal"
+msgstr ""
+
+#: extension.js:769
+msgid "The terminal process could not be terminated."
+msgstr ""
+
+#: extension.js:769 extension.js:782 extension.js:801 extension.js:804
+msgid "You can activate the debug mode to nail down the issue"
+msgstr ""
+
+#: extension.js:782
+msgid "Drop Down Terminal ended abruptly"
+msgstr ""
+
+#: extension.js:801
+msgid "The user shell could not be spawn in the terminal."
+msgstr ""
+
+#: extension.js:803
+msgid "An error occured in the Drop Down Terminal"
+msgstr ""
+
+#: extension.js:943
+msgid "Error while opening the preferences"
+msgstr ""
+
+#: extension.js:943
+msgid ""
+"gnome-shell-extension-prefs could not be started, check your session log for "
+"more details"
+msgstr ""
+
+#: prefsWindow.js:94
+msgid "Could not load the preferences UI file"
+msgstr ""
+
+#: prefsWindow.js:318
+msgid "Invalid syntax or range"
+msgstr ""
+
+#: prefsWindow.js:344
+msgid "no argument found"
+msgstr ""
+
+#: prefsWindow.js:362
+msgid "Default (Primary monitor)"
+msgstr ""
+
+#: prefsWindow.js:364 prefs.gtkbuilder:994
+msgid "Monitor"
+msgstr ""
+
+#: prefs.gtkbuilder:28
+msgid "Block"
+msgstr ""
+
+#: prefs.gtkbuilder:32
+msgid "I-Beam"
+msgstr ""
+
+#: prefs.gtkbuilder:36
+msgid "Underline"
+msgstr ""
+
+#: prefs.gtkbuilder:96
+msgid "Top"
+msgstr ""
+
+#: prefs.gtkbuilder:100
+msgid "Left"
+msgstr ""
+
+#: prefs.gtkbuilder:104
+msgid "Right"
+msgstr ""
+
+#: prefs.gtkbuilder:108
+msgid "Bottom"
+msgstr ""
+
+#: prefs.gtkbuilder:198
+msgid "Shortcut"
+msgstr ""
+
+#: prefs.gtkbuilder:227
+msgid "<b>Activation</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:265
+msgid ""
+"<small>Transparency support is only included on certain distributions like "
+"Fedora as the support has been removed on the upstream VTE project.</small>"
+msgstr ""
+
+#: prefs.gtkbuilder:278
+msgid "Transparency"
+msgstr ""
+
+#: prefs.gtkbuilder:331
+msgid "Open Time (ms)"
+msgstr ""
+
+#: prefs.gtkbuilder:343
+msgid "Close Time (ms)"
+msgstr ""
+
+#: prefs.gtkbuilder:377
+msgid "Animation"
+msgstr ""
+
+#: prefs.gtkbuilder:413
+msgid "<b>Appearance</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:447
+msgid "Scrollbar"
+msgstr ""
+
+#: prefs.gtkbuilder:462
+msgid "Toggle on scroll"
+msgstr ""
+
+#: prefs.gtkbuilder:476
+msgid "Hide on focus out"
+msgstr ""
+
+#: prefs.gtkbuilder:490
+msgid "Hide on escape"
+msgstr ""
+
+#: prefs.gtkbuilder:512
+msgid "Misc"
+msgstr ""
+
+#: prefs.gtkbuilder:531
+msgid "General settings"
+msgstr ""
+
+#: prefs.gtkbuilder:574 prefs.gtkbuilder:1016
+msgid "Position"
+msgstr ""
+
+#: prefs.gtkbuilder:587
+msgid "Height"
+msgstr ""
+
+#: prefs.gtkbuilder:615 prefs.gtkbuilder:684 prefs.gtkbuilder:706
+#: prefs.gtkbuilder:728 prefs.gtkbuilder:813 prefs.gtkbuilder:1109
+#: prefs.gtkbuilder:1155
+msgid "Reset the field to its default value"
+msgstr ""
+
+#: prefs.gtkbuilder:656
+msgid "Left-Padding"
+msgstr ""
+
+#: prefs.gtkbuilder:797
+msgid ""
+"<small>The size in pixels (400px for instance) or in percentage (30% for "
+"instance)</small>"
+msgstr ""
+
+#: prefs.gtkbuilder:836
+msgid "Right-Padding"
+msgstr ""
+
+#: prefs.gtkbuilder:849
+msgid "Top-Padding"
+msgstr ""
+
+#: prefs.gtkbuilder:862
+msgid "Bottom-Padding"
+msgstr ""
+
+#: prefs.gtkbuilder:885
+msgid "<b>Position</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:921
+msgid "Use selected monitor"
+msgstr ""
+
+#: prefs.gtkbuilder:972
+msgid "Multi-monitor mode"
+msgstr ""
+
+#: prefs.gtkbuilder:1058
+msgid ""
+"<small>Please do not ask for full color support: I want it as much as you do "
+"but <b>it can't be done yet</b>. There are shortcomings with the JS bindings "
+"that make color support limited.</small>"
+msgstr ""
+
+#: prefs.gtkbuilder:1083
+msgid "Text color"
+msgstr ""
+
+#: prefs.gtkbuilder:1129
+msgid "Background color"
+msgstr ""
+
+#: prefs.gtkbuilder:1203
+msgid "<b>Colors</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:1239
+msgid "Run a custom command instead of my shell"
+msgstr ""
+
+#: prefs.gtkbuilder:1267
+msgid "Custom command"
+msgstr ""
+
+#: prefs.gtkbuilder:1313
+msgid "<b>Command</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:1349
+msgid "Cursor type"
+msgstr ""
+
+#: prefs.gtkbuilder:1394
+msgid "<b>Cursor</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:1420
+msgid "Terminal bell"
+msgstr ""
+
+#: prefs.gtkbuilder:1436
+msgid "<b>Misc</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:1473
+msgid "Increase"
+msgstr ""
+
+#: prefs.gtkbuilder:1485
+msgid "Decrease"
+msgstr "Увеличь"
+
+#: prefs.gtkbuilder:1571
+msgid "Font size manipulation"
+msgstr ""
+
+#: prefs.gtkbuilder:1593
+msgid "Terminal"
+msgstr ""
+
+#: prefs.gtkbuilder:1630
+msgid "Enable tabs"
+msgstr ""
+
+#: prefs.gtkbuilder:1651
+msgid "<b>General</b>"
+msgstr ""
+
+#: prefs.gtkbuilder:1692
+msgid "New tab"
+msgstr ""
+
+#: prefs.gtkbuilder:1738
+msgid "Prev tab"
+msgstr ""
+
+#: prefs.gtkbuilder:1750
+msgid "Next tab"
+msgstr ""
+
+#: prefs.gtkbuilder:1762
+msgid "Close tab"
+msgstr ""
+
+#: prefs.gtkbuilder:1882
+msgid "Keybindings"
+msgstr ""
+
+#: prefs.gtkbuilder:1905
+msgid "Tabs"
+msgstr "Табы"
