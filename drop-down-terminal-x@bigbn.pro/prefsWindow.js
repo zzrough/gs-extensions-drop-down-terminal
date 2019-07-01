@@ -275,7 +275,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     let iter = store.append()
 
     let updateShortcutRow = (accel) => {
-      let [key, mods] = (accel !== null) ? Gtk.accelerator_parse(accel) : [0, 0]
+      let [key, mods] = (typeof accel !== "undefined") ? Gtk.accelerator_parse(accel) : [0, 0]
       store.set(iter, [COLUMN_KEY, COLUMN_MODS], [key, mods])
     }
 
