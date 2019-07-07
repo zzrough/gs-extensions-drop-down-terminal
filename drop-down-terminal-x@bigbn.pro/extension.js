@@ -99,6 +99,9 @@ const DropDownTerminalXIface =
             <arg name="height" type="i" direction="in"/>          
         </method>                                                 
         <method name="Toggle"/>                                   
+        <method name="GetVisibilityState">
+          <arg name="state" type="b" direction="out"/>
+        </method>
         <method name="Focus"/>                                    
         <method name="NewTab"/>                                    
         <method name="PrevTab"/>                                    
@@ -110,6 +113,9 @@ const DropDownTerminalXIface =
         <signal name="Failure">                                   
             <arg type="s" name="name"/>                           
             <arg type="s" name="cause"/>                          
+        </signal>
+        <signal name="VisibilityStateChanged">                                   
+            <arg type="b" name="state"/>
         </signal>                                                 
      </interface>                                                 
      </node>`
@@ -245,7 +251,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     let busRun = (actionName) => this._busProxy && this._busProxy[actionName]()
 
     this.bindings = [
-      [TOGGLE_SHORTCUT_SETTING_KEY, this._toggle],
+      [TOGGLE_SHORTCUT_SETTING_KEY, this._toggle, true],
       [NEW_TAB_SHORTCUT_SETTING_KEY, () => busRun('NewTabRemote')],
       [PREV_TAB_SHORTCUT_SETTING_KEY, () => busRun('PrevTabRemote')],
       [NEXT_TAB_SHORTCUT_SETTING_KEY, () => busRun('NextTabRemote')],
@@ -288,10 +294,12 @@ const DropDownTerminalXExtension = new Lang.Class({
       }),
 
       // -------------------------
-      ...this.bindings.map(([key, action]) => {
+      ...this.bindings.map(([key, action, isGlobal]) => {
         return this._settings.connect('changed::' + key, () => {
-          this._unbindShortcut(key)
-          this._bindShortcut(key, action)
+          if (this.visible || isGlobal) {
+            this._unbindShortcut(key)
+            this._bindShortcut(key, action)
+          }
         })
       })
     ]
@@ -301,7 +309,9 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._updateToggleOnScroll()
     this._updateWindowGeometry()
 
-    this.bindings.forEach(([key, action]) => this._bindShortcut(key, action))
+    // Applying bindging only for global shortcuts (toggle)
+    this.temporaryBindings = this.bindings.filter(([key, action, isGlobal]) => !isGlobal)
+    this.bindings.filter(([key, action, isGlobal]) => isGlobal).forEach(([key, action]) => this._bindShortcut(key, action))
 
     // registers the bus name watch
     this._busWatchId = Gio.DBus.session.watch_name('pro.bigbn.DropDownTerminalX',
@@ -790,7 +800,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, [name, cause]) {
       debug('failure reported by the terminal: ' + cause)
 
-      if (name == 'ForkUserShellFailed') {
+      if (name === 'ForkUserShellFailed') {
         Main.notifyError(_('Drop Down Terminal failed to start'),
           _('The user shell could not be spawn in the terminal.') + '\n\n' + _('You can activate the debug mode to nail down the issue'))
       } else {
@@ -798,6 +808,19 @@ const DropDownTerminalXExtension = new Lang.Class({
           cause + '\n\n' + _('You can activate the debug mode to nail down the issue'))
       }
     }))
+
+    this._busProxy.connectSignal('VisibilityStateChanged', (proxy, sender, [visible]) => {
+      log('Visibility changed')
+      log(visible)
+      this.visible = visible
+      if (visible) {
+        log('Binding temporary shortcuts')
+        this.temporaryBindings.forEach(([key, action]) => this._bindShortcut(key, action))
+      } else {
+        log('Unbinding temporary shortcuts')
+        this.temporaryBindings.forEach(([key, action]) => this._unbindShortcut(key))
+      }
+    })
 
     // applies the geometry if applicable
     if (this._windowHeight !== null) {

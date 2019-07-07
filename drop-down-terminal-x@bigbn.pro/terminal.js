@@ -43,7 +43,10 @@ const DropDownTerminalXIface =
             <arg name="width" type="i" direction="in"/>           
             <arg name="height" type="i" direction="in"/>          
         </method>                                                 
-        <method name="Toggle"/>                                   
+        <method name="Toggle"/> 
+        <method name="GetVisibilityState">
+          <arg name="state" type="b" direction="out"/>
+        </method>                                  
         <method name="Focus"/>                                    
         <method name="NewTab"/>                                    
         <method name="PrevTab"/>                                    
@@ -55,7 +58,10 @@ const DropDownTerminalXIface =
         <signal name="Failure">                                   
             <arg type="s" name="name"/>                           
             <arg type="s" name="cause"/>                          
-        </signal>                                                 
+        </signal>  
+        <signal name="VisibilityStateChanged">                                   
+            <arg type="b" name="state"/>
+        </signal>                                               
     </interface>                                                  
     </node>`
 
@@ -445,15 +451,26 @@ const DropDownTerminalX = new Lang.Class({
 
   Toggle: function () {
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
-    Convenience.runInGdk(Lang.bind(this, function () {
-      this._window.visible ? this._window.hide() : this._window.show()
+    Convenience.runInGdk(() => {
+      if (this._window.visible) {
+        this._window.hide()
+        this._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [this._window.visible]))
+      } else {
+        this._window.show()
+        this._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [this._window.visible]))
+      }
       return false
-    }))
+    })
+  },
+
+  GetVisibilityState () {
+    return this._window.visible
   },
 
   _jentlyHide () {
     Convenience.runInGdk(Lang.bind(this, function () {
       this._window.hide()
+      this._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [this._window.visible]))
       return false
     }))
   },
@@ -558,7 +575,11 @@ const DropDownTerminalX = new Lang.Class({
     window.set_visual(screen.get_rgba_visual())
 
     window.connect('enter_notify_event', Lang.bind(this, this._windowMouseEnter))
-    window.connect('delete-event', () => { window.hide(); return true })
+    window.connect('delete-event', () => {
+      window.hide()
+      this._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]))
+      return true
+    })
     window.connect('destroy', Gtk.main_quit)
     window.connect('focus-out-event', () => {
       if (this._isHideOnUnfocusEnabled) this._jentlyHide()
