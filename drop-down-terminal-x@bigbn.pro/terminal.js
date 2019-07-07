@@ -599,12 +599,17 @@ const DropDownTerminalX = new Lang.Class({
 
   _createPopupAndActions: function (tab) {
     // get some shortcuts
-    let term = tab.terminal
     let group = tab.actionGroup
 
     // creates the actions and fills the action group
-    this._createAction('Copy', 'Copy', Gtk.STOCK_COPY, '<shift><control>C', group, Lang.bind(term, term.copy_clipboard))
-    this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, Lang.bind(term, term.paste_clipboard))
+    this._createAction('Copy', 'Copy', Gtk.STOCK_COPY, '<shift><control>C', group, () => {
+      let terminal = this._getCurrentTerminal()
+      terminal.copy_clipboard()
+    })
+    this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, () => {
+      let terminal = this._getCurrentTerminal()
+      terminal.paste_clipboard()
+    })
     this._createAction('Close', 'Close', Gtk.STOCK_STOP, '<shift><control>D', group, () => {
       if (this.notebook.get_n_pages() === 1) return this._forkUserShell(tab.terminal)
       let pageNum = this.notebook.page_num(tab.container)
