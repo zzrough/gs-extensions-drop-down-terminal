@@ -44,6 +44,7 @@ const Config = imports.misc.config
 const ExtensionSystem = imports.ui.extensionSystem
 const ExtensionUtils = imports.misc.extensionUtils
 const Me = imports.misc.extensionUtils.getCurrentExtension()
+const Util = imports.misc.util
 const Convenience = Me.imports.convenience
 
 // constants
@@ -116,7 +117,10 @@ const DropDownTerminalXIface =
         </signal>
         <signal name="VisibilityStateChanged">                                   
             <arg type="b" name="state"/>
-        </signal>                                                 
+        </signal>
+        <signal name="SettingsRequested">                                   
+          <arg type="b" name="state"/>
+        </signal>                                                   
      </interface>                                                 
      </node>`
 
@@ -810,16 +814,17 @@ const DropDownTerminalXExtension = new Lang.Class({
     }))
 
     this._busProxy.connectSignal('VisibilityStateChanged', (proxy, sender, [visible]) => {
-      log('Visibility changed')
-      log(visible)
       this.visible = visible
       if (visible) {
-        log('Binding temporary shortcuts')
         this.temporaryBindings.forEach(([key, action]) => this._bindShortcut(key, action))
       } else {
-        log('Unbinding temporary shortcuts')
         this.temporaryBindings.forEach(([key, action]) => this._unbindShortcut(key))
       }
+    })
+
+    this._busProxy.connectSignal('SettingsRequested', (proxy, sender, [visible]) => {
+      log('ECEVE')
+      Util.spawn(['gnome-shell-extension-prefs', Me.metadata.uuid])
     })
 
     // applies the geometry if applicable

@@ -61,7 +61,10 @@ const DropDownTerminalXIface =
         </signal>  
         <signal name="VisibilityStateChanged">                                   
             <arg type="b" name="state"/>
-        </signal>                                               
+        </signal>
+        <signal name="SettingsRequested">      
+            <arg type="b" name="state"/>                           
+        </signal>                                                
     </interface>                                                  
     </node>`
 
@@ -187,13 +190,35 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.set_scrollable(true)
     this.notebook.show()
 
-    let plusButton = new Gtk.Button({ label: '+' })
+    let plusImage = new Gtk.Image()
+    plusImage.set_from_icon_name('document-new-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+
+    let settingsImage = new Gtk.Image()
+    settingsImage.set_from_icon_name('document-properties-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+
+    let plusButton = new Gtk.Button({ image: plusImage })
     plusButton.connect('clicked', Lang.bind(this, this.addTab))
 
-    this.notebook.set_action_widget(plusButton, Gtk.PackType.END)
+    let settingsButton = new Gtk.Button({ image: settingsImage })
+    settingsButton.connect('clicked', () => {
+      log('HGVFGHJ ')
+      this._bus.emit_signal('SettingsRequested', GLib.Variant.new('(b)', [this._window.visible]))
+    })
+
+    let box = new Gtk.HBox({
+      homogeneous: true
+    })
+
+    box.pack_start(settingsButton, true, true, 0)
+    box.pack_start(plusButton, true, true, 0)
+
+    this.notebook.set_action_widget(box, Gtk.PackType.END)
 
     this._window.add(this.notebook)
+
+    box.show()
     plusButton.show()
+    settingsButton.show()
 
     // gets the settings
     this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID)
