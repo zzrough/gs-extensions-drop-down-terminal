@@ -82,7 +82,7 @@ const RIGHT_EDGE = 2;
 const BOTTOM_EDGE = 3;
 const SHELL_VERSION = 10 * parseFloat('0.' + Config.PACKAGE_VERSION.split('.').join('')).toFixed(10); // dbus interface
 
-const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>                                                 \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
+const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>\n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>\n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>                                                 \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
 
 function debug(text) {
   DEBUG && log('[DDT] ' + text);
@@ -101,6 +101,7 @@ const SouthBorderEffect = new Lang.Class({
   Extends: Clutter.Effect,
   _init: function () {
     this.parent();
+    ExtensionUtils.initTranslations();
     this._color = new Cogl.Color();
 
     if (Convenience.GTK_VERSION >= 31590) {
@@ -183,7 +184,8 @@ const DropDownTerminalXExtension = new Lang.Class({
     var _this = this;
 
     // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
-    this._childPid = null; // initializes other members used to toggle the terminal
+    this._childPid = null;
+    log(_('Tabs') + '@'); // initializes other members used to toggle the terminal
 
     this._busProxy = null;
     this._windowActor = null;
@@ -210,7 +212,7 @@ const DropDownTerminalXExtension = new Lang.Class({
       return _this._busProxy && _this._busProxy[actionName]();
     };
 
-    this.bindings = [[TOGGLE_SHORTCUT_SETTING_KEY, this._toggle], [NEW_TAB_SHORTCUT_SETTING_KEY, function () {
+    this.bindings = [[TOGGLE_SHORTCUT_SETTING_KEY, this._toggle, true], [NEW_TAB_SHORTCUT_SETTING_KEY, function () {
       return busRun('NewTabRemote');
     }], [PREV_TAB_SHORTCUT_SETTING_KEY, function () {
       return busRun('PrevTabRemote');
@@ -244,14 +246,17 @@ const DropDownTerminalXExtension = new Lang.Class({
         }
       });
     })), _toConsumableArray(this.bindings.map(function (_ref3) {
-      let _ref4 = _slicedToArray(_ref3, 2),
+      let _ref4 = _slicedToArray(_ref3, 3),
           key = _ref4[0],
-          action = _ref4[1];
+          action = _ref4[1],
+          isGlobal = _ref4[2];
 
       return _this._settings.connect('changed::' + key, function () {
-        _this._unbindShortcut(key);
+        if (_this.visible || isGlobal) {
+          _this._unbindShortcut(key);
 
-        _this._bindShortcut(key, action);
+          _this._bindShortcut(key, action);
+        }
       });
     }))); // applies the settings initially
 
@@ -259,12 +264,28 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     this._updateToggleOnScroll();
 
-    this._updateWindowGeometry();
+    this._updateWindowGeometry(); // Applying bindging only for global shortcuts (toggle)
 
-    this.bindings.forEach(function (_ref5) {
-      let _ref6 = _slicedToArray(_ref5, 2),
+
+    this.temporaryBindings = this.bindings.filter(function (_ref5) {
+      let _ref6 = _slicedToArray(_ref5, 3),
           key = _ref6[0],
-          action = _ref6[1];
+          action = _ref6[1],
+          isGlobal = _ref6[2];
+
+      return !isGlobal;
+    });
+    this.bindings.filter(function (_ref7) {
+      let _ref8 = _slicedToArray(_ref7, 3),
+          key = _ref8[0],
+          action = _ref8[1],
+          isGlobal = _ref8[2];
+
+      return isGlobal;
+    }).forEach(function (_ref9) {
+      let _ref10 = _slicedToArray(_ref9, 2),
+          key = _ref10[0],
+          action = _ref10[1];
 
       return _this._bindShortcut(key, action);
     }); // registers the bus name watch
@@ -306,9 +327,9 @@ const DropDownTerminalXExtension = new Lang.Class({
     var _this2 = this;
 
     // unbinds the shortcut
-    this.bindings.forEach(function (_ref7) {
-      let _ref8 = _slicedToArray(_ref7, 1),
-          key = _ref8[0];
+    this.bindings.forEach(function (_ref11) {
+      let _ref12 = _slicedToArray(_ref11, 1),
+          key = _ref12[0];
 
       return _this2._unbindShortcut(key);
     }); // removes the ctrl-alt-tab group
@@ -735,23 +756,56 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._forgetChild();
   },
   _busNameAppeared: function (connection, name, nameOwner) {
+    var _this3 = this;
+
     // creates a dbus proxy on the interface exported by the child process
     let DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface);
     this._busProxy = new DropDownTerminalXDBusProxy(Gio.DBus.session, 'pro.bigbn.DropDownTerminalX', '/pro/bigbn/DropDownTerminalX'); // connects to the Failure signal to report errors
 
-    this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, _ref9) {
-      let _ref10 = _slicedToArray(_ref9, 2),
-          name = _ref10[0],
-          cause = _ref10[1];
+    this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, _ref13) {
+      let _ref14 = _slicedToArray(_ref13, 2),
+          name = _ref14[0],
+          cause = _ref14[1];
 
       debug('failure reported by the terminal: ' + cause);
 
-      if (name == 'ForkUserShellFailed') {
+      if (name === 'ForkUserShellFailed') {
         Main.notifyError(_('Drop Down Terminal failed to start'), _('The user shell could not be spawn in the terminal.') + '\n\n' + _('You can activate the debug mode to nail down the issue'));
       } else {
         Main.notifyError(_('An error occured in the Drop Down Terminal'), cause + '\n\n' + _('You can activate the debug mode to nail down the issue'));
       }
-    })); // applies the geometry if applicable
+    }));
+
+    this._busProxy.connectSignal('VisibilityStateChanged', function (proxy, sender, _ref15) {
+      let _ref16 = _slicedToArray(_ref15, 1),
+          visible = _ref16[0];
+
+      log('Visibility changed');
+      log(visible);
+      _this3.visible = visible;
+
+      if (visible) {
+        log('Binding temporary shortcuts');
+
+        _this3.temporaryBindings.forEach(function (_ref17) {
+          let _ref18 = _slicedToArray(_ref17, 2),
+              key = _ref18[0],
+              action = _ref18[1];
+
+          return _this3._bindShortcut(key, action);
+        });
+      } else {
+        log('Unbinding temporary shortcuts');
+
+        _this3.temporaryBindings.forEach(function (_ref19) {
+          let _ref20 = _slicedToArray(_ref19, 2),
+              key = _ref20[0],
+              action = _ref20[1];
+
+          return _this3._unbindShortcut(key);
+        });
+      }
+    }); // applies the geometry if applicable
 
 
     if (this._windowHeight !== null) {

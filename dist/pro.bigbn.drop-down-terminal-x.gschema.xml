@@ -275,5 +275,13 @@
       </description>
     </key>
 
+    <key name="tabs-position" type="u">
+      <default>3</default>
+      <summary>Tabs position</summary>
+      <description>
+        Specifies the the edge to draw the tabs at.
+      </description>
+    </key>
+
   </schema>
 </schemalist>
