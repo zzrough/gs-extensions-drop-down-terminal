@@ -201,7 +201,6 @@ const DropDownTerminalX = new Lang.Class({
 
     let settingsButton = new Gtk.Button({ image: settingsImage })
     settingsButton.connect('clicked', () => {
-      log('HGVFGHJ ')
       this._bus.emit_signal('SettingsRequested', GLib.Variant.new('(b)', [this._window.visible]))
     })
 

@@ -41,7 +41,7 @@ const Gtk = imports.gi.Gtk;
 const Vte = imports.gi.Vte;
 const Convenience = imports.convenience; // dbus interface
 
-const DropDownTerminalXIface = "<node>                                                        \n    <interface name=\"pro.bigbn.DropDownTerminalX\">  \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/> \n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>                                  \n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>  \n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>                                               \n    </interface>                                                  \n    </node>"; // uimanager popup information
+const DropDownTerminalXIface = "<node>                                                        \n    <interface name=\"pro.bigbn.DropDownTerminalX\">  \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/> \n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>                                  \n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>  \n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">      \n            <arg type=\"b\" name=\"state\"/>                           \n        </signal>                                                \n    </interface>                                                  \n    </node>"; // uimanager popup information
 
 const PopupUi = "<ui>                               \n        <popup name=\"TerminalPopup\">   \n            <menuitem action=\"Copy\"/>  \n            <menuitem action=\"Paste\"/> \n            <menuitem action=\"Close\"/> \n        </popup>                       \n    </ui>"; // constants for the location of the extension
 
@@ -111,6 +111,8 @@ const DropDownTerminalX = new Lang.Class({
   Name: 'DropDownTerminalX',
   tabs: [],
   _init: function () {
+    var _this = this;
+
     // initializes the state
     this._customCommandArgs = [];
     this._visible = false; // loads the custom CSS to mimick the shell style
@@ -133,15 +135,32 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.set_show_border(true);
     this.notebook.set_scrollable(true);
     this.notebook.show();
+    let plusImage = new Gtk.Image();
+    plusImage.set_from_icon_name('document-new-symbolic', Gtk.IconSize.SMALL_TOOLBAR);
+    let settingsImage = new Gtk.Image();
+    settingsImage.set_from_icon_name('document-properties-symbolic', Gtk.IconSize.SMALL_TOOLBAR);
     let plusButton = new Gtk.Button({
-      label: '+'
+      image: plusImage
     });
     plusButton.connect('clicked', Lang.bind(this, this.addTab));
-    this.notebook.set_action_widget(plusButton, Gtk.PackType.END);
+    let settingsButton = new Gtk.Button({
+      image: settingsImage
+    });
+    settingsButton.connect('clicked', function () {
+      _this._bus.emit_signal('SettingsRequested', GLib.Variant.new('(b)', [_this._window.visible]));
+    });
+    let box = new Gtk.HBox({
+      homogeneous: true
+    });
+    box.pack_start(settingsButton, true, true, 0);
+    box.pack_start(plusButton, true, true, 0);
+    this.notebook.set_action_widget(box, Gtk.PackType.END);
 
     this._window.add(this.notebook);
 
-    plusButton.show(); // gets the settings
+    box.show();
+    plusButton.show();
+    settingsButton.show(); // gets the settings
 
     this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
     this._interfaceSettings = new Gio.Settings({
@@ -263,7 +282,7 @@ const DropDownTerminalX = new Lang.Class({
     }).join(' ')));
   },
   addTab: function () {
-    var _this = this;
+    var _this2 = this;
 
     let tab = this._createTerminalTab();
 
@@ -284,7 +303,7 @@ const DropDownTerminalX = new Lang.Class({
     let form = this._buildRenameForm(function (newName) {
       tab.name = newName;
 
-      _this._changeTabLabel(tab);
+      _this2._changeTabLabel(tab);
 
       tab.popover.popdown();
     });
@@ -298,7 +317,7 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.append_page(tab.container, eventBox);
     this.notebook.set_tab_reorderable(tab.container, true);
     tab.terminal.connect('window-title-changed', function () {
-      return _this._changeTabLabel(tab);
+      return _this2._changeTabLabel(tab);
     }); // CLose tab on middle mouse button click
 
     eventBox.connect('button-press-event', function (widget, event) {
@@ -308,11 +327,11 @@ const DropDownTerminalX = new Lang.Class({
           button = _event$get_button2[1];
 
       if (button === Gdk.BUTTON_MIDDLE) {
-        if (_this.notebook.get_n_pages() === 1) return _this._forkUserShell(tab.terminal);
+        if (_this2.notebook.get_n_pages() === 1) return _this2._forkUserShell(tab.terminal);
 
-        let pageNum = _this.notebook.page_num(tab.container);
+        let pageNum = _this2.notebook.page_num(tab.container);
 
-        _this._removeTab(pageNum);
+        _this2._removeTab(pageNum);
       }
 
       if (event.get_event_type() === Gdk.EventType.DOUBLE_BUTTON_PRESS || button === Gdk.BUTTON_SECONDARY) {
@@ -340,16 +359,16 @@ const DropDownTerminalX = new Lang.Class({
     return tab;
   },
   _createTerminalTab: function () {
-    var _this2 = this;
+    var _this3 = this;
 
     let terminal = this._createTerminalView();
 
     let onExit = terminal.connect('child-exited', function () {
-      if (_this2.notebook.get_n_pages() === 1) return _this2._forkUserShell(terminal);
+      if (_this3.notebook.get_n_pages() === 1) return _this3._forkUserShell(terminal);
 
-      let pageNum = _this2.notebook.get_current_page();
+      let pageNum = _this3.notebook.get_current_page();
 
-      _this2._removeTab(pageNum);
+      _this3._removeTab(pageNum);
     });
     let onRelease = terminal.connect('button-release-event', this._terminalButtonReleased.bind(this));
     let onPress = terminal.connect('button-press-event', this._terminalButtonPressed.bind(this));
@@ -432,18 +451,18 @@ const DropDownTerminalX = new Lang.Class({
     terminal.set_font_scale(terminal.get_font_scale() - 0.1);
   },
   Toggle: function () {
-    var _this3 = this;
+    var _this4 = this;
 
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(function () {
-      if (_this3._window.visible) {
-        _this3._window.hide();
+      if (_this4._window.visible) {
+        _this4._window.hide();
 
-        _this3._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this3._window.visible]));
+        _this4._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this4._window.visible]));
       } else {
-        _this3._window.show();
+        _this4._window.show();
 
-        _this3._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this3._window.visible]));
+        _this4._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this4._window.visible]));
       }
 
       return false;
@@ -536,7 +555,7 @@ const DropDownTerminalX = new Lang.Class({
     return removedTab;
   },
   _createWindow: function () {
-    var _this4 = this;
+    var _this5 = this;
 
     let screen = Gdk.Screen.get_default();
     let window = new Gtk.Window({
@@ -565,17 +584,17 @@ const DropDownTerminalX = new Lang.Class({
     window.connect('delete-event', function () {
       window.hide();
 
-      _this4._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
+      _this5._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
 
       return true;
     });
     window.connect('destroy', Gtk.main_quit);
     window.connect('focus-out-event', function () {
-      if (_this4._isHideOnUnfocusEnabled) _this4._jentlyHide();
+      if (_this5._isHideOnUnfocusEnabled) _this5._jentlyHide();
       return true;
     });
     window.connect('key-press-event', function (widget, event, user_data) {
-      if (_this4._isHideOnEscapeEnabled) {
+      if (_this5._isHideOnEscapeEnabled) {
         let _event$get_keyval = event.get_keyval(),
             _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
             success = _event$get_keyval2[0],
@@ -584,35 +603,35 @@ const DropDownTerminalX = new Lang.Class({
 
         let keyname = Gdk.keyval_name(keyval); // string keyname
 
-        if (keyname === 'Escape') _this4._jentlyHide();
+        if (keyname === 'Escape') _this5._jentlyHide();
       }
     });
     return window;
   },
   _createPopupAndActions: function (tab) {
-    var _this5 = this;
+    var _this6 = this;
 
     // get some shortcuts
     let group = tab.actionGroup; // creates the actions and fills the action group
 
     this._createAction('Copy', 'Copy', Gtk.STOCK_COPY, '<shift><control>C', group, function () {
-      let terminal = _this5._getCurrentTerminal();
+      let terminal = _this6._getCurrentTerminal();
 
       terminal.copy_clipboard();
     });
 
     this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, function () {
-      let terminal = _this5._getCurrentTerminal();
+      let terminal = _this6._getCurrentTerminal();
 
       terminal.paste_clipboard();
     });
 
     this._createAction('Close', 'Close', Gtk.STOCK_STOP, '<shift><control>D', group, function () {
-      if (_this5.notebook.get_n_pages() === 1) return _this5._forkUserShell(tab.terminal);
+      if (_this6.notebook.get_n_pages() === 1) return _this6._forkUserShell(tab.terminal);
 
-      let pageNum = _this5.notebook.page_num(tab.container);
+      let pageNum = _this6.notebook.page_num(tab.container);
 
-      _this5._removeTab(pageNum);
+      _this6._removeTab(pageNum);
     }); // creates the UI manager
 
 

@@ -51,6 +51,7 @@ const Config = imports.misc.config;
 const ExtensionSystem = imports.ui.extensionSystem;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Util = imports.misc.util;
 const Convenience = Me.imports.convenience; // constants
 
 const ANIMATION_CONFLICT_EXTENSION_UUIDS = ['window-open-animation-rotate-in@mengzhuo.org', 'window-open-animation-slide-in@mengzhuo.org', 'window-open-animation-scale-in@mengzhuo.org'];
@@ -82,7 +83,7 @@ const RIGHT_EDGE = 2;
 const BOTTOM_EDGE = 3;
 const SHELL_VERSION = 10 * parseFloat('0.' + Config.PACKAGE_VERSION.split('.').join('')).toFixed(10); // dbus interface
 
-const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>\n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>\n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>                                                 \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
+const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>\n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>\n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">                                   \n          <arg type=\"b\" name=\"state\"/>\n        </signal>                                                   \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
 
 function debug(text) {
   DEBUG && log('[DDT] ' + text);
@@ -780,13 +781,9 @@ const DropDownTerminalXExtension = new Lang.Class({
       let _ref16 = _slicedToArray(_ref15, 1),
           visible = _ref16[0];
 
-      log('Visibility changed');
-      log(visible);
       _this3.visible = visible;
 
       if (visible) {
-        log('Binding temporary shortcuts');
-
         _this3.temporaryBindings.forEach(function (_ref17) {
           let _ref18 = _slicedToArray(_ref17, 2),
               key = _ref18[0],
@@ -795,8 +792,6 @@ const DropDownTerminalXExtension = new Lang.Class({
           return _this3._bindShortcut(key, action);
         });
       } else {
-        log('Unbinding temporary shortcuts');
-
         _this3.temporaryBindings.forEach(function (_ref19) {
           let _ref20 = _slicedToArray(_ref19, 2),
               key = _ref20[0],
@@ -805,6 +800,13 @@ const DropDownTerminalXExtension = new Lang.Class({
           return _this3._unbindShortcut(key);
         });
       }
+    });
+
+    this._busProxy.connectSignal('SettingsRequested', function (proxy, sender, _ref21) {
+      let _ref22 = _slicedToArray(_ref21, 1),
+          visible = _ref22[0];
+
+      Util.spawn(['gnome-shell-extension-prefs', Me.metadata.uuid]);
     }); // applies the geometry if applicable
 
 

@@ -823,7 +823,6 @@ const DropDownTerminalXExtension = new Lang.Class({
     })
 
     this._busProxy.connectSignal('SettingsRequested', (proxy, sender, [visible]) => {
-      log('ECEVE')
       Util.spawn(['gnome-shell-extension-prefs', Me.metadata.uuid])
     })
 
