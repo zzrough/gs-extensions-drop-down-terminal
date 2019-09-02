@@ -63,6 +63,8 @@ const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
 const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor'
 const MULTI_MONITOR_MODE_SETTING_KEY = 'multi-monitor-mode'
 
+const TABS_POSITION_SETTING_KEY = 'tabs-position'
+
 // tree view columns
 const COLUMN_KEY = 0
 const COLUMN_MODS = 1
@@ -140,6 +142,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       this._makeShortcutEdit('decrease-text-shortcut-treeview', 'decrease-text-shortcut-liststore', DECREASE_TEXT_SHORTCUT_SETTING_KEY)
 
       this._initMonitorWidgets()
+      this._initTabsPositionWidgets()
 
       this._runCustomCommandCheckButton = builder.get_object('run-custom-command-checkbutton')
       this._customCommandBox = builder.get_object('custom-command-box')
@@ -394,5 +397,26 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     monitorComboxbox.add_attribute(renderer, 'text', 1)
 
     this._settings.bind(MULTI_MONITOR_MODE_SETTING_KEY, multyMonitorCheckbox, 'active', Gio.SettingsBindFlags.DEFAULT)
+  },
+
+  _initTabsPositionWidgets () {
+    let comboBox = this.builder.get_object('tabs-position')
+    let listStore = this.builder.get_object('tabs-position-store')
+
+    let currentPosition = this._settings.get_uint(TABS_POSITION_SETTING_KEY)
+
+    comboBox.set_id_column(1)
+    comboBox.set_active_id(String(currentPosition))
+
+    comboBox.connect('changed', (entry) => {
+      let [success, iter] = comboBox.get_active_iter()
+      if (!success) return
+      let index = listStore.get_value(iter, 1)
+      this._settings.set_uint(TABS_POSITION_SETTING_KEY, index)
+    })
+
+    let renderer = new Gtk.CellRendererText()
+    comboBox.pack_start(renderer, true)
+    comboBox.add_attribute(renderer, 'text', 0)
   }
 })

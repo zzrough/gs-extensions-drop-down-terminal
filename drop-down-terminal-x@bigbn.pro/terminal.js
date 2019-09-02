@@ -94,6 +94,7 @@ const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell'
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs'
 const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus'
 const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape'
+const TABS_POSITION_SETTING_KEY = 'tabs-position'
 
 // gnome desktop wm settings
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences'
@@ -199,6 +200,8 @@ const DropDownTerminalX = new Lang.Class({
     this._interfaceSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' })
 
     this._updateTabsSupport()
+    this._updateTabsPosition()
+
     this._updateUnfocusSupport()
 
     let updateAppearance = Lang.bind(this, function () {
@@ -240,6 +243,7 @@ const DropDownTerminalX = new Lang.Class({
     this._settings.connect('changed::' + HIDE_ON_UNFOCUS_SETTING_KEY, Lang.bind(this, this._updateUnfocusSupport))
     this._settings.connect('changed::' + HIDE_ON_ESCAPE_SETTING_KEY, Lang.bind(this, this._updateEscapeSupport))
     this._settings.connect('changed::' + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, updateBellSettings))
+    this._settings.connect('changed::' + TABS_POSITION_SETTING_KEY, Lang.bind(this, this._updateTabsPosition))
 
     // connect to gnome settings changes
     this._desktopSettings = Convenience.getInstalledSettings(WM_PREFERENCES_SCHEMA)
@@ -720,6 +724,18 @@ const DropDownTerminalX = new Lang.Class({
       this._isTabsEnabled = false
       this.notebook.set_show_tabs(false)
     }
+  },
+
+  _updateTabsPosition () {
+    let position = this._settings.get_uint(TABS_POSITION_SETTING_KEY)
+    let mapping = {
+      0: Gtk.PositionType.TOP,
+      3: Gtk.PositionType.BOTTOM,
+      1: Gtk.PositionType.LEFT,
+      2: Gtk.PositionType.RIGHT
+    }
+
+    this.notebook.set_tab_pos(mapping[position])
   },
 
   _updateUnfocusSupport: function () {
