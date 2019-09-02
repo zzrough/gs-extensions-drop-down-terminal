@@ -15,6 +15,8 @@ Includes
 
 [<img src="https://github.com/bigbn/drop-down-terminal-x/raw/master/get.png" height="100">](https://extensions.gnome.org/extension/1509/drop-down-terminal-x)
 
+![Terminal](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/animated.gif)
+
 ### Manual installation
 
     $ git clone https://github.com/bigbn/gs-extensions-drop-down-terminal.git /tmp/drop-down-terminal
@@ -28,7 +30,8 @@ Screenshots
 ![Terminal](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-term.png)
 
 ### Preferences
-![General preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-1.png)
-![Terminal preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-2.png)
-![Tabs preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-3.png)
+![General settings](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-1.png)
+![Position](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-2.png)
+![Terminal preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-3.png)
+![Tabs preferences](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-prefs-4.png)
 ![Tabs renaming](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/screenshot-rename-4.png)
