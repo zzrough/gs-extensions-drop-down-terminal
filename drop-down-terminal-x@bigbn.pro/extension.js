@@ -141,7 +141,7 @@ const SouthBorderEffect = new Lang.Class({
 
   _init: function () {
     this.parent()
-    ExtensionUtils.initTranslations()
+    //ExtensionUtils.initTranslations()
 
     this._color = new Cogl.Color()
 
