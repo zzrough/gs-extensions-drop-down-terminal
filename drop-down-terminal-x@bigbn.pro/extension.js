@@ -459,7 +459,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     // the bus proxy might not be ready, in this case we will be called later once the bus name appears
     if (this._busProxy !== null) {
       // if the actor is set, this means the terminal is opened, so we will handle closing
-      if (this._windowActor !== null) {
+      if (this._windowActor && this._windowActor.hasOwnProperty('allocation')) {
         let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY)
         let targetY = this._windowY
         let targetX = this._windowX
@@ -900,6 +900,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _updateClip: function () {
     let monitor = this._getCurrentMonitor()
+    if (!this._windowActor || !this._windowActor.hasOwnProperty('allocation')) return
     let a = this._windowActor.allocation
     let clip = new Clutter.ActorBox({
       x1: Math.max(monitor.x, a.x1),
