@@ -101,8 +101,8 @@ const SouthBorderEffect = new Lang.Class({
   Name: 'SouthBorderEffect-' + window.__DDTInstance++,
   Extends: Clutter.Effect,
   _init: function () {
-    this.parent();
-    ExtensionUtils.initTranslations();
+    this.parent(); //ExtensionUtils.initTranslations()
+
     this._color = new Cogl.Color();
 
     if (Convenience.GTK_VERSION >= 31590) {
@@ -427,7 +427,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     if (this._busProxy !== null) {
       // if the actor is set, this means the terminal is opened, so we will handle closing
-      if (this._windowActor !== null) {
+      if (this._windowActor && this._windowActor.hasOwnProperty('allocation')) {
         let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         let targetY = this._windowY;
@@ -877,6 +877,7 @@ const DropDownTerminalXExtension = new Lang.Class({
   _updateClip: function () {
     let monitor = this._getCurrentMonitor();
 
+    if (!this._windowActor || !this._windowActor.hasOwnProperty('allocation')) return;
     let a = this._windowActor.allocation;
     let clip = new Clutter.ActorBox({
       x1: Math.max(monitor.x, a.x1),
