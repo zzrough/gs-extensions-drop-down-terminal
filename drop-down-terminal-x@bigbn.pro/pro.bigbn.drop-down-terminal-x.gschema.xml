@@ -283,5 +283,13 @@
       </description>
     </key>
 
+    <key name="scroll-on-output" type="b">
+      <default>false</default>
+      <summary>Enable scroll on output</summary>
+      <description>
+        Controls whether or not the terminal will forcibly scroll to the bottom of the viewable history when the new data is received.
+      </description>
+    </key>
+
   </schema>
 </schemalist>

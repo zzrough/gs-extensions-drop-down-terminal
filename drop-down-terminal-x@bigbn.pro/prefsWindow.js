@@ -33,6 +33,7 @@ const OPENING_ANIMATION_TIME_SETTING_KEY = 'opening-animation-time'
 const CLOSING_ANIMATION_TIME_SETTING_KEY = 'closing-animation-time'
 const TRANSPARENT_TERMINAL_SETTING_KEY = 'transparent-terminal'
 const SCROLLBAR_VISIBLE_SETTING_KEY = 'scrollbar-visible'
+const SCROLL_ON_OUTPUT_SETTING_KEY = 'scroll-on-output'
 const TERMINAL_SIZE_SETTING_KEY = 'terminal-size'
 const TERMINAL_LEFT_PADDING_SETTING_KEY = 'terminal-left-padding'
 const TERMINAL_RIGHT_PADDING_SETTING_KEY = 'terminal-right-padding'
@@ -109,6 +110,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       let closingAnimationTimeSpinButton = builder.get_object('closing-animation-time-spinbutton')
       let transparentTerminalCheckButton = builder.get_object('transparent-terminal-checkbutton')
       let scrollbarVisibleCheckButton = builder.get_object('scrollbar-visible-checkbutton')
+      let scrollOnOutputCheckButton = builder.get_object('scroll-on-output-checkbutton')
       let terminalSizeEntry = builder.get_object('terminal-size-entry')
       let terminalSizeResetButton = builder.get_object('terminal-size-reset-button')
       let terminalLeftPaddingEntry = builder.get_object('terminal-left-padding-entry')
@@ -179,6 +181,8 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       // binds the scrollbar visibility setting
       this._settings.bind(SCROLLBAR_VISIBLE_SETTING_KEY, scrollbarVisibleCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
 
+      this._settings.bind(SCROLL_ON_OUTPUT_SETTING_KEY, scrollOnOutputCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
+            
       // binds the tabs state setting
       this._settings.bind(ENABLE_TABS_SETTING_KEY, enableTabsCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
 
