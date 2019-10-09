@@ -53,6 +53,7 @@ const FONT_NAME_SETTING_KEY = 'monospace-font-name';
 const TRANSPARENCY_LEVEL_SETTING_KEY = 'transparency-level';
 const TRANSPARENT_TERMINAL_SETTING_KEY = 'transparent-terminal';
 const SCROLLBAR_VISIBLE_SETTING_KEY = 'scrollbar-visible';
+const SCROLL_ON_OUTPUT_SETTING_KEY = 'scroll-on-output';
 const TERMINAL_CURSOR_SETTING_KEY = 'terminal-cursor';
 const COLOR_FOREGROUND_SETTING_KEY = 'foreground-color';
 const COLOR_BACKGROUND_SETTING_KEY = 'background-color';
@@ -117,7 +118,7 @@ const DropDownTerminalX = new Lang.Class({
     this._customCommandArgs = [];
     this._visible = false; // loads the custom CSS to mimick the shell style
 
-    let provider = new Gtk.CssProvider();
+    const provider = new Gtk.CssProvider();
 
     if (Convenience.GTK_VERSION >= 31790) {
       provider.load_from_file(Gio.File.new_for_path(EXTENSION_PATH + '/gtk.css'));
@@ -135,21 +136,21 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.set_show_border(true);
     this.notebook.set_scrollable(true);
     this.notebook.show();
-    let plusImage = new Gtk.Image();
+    const plusImage = new Gtk.Image();
     plusImage.set_from_icon_name('document-new-symbolic', Gtk.IconSize.SMALL_TOOLBAR);
-    let settingsImage = new Gtk.Image();
+    const settingsImage = new Gtk.Image();
     settingsImage.set_from_icon_name('document-properties-symbolic', Gtk.IconSize.SMALL_TOOLBAR);
-    let plusButton = new Gtk.Button({
+    const plusButton = new Gtk.Button({
       image: plusImage
     });
     plusButton.connect('clicked', Lang.bind(this, this.addTab));
-    let settingsButton = new Gtk.Button({
+    const settingsButton = new Gtk.Button({
       image: settingsImage
     });
     settingsButton.connect('clicked', function () {
       _this._bus.emit_signal('SettingsRequested', GLib.Variant.new('(b)', [_this._window.visible]));
     });
-    let box = new Gtk.HBox({
+    const box = new Gtk.HBox({
       homogeneous: true
     });
     box.pack_start(settingsButton, true, true, 0);
@@ -173,25 +174,28 @@ const DropDownTerminalX = new Lang.Class({
 
     this._updateUnfocusSupport();
 
-    let updateAppearance = Lang.bind(this, function () {
-      this._applyToAllTabs(function (tab) {
-        Convenience.runInGdk(Lang.bind(this, function () {
-          this._updateOpacityAndColors(tab);
-        }));
+    const reApplyPrefs = function () {
+      return _this._applyToAllTabs(function (tab) {
+        return Convenience.runInGdk(function () {
+          return _this._updateBehaviour(tab);
+        });
       });
-    });
-    let updateCommand = Lang.bind(this, function () {
-      this._applyToAllTabs(function (tab) {
-        this._updateCustomCommand(tab);
+    };
+
+    const updateCommand = function () {
+      return _this._applyToAllTabs(function (tab) {
+        return _this._updateCustomCommand(tab);
       });
-    });
-    let updateBellSettings = Lang.bind(this, function () {
-      this._applyToAllTabs(function (tab) {
-        this._updateAudibleIndicator(tab);
+    };
+
+    const updateBellSettings = function () {
+      return _this._applyToAllTabs(function (tab) {
+        return _this._updateAudibleIndicator(tab);
       });
-    });
-    [SCROLLBAR_VISIBLE_SETTING_KEY, TRANSPARENCY_LEVEL_SETTING_KEY, TRANSPARENT_TERMINAL_SETTING_KEY, COLOR_FOREGROUND_SETTING_KEY, COLOR_BACKGROUND_SETTING_KEY].forEach(Lang.bind(this, function (key) {
-      this._settings.connect('changed::' + key, updateAppearance);
+    };
+
+    [SCROLLBAR_VISIBLE_SETTING_KEY, SCROLL_ON_OUTPUT_SETTING_KEY, TRANSPARENCY_LEVEL_SETTING_KEY, TRANSPARENT_TERMINAL_SETTING_KEY, COLOR_FOREGROUND_SETTING_KEY, COLOR_BACKGROUND_SETTING_KEY].forEach(Lang.bind(this, function (key) {
+      this._settings.connect('changed::' + key, reApplyPrefs);
     }));
     [RUN_CUSTOM_COMMAND_SETTING_KEY, CUSTOM_COMMAND_SETTING_KEY].forEach(Lang.bind(this, function (key) {
       this._settings.connect('changed::' + key, updateCommand);
@@ -235,8 +239,8 @@ const DropDownTerminalX = new Lang.Class({
     // adds the uri matchers
     this._uriHandlingPropertiesbyTag = {};
     UriHandlingProperties.forEach(Lang.bind(this, function (hp) {
-      let regex = GLib.Regex.new(hp.pattern, GLib.RegexCompileFlags.CASELESS | GLib.RegexCompileFlags.OPTIMIZE, 0);
-      let tag = tab.terminal.match_add_gregex(regex, 0);
+      const regex = GLib.Regex.new(hp.pattern, GLib.RegexCompileFlags.CASELESS | GLib.RegexCompileFlags.OPTIMIZE, 0);
+      const tag = tab.terminal.match_add_gregex(regex, 0);
       tab.terminal.match_set_cursor_type(tag, Gdk.CursorType.HAND2);
       this._uriHandlingPropertiesbyTag[tag] = hp;
     }));
@@ -247,13 +251,13 @@ const DropDownTerminalX = new Lang.Class({
   },
   _buildRenameForm: function () {
     let onSave = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : function () {};
-    let vbox = new Gtk.VBox({
+    const vbox = new Gtk.VBox({
       homogeneous: false,
       orientation: Gtk.Orientation.HORIZONTAL,
       spacing: 5
     });
-    let entry = new Gtk.Entry();
-    let saveButton = new Gtk.Button({
+    const entry = new Gtk.Entry();
+    const saveButton = new Gtk.Button({
       label: 'OK'
     });
     vbox.pack_start(entry, true, true, 0);
@@ -267,14 +271,14 @@ const DropDownTerminalX = new Lang.Class({
     return vbox;
   },
   _changeTabLabel: function (tab) {
-    let labelText = tab.name || String(tab.terminal.get_window_title()).replace(':~', '');
+    const labelText = tab.name || String(tab.terminal.get_window_title()).replace(':~', '');
 
-    let _labelText$split = labelText.split(':'),
-        _labelText$split2 = _slicedToArray(_labelText$split, 2),
-        prompt = _labelText$split2[0],
-        path = _labelText$split2[1];
+    const _labelText$split = labelText.split(':'),
+          _labelText$split2 = _slicedToArray(_labelText$split, 2),
+          prompt = _labelText$split2[0],
+          path = _labelText$split2[1];
 
-    let dirs = path ? path.split('/') : [null];
+    const dirs = path ? path.split('/') : [null];
     let lastDir = dirs[dirs.length - 1];
     if (lastDir && lastDir.length > 30) lastDir = lastDir.substring(0, 30) + '...';
     tab.label.set_label(this._getTabName(tab.number, [prompt, lastDir].filter(function (s) {
@@ -284,15 +288,15 @@ const DropDownTerminalX = new Lang.Class({
   addTab: function () {
     var _this2 = this;
 
-    let tab = this._createTerminalTab();
+    const tab = this._createTerminalTab();
 
     tab.number = this.tabs.length ? Math.max.apply(Math, _toConsumableArray(this.tabs.map(function (tab) {
       return tab.number;
     }))) + 1 : 1;
 
-    let tabName = this._getTabName(tab.number);
+    const tabName = this._getTabName(tab.number);
 
-    let eventBox = new Gtk.EventBox();
+    const eventBox = new Gtk.EventBox();
     tab.label = new Gtk.Label({
       halign: Gtk.Align.CENTER,
       label: tabName,
@@ -300,7 +304,7 @@ const DropDownTerminalX = new Lang.Class({
     });
     tab.popover = new Gtk.Popover();
 
-    let form = this._buildRenameForm(function (newName) {
+    const form = this._buildRenameForm(function (newName) {
       tab.name = newName;
 
       _this2._changeTabLabel(tab);
@@ -321,15 +325,15 @@ const DropDownTerminalX = new Lang.Class({
     }); // CLose tab on middle mouse button click
 
     eventBox.connect('button-press-event', function (widget, event) {
-      let _event$get_button = event.get_button(),
-          _event$get_button2 = _slicedToArray(_event$get_button, 2),
-          isNumberDelivered = _event$get_button2[0],
-          button = _event$get_button2[1];
+      const _event$get_button = event.get_button(),
+            _event$get_button2 = _slicedToArray(_event$get_button, 2),
+            isNumberDelivered = _event$get_button2[0],
+            button = _event$get_button2[1];
 
       if (button === Gdk.BUTTON_MIDDLE) {
         if (_this2.notebook.get_n_pages() === 1) return _this2._forkUserShell(tab.terminal);
 
-        let pageNum = _this2.notebook.page_num(tab.container);
+        const pageNum = _this2.notebook.page_num(tab.container);
 
         _this2._removeTab(pageNum);
       }
@@ -346,7 +350,7 @@ const DropDownTerminalX = new Lang.Class({
 
     this._updateFont(tab);
 
-    this._updateOpacityAndColors(tab);
+    this._updateBehaviour(tab);
 
     this._updateCustomCommand(tab);
 
@@ -361,23 +365,23 @@ const DropDownTerminalX = new Lang.Class({
   _createTerminalTab: function () {
     var _this3 = this;
 
-    let terminal = this._createTerminalView();
+    const terminal = this._createTerminalView();
 
-    let onExit = terminal.connect('child-exited', function () {
+    const onExit = terminal.connect('child-exited', function () {
       if (_this3.notebook.get_n_pages() === 1) return _this3._forkUserShell(terminal);
 
-      let pageNum = _this3.notebook.get_current_page();
+      const pageNum = _this3.notebook.get_current_page();
 
       _this3._removeTab(pageNum);
     });
-    let onRelease = terminal.connect('button-release-event', this._terminalButtonReleased.bind(this));
-    let onPress = terminal.connect('button-press-event', this._terminalButtonPressed.bind(this));
-    let onRefresh = terminal.connect('refresh-window', this._refreshWindow.bind(this));
-    let container = new Gtk.ScrolledWindow({
+    const onRelease = terminal.connect('button-release-event', this._terminalButtonReleased.bind(this));
+    const onPress = terminal.connect('button-press-event', this._terminalButtonPressed.bind(this));
+    const onRefresh = terminal.connect('refresh-window', this._refreshWindow.bind(this));
+    const container = new Gtk.ScrolledWindow({
       hadjustment: terminal.get_hadjustment(),
       vadjustment: terminal.get_vadjustment()
     });
-    let actionGroup = new Gtk.ActionGroup({
+    const actionGroup = new Gtk.ActionGroup({
       name: 'Main'
     });
     container.add(terminal);
@@ -394,15 +398,15 @@ const DropDownTerminalX = new Lang.Class({
     };
   },
   SetGeometry: function (x, y, width, height) {
-    let _this$_window$get_pos = this._window.get_position(),
-        _this$_window$get_pos2 = _slicedToArray(_this$_window$get_pos, 2),
-        currentX = _this$_window$get_pos2[0],
-        currentY = _this$_window$get_pos2[1];
+    const _this$_window$get_pos = this._window.get_position(),
+          _this$_window$get_pos2 = _slicedToArray(_this$_window$get_pos, 2),
+          currentX = _this$_window$get_pos2[0],
+          currentY = _this$_window$get_pos2[1];
 
-    let _this$_window$get_siz = this._window.get_size(),
-        _this$_window$get_siz2 = _slicedToArray(_this$_window$get_siz, 2),
-        currentWidth = _this$_window$get_siz2[0],
-        currentHeight = _this$_window$get_siz2[1];
+    const _this$_window$get_siz = this._window.get_size(),
+          _this$_window$get_siz2 = _slicedToArray(_this$_window$get_siz, 2),
+          currentWidth = _this$_window$get_siz2[0],
+          currentHeight = _this$_window$get_siz2[1];
 
     Convenience.runInGdk(Lang.bind(this, function () {
       if (x != currentX || y != currentY) {
@@ -432,21 +436,21 @@ const DropDownTerminalX = new Lang.Class({
     if (!this._window.visible) return;
     if (!this._isTabsEnabled) return;
     if (this.notebook.get_n_pages() === 1) return this._forkUserShell(this.tabs[0].terminal);
-    let pageNum = this.notebook.get_current_page();
+    const pageNum = this.notebook.get_current_page();
 
     this._removeTab(pageNum);
   },
   IncreaseFontSize: function () {
     if (!this._window.visible) return;
 
-    let terminal = this._getCurrentTerminal();
+    const terminal = this._getCurrentTerminal();
 
     terminal.set_font_scale(terminal.get_font_scale() + 0.1);
   },
   DecreaseFontSize: function () {
     if (!this._window.visible) return;
 
-    let terminal = this._getCurrentTerminal();
+    const terminal = this._getCurrentTerminal();
 
     terminal.set_font_scale(terminal.get_font_scale() - 0.1);
   },
@@ -500,23 +504,25 @@ const DropDownTerminalX = new Lang.Class({
     Gtk.main_quit();
   },
   _getCurrentTerminal: function () {
-    let pageNum = this.notebook.get_current_page();
-    let terminal = this.tabs[pageNum].terminal;
+    const pageNum = this.notebook.get_current_page();
+    const terminal = this.tabs[pageNum].terminal;
     return terminal;
   },
   _createTerminalView: function () {
-    let terminal = new Vte.Terminal();
+    const terminal = new Vte.Terminal();
 
-    let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
+    const enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
 
     terminal.set_audible_bell(enableBell);
 
-    let cursorShape = this._settings.get_enum(TERMINAL_CURSOR_SETTING_KEY);
+    const cursorShape = this._settings.get_enum(TERMINAL_CURSOR_SETTING_KEY);
+
+    const scrollOnOutput = this._settings.get_boolean(SCROLL_ON_OUTPUT_SETTING_KEY);
 
     terminal.set_cursor_shape(cursorShape);
     terminal.set_can_focus(true);
     terminal.set_allow_bold(true);
-    terminal.set_scroll_on_output(true);
+    terminal.set_scroll_on_output(scrollOnOutput);
     terminal.set_scroll_on_keystroke(true);
     terminal.set_scrollback_lines(8096);
 
@@ -537,13 +543,13 @@ const DropDownTerminalX = new Lang.Class({
   },
   _removeTab: function (pageNum) {
     this.notebook.remove_page(pageNum);
-    let removedTabs = this.tabs.splice(pageNum, 1);
+    const removedTabs = this.tabs.splice(pageNum, 1);
     let removedTab = null;
 
     if (removedTabs.length) {
       removedTab = removedTabs[0];
 
-      for (let eventId in removedTab.eventHandlers) {
+      for (const eventId in removedTab.eventHandlers) {
         removedTab.terminal.disconnect(removedTab.eventHandlers[eventId]);
       }
 
@@ -557,8 +563,8 @@ const DropDownTerminalX = new Lang.Class({
   _createWindow: function () {
     var _this5 = this;
 
-    let screen = Gdk.Screen.get_default();
-    let window = new Gtk.Window({
+    const screen = Gdk.Screen.get_default();
+    const window = new Gtk.Window({
       type: Gtk.WindowType.TOPLEVEL
     });
     window.set_title('Drop Down Terminal');
@@ -595,13 +601,13 @@ const DropDownTerminalX = new Lang.Class({
     });
     window.connect('key-press-event', function (widget, event, user_data) {
       if (_this5._isHideOnEscapeEnabled) {
-        let _event$get_keyval = event.get_keyval(),
-            _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
-            success = _event$get_keyval2[0],
-            keyval = _event$get_keyval2[1]; // integer
+        const _event$get_keyval = event.get_keyval(),
+              _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
+              success = _event$get_keyval2[0],
+              keyval = _event$get_keyval2[1]; // integer
 
 
-        let keyname = Gdk.keyval_name(keyval); // string keyname
+        const keyname = Gdk.keyval_name(keyval); // string keyname
 
         if (keyname === 'Escape') _this5._jentlyHide();
       }
@@ -612,16 +618,16 @@ const DropDownTerminalX = new Lang.Class({
     var _this6 = this;
 
     // get some shortcuts
-    let group = tab.actionGroup; // creates the actions and fills the action group
+    const group = tab.actionGroup; // creates the actions and fills the action group
 
     this._createAction('Copy', 'Copy', Gtk.STOCK_COPY, '<shift><control>C', group, function () {
-      let terminal = _this6._getCurrentTerminal();
+      const terminal = _this6._getCurrentTerminal();
 
       terminal.copy_clipboard();
     });
 
     this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, function () {
-      let terminal = _this6._getCurrentTerminal();
+      const terminal = _this6._getCurrentTerminal();
 
       terminal.paste_clipboard();
     });
@@ -629,13 +635,13 @@ const DropDownTerminalX = new Lang.Class({
     this._createAction('Close', 'Close', Gtk.STOCK_STOP, '<shift><control>D', group, function () {
       if (_this6.notebook.get_n_pages() === 1) return _this6._forkUserShell(tab.terminal);
 
-      let pageNum = _this6.notebook.page_num(tab.container);
+      const pageNum = _this6.notebook.page_num(tab.container);
 
       _this6._removeTab(pageNum);
     }); // creates the UI manager
 
 
-    let uiManager = new Gtk.UIManager();
+    const uiManager = new Gtk.UIManager();
     uiManager.add_ui_from_string(PopupUi, PopupUi.length);
     uiManager.insert_action_group(group, 0); // hooks the accel group up
 
@@ -646,7 +652,7 @@ const DropDownTerminalX = new Lang.Class({
   _forkUserShell: function (terminal) {
     terminal.reset(false, true);
 
-    let args = this._getCommandArgs();
+    const args = this._getCommandArgs();
 
     let success, pid;
 
@@ -672,7 +678,7 @@ const DropDownTerminalX = new Lang.Class({
     } catch (e) {
       logError(e);
       terminal._lastForkFailed = true;
-      let cause = e.name + ' - ' + e.message;
+      const cause = e.name + ' - ' + e.message;
 
       this._bus.emit_signal('Failure', GLib.Variant.new('(ss)', ['ForkUserShellFailed', "Could not start the shell command line '" + args.join(' ') + "'."]));
 
@@ -689,30 +695,32 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
   _refreshWindow: function () {
-    let rect = this._window.window.get_frame_extents();
+    const rect = this._window.window.get_frame_extents();
 
     this._window.window.invalidate_rect(rect, true);
   },
   _updateFont: function (tab) {
-    let fontDescStr = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
+    const fontDescStr = this._interfaceSettings.get_string(FONT_NAME_SETTING_KEY);
 
-    let fontDesc = Pango.FontDescription.from_string(fontDescStr);
+    const fontDesc = Pango.FontDescription.from_string(fontDescStr);
     tab.terminal.set_font(fontDesc);
   },
-  _updateOpacityAndColors: function (tab) {
-    let isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
+  _updateBehaviour: function (tab) {
+    const isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
 
-    let transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
+    const transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
 
-    let hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY); // updates the colors
+    const hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
+
+    const scrollOnOutput = this._settings.get_boolean(SCROLL_ON_OUTPUT_SETTING_KEY); // updates the colors
     //
     // Note: to follow the deprecation scheme, we try first the _rgba variants as vte < 0.38
     //       already has the non-rgba-suffixed one but it was working with GdkColor back then,
     //       and passing a GdkRGBA would raise an exception
 
 
-    let fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
-    let bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
+    const fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
+    const bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
 
     if (tab.terminal.set_color_foreground_rgba) {
       // removed in vte 0.38
@@ -732,6 +740,7 @@ const DropDownTerminalX = new Lang.Class({
       tab.terminal.set_color_background(bgColor);
     }
 
+    tab.terminal.set_scroll_on_output(scrollOnOutput);
     tab.container.set_policy(Gtk.PolicyType.AUTOMATIC, hasScrollbar ? Gtk.PolicyType.ALWAYS : Gtk.PolicyType.NEVER);
   },
   _updateTabsSupport: function () {
@@ -744,9 +753,9 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
   _updateTabsPosition: function () {
-    let position = this._settings.get_uint(TABS_POSITION_SETTING_KEY);
+    const position = this._settings.get_uint(TABS_POSITION_SETTING_KEY);
 
-    let mapping = {
+    const mapping = {
       0: Gtk.PositionType.TOP,
       3: Gtk.PositionType.BOTTOM,
       1: Gtk.PositionType.LEFT,
@@ -769,7 +778,7 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
   _updateAudibleIndicator: function (tab) {
-    let enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
+    const enableBell = this._settings.get_boolean(ENABLE_AUDIBLE_BELL_KEY);
 
     tab.terminal.set_audible_bell(enableBell);
   },
@@ -805,36 +814,36 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
   _terminalButtonReleased: function (terminal, event) {
-    let _event$get_state = event.get_state(),
-        _event$get_state2 = _slicedToArray(_event$get_state, 2),
-        has_state = _event$get_state2[0],
-        state = _event$get_state2[1];
+    const _event$get_state = event.get_state(),
+          _event$get_state2 = _slicedToArray(_event$get_state, 2),
+          has_state = _event$get_state2[0],
+          state = _event$get_state2[1];
 
-    let _event$get_button3 = event.get_button(),
-        _event$get_button4 = _slicedToArray(_event$get_button3, 2),
-        is_button = _event$get_button4[0],
-        button = _event$get_button4[1]; // opens hovered link on ctrl+left-click
+    const _event$get_button3 = event.get_button(),
+          _event$get_button4 = _slicedToArray(_event$get_button3, 2),
+          is_button = _event$get_button4[0],
+          button = _event$get_button4[1]; // opens hovered link on ctrl+left-click
 
 
     if (is_button && button == Gdk.BUTTON_PRIMARY && state & Gdk.ModifierType.CONTROL_MASK) {
-      let _event$get_coords = event.get_coords(),
-          _event$get_coords2 = _slicedToArray(_event$get_coords, 3),
-          preserved = _event$get_coords2[0],
-          x = _event$get_coords2[1],
-          y = _event$get_coords2[2];
+      const _event$get_coords = event.get_coords(),
+            _event$get_coords2 = _slicedToArray(_event$get_coords, 3),
+            preserved = _event$get_coords2[0],
+            x = _event$get_coords2[1],
+            y = _event$get_coords2[2];
 
-      let border = new Gtk.Border();
+      const border = new Gtk.Border();
       terminal.style_get_property('inner-border', border);
-      let column = (x - border.left) / terminal.get_char_width();
-      let row = (y - border.top) / terminal.get_char_height();
+      const column = (x - border.left) / terminal.get_char_width();
+      const row = (y - border.top) / terminal.get_char_height();
 
-      let _terminal$match_check = terminal.match_check(column, row),
-          _terminal$match_check2 = _slicedToArray(_terminal$match_check, 2),
-          match = _terminal$match_check2[0],
-          tag = _terminal$match_check2[1];
+      const _terminal$match_check = terminal.match_check(column, row),
+            _terminal$match_check2 = _slicedToArray(_terminal$match_check, 2),
+            match = _terminal$match_check2[0],
+            tag = _terminal$match_check2[1];
 
       if (match) {
-        let properties = this._uriHandlingPropertiesbyTag[tag];
+        const properties = this._uriHandlingPropertiesbyTag[tag];
 
         this._openUri(match, properties.flavor, event.get_screen(), event.get_time());
       }
@@ -871,10 +880,10 @@ const DropDownTerminalX = new Lang.Class({
 
 
     try {
-      let _GLib$shell_parse_arg = GLib.shell_parse_argv(Vte.get_user_shell()),
-          _GLib$shell_parse_arg2 = _slicedToArray(_GLib$shell_parse_arg, 2),
-          parsed = _GLib$shell_parse_arg2[0],
-          args = _GLib$shell_parse_arg2[1];
+      const _GLib$shell_parse_arg = GLib.shell_parse_argv(Vte.get_user_shell()),
+            _GLib$shell_parse_arg2 = _slicedToArray(_GLib$shell_parse_arg, 2),
+            parsed = _GLib$shell_parse_arg2[0],
+            args = _GLib$shell_parse_arg2[1];
 
       if (parsed) {
         return args;
@@ -887,26 +896,26 @@ const DropDownTerminalX = new Lang.Class({
   },
   _getCommandEnv: function () {
     // builds the environment
-    let env = {};
+    const env = {};
     GLib.listenv().forEach(function (name) {
       env[name] = GLib.getenv(name);
     });
-    delete env['COLUMNS'];
-    delete env['LINES'];
-    delete env['GNOME_DESKTOP_ICON'];
-    env['COLORTERM'] = 'drop-down-terminal-x';
-    env['TERM'] = 'xterm-256color'; // gets an array of key=value pairs
+    delete env.COLUMNS;
+    delete env.LINES;
+    delete env.GNOME_DESKTOP_ICON;
+    env.COLORTERM = 'drop-down-terminal-x';
+    env.TERM = 'xterm-256color'; // gets an array of key=value pairs
 
-    let envArray = [];
+    const envArray = [];
 
-    for (let key in env) {
+    for (const key in env) {
       envArray.push(key + '=' + (env[key] ? env[key] : ''));
     }
 
     return envArray;
   },
   _createAction: function (name, label, stockId, accel, actionGroup, callback) {
-    let action = new Gtk.Action({
+    const action = new Gtk.Action({
       name: name,
       label: label,
       stock_id: stockId
@@ -921,7 +930,7 @@ Gtk.init(null, 0); // sets the setting to prefer a dark theme
 
 Gtk.Settings.get_default()['gtk-application-prefer-dark-theme'] = true; // creates the terminal
 
-let terminal = new DropDownTerminalX();
+const terminal = new DropDownTerminalX();
 GLib.set_prgname('drop-down-terminal-x'); // starts the main loop
 
 Gtk.main();
