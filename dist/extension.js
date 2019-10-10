@@ -101,7 +101,7 @@ const SouthBorderEffect = new Lang.Class({
   Name: 'SouthBorderEffect-' + window.__DDTInstance++,
   Extends: Clutter.Effect,
   _init: function () {
-    this.parent(); //ExtensionUtils.initTranslations()
+    this.parent(); // ExtensionUtils.initTranslations()
 
     this._color = new Cogl.Color();
 
@@ -116,8 +116,8 @@ const SouthBorderEffect = new Lang.Class({
     }
   },
   vfunc_paint: function () {
-    let actor = this.get_actor();
-    let geom = actor.get_allocation_geometry();
+    const actor = this.get_actor();
+    const geom = actor.get_allocation_geometry();
     actor.continue_paint();
     Cogl.set_source_color(this._color);
     Cogl.rectangle(0, geom.height, geom.width, geom.height - this._width);
@@ -138,20 +138,20 @@ const MissingVteDialog = new Lang.Class({
       default: true
     }]);
 
-    let errorIcon = new St.Icon({
+    const errorIcon = new St.Icon({
       icon_name: 'dialog-error-symbolic',
       icon_size: 24,
       style_class: 'run-dialog-error-icon'
     });
-    let titleLabel = new St.Label({
+    const titleLabel = new St.Label({
       text: _('Vte library missing')
     });
-    let messageLabel = new St.Label({
+    const messageLabel = new St.Label({
       text: _("The 'Drop Down Terminal' extension requires the Vte library (version >= 0.31) and its gir typelib.\n" + '\n' + 'Please install:\n' + "    - on Fedora/Arch: the 'vte3' package (you certainly uninstalled it)\n" + "    - on Debian/Ubuntu: the 'gir-1.2-vte-2.*' package (not installed by default)\n" + "    - on openSUSE: the 'typelib-1_0-Vte-2.*' package (not installed by default)\n" + '\n' + 'Then, log out.')
     });
     messageLabel.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
     messageLabel.clutter_text.line_wrap = true;
-    let titleBox = new St.BoxLayout();
+    const titleBox = new St.BoxLayout();
     titleBox.add(errorIcon);
     titleBox.add(new St.Label({
       text: '  '
@@ -159,7 +159,7 @@ const MissingVteDialog = new Lang.Class({
     titleBox.add(titleLabel, {
       x_fill: true
     });
-    let box = new St.BoxLayout({
+    const box = new St.BoxLayout({
       vertical: true
     });
     box.add(titleBox);
@@ -209,7 +209,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     }));
     this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled));
 
-    let busRun = function (actionName) {
+    const busRun = function (actionName) {
       return _this._busProxy && _this._busProxy[actionName]();
     };
 
@@ -296,7 +296,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     this._oldCtrlAltTabManagerPopupFunc = Main.ctrlAltTabManager.popup;
     Main.ctrlAltTabManager.popup = Lang.bind(this, function (backward, binding, mask) {
-      let oldGetTabList = this._display.get_tab_list;
+      const oldGetTabList = this._display.get_tab_list;
       this._display.get_tab_list = Lang.bind(this, function (type, screen, workspace) {
         let windows = Lang.bind(this._display, oldGetTabList)(type, screen, workspace);
         windows = windows.filter(function (win) {
@@ -307,13 +307,13 @@ const DropDownTerminalXExtension = new Lang.Class({
       Lang.bind(Main.ctrlAltTabManager, this._oldCtrlAltTabManagerPopupFunc)(backward, binding, mask);
       this._display.get_tab_list = oldGetTabList;
     });
-    let focusManager = global.focus_manager;
+    const focusManager = global.focus_manager;
     this._oldFocusManagerAddGroupFunc = focusManager.add_group;
     this._oldFocusManagerRemoveGroupFunc = focusManager.remove_group; // finds our window out if we come back from the locking screen for instance
 
-    let windowActors = global.get_window_actors();
+    const windowActors = global.get_window_actors();
 
-    for (let i in windowActors) {
+    for (const i in windowActors) {
       if (windowActors[i].get_meta_window().get_wm_class() == TERMINAL_WINDOW_WM_CLASS) {
         this._setWindowActor(windowActors[i]);
 
@@ -350,13 +350,13 @@ const DropDownTerminalXExtension = new Lang.Class({
     // the extension already rebinds with the terminal on enable, so we just need not to quit the terminal
     // if the screen is getting locked
 
-    let lockingScreen = Main.sessionMode.currentMode == 'unlock-dialog' || // unlock-dialog == shield/curtain (before lock-screen w/ gdm)
+    const lockingScreen = Main.sessionMode.currentMode == 'unlock-dialog' || // unlock-dialog == shield/curtain (before lock-screen w/ gdm)
     Main.sessionMode.currentMode == 'lock-screen'; // lock-screen == lock screen (after unlock-dialog or w/o gdm)
     // checks if there is not an instance of a previous child, mainly because it survived a shell restart
     // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
 
     if (this._childPid === null && this._busProxy !== null) {
-      this._childPid = this._busProxy['Pid'];
+      this._childPid = this._busProxy.Pid;
     } // quit and/or kill the child process if it exists, except if we are going to the lock
     // screen, as the user will obviously unlock and he expects his terminal back
 
@@ -383,7 +383,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     Gio.DBus.session.unwatch_name(this._busWatchId);
     this._busWatchId = null; // disconnects the setting listeners
 
-    for (let i in this._settingChangedHandlerIds) {
+    for (const i in this._settingChangedHandlerIds) {
       this._settings.disconnect(this._settingChangedHandlerIds[i]);
     }
 
@@ -409,7 +409,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
 
     if (this._childPid === null && this._busProxy !== null) {
-      this._childPid = this._busProxy['Pid'];
+      this._childPid = this._busProxy.Pid;
     } // forks if the child does not exist (never started or killed)
 
 
@@ -428,12 +428,12 @@ const DropDownTerminalXExtension = new Lang.Class({
     if (this._busProxy !== null) {
       // if the actor is set, this means the terminal is opened, so we will handle closing
       if (this._windowActor && this._windowActor.hasOwnProperty('allocation')) {
-        let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+        const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         let targetY = this._windowY;
         let targetX = this._windowX;
-        let animationTime = this._shouldAnimateWindow() ? this._closingAnimationTimeMillis / 1000.0 : 0;
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        const animationTime = this._shouldAnimateWindow() ? this._closingAnimationTimeMillis / 1000.0 : 0;
+        const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
         switch (terminalPosition) {
           case LEFT_EDGE:
@@ -475,19 +475,11 @@ const DropDownTerminalXExtension = new Lang.Class({
   },
   _panelScrolled: function (actor, event) {
     // checks if toggle on scroll is enabled
-    if (!this._toggleOnScrollEnabled) {
-      return;
-    } // only proceed if the terminal is hidden/shown and the scroll occurs
-    // downwards/upwards
-
-
-    if (this._windowActor === null && event.get_scroll_direction() != Clutter.ScrollDirection.DOWN) {
-      return;
-    }
-
-    if (this._windowActor !== null && event.get_scroll_direction() != Clutter.ScrollDirection.UP) {
-      return;
-    }
+    if (!this._toggleOnScrollEnabled) return;
+    const direction = event.get_scroll_direction();
+    if (direction !== Clutter.ScrollDirection.DOWN && direction !== Clutter.ScrollDirection.UP) return;
+    if (direction === Clutter.ScrollDirection.DOWN && this.visible) return;
+    if (direction === Clutter.ScrollDirection.UP && !this.visible) return;
 
     this._toggle();
   },
@@ -500,48 +492,48 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._toggleOnScrollEnabled = this._settings.get_boolean(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY);
   },
   _getCurrentMonitor: function () {
-    let screenProxy = global.screen || global.display;
+    const screenProxy = global.screen || global.display;
     let monitorIndex = Number(this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY));
     if (monitorIndex === -1) monitorIndex = screenProxy.get_primary_monitor();
     return Main.layoutManager.monitors[monitorIndex] || Main.layoutManager.primaryMonitor;
   },
   _updateWindowGeometry: function () {
-    let screenProxy = global.screen || global.display;
+    const screenProxy = global.screen || global.display;
 
-    let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+    const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
-    let monitor = this._getCurrentMonitor(); // computes the window geometry except the height
+    const monitor = this._getCurrentMonitor(); // computes the window geometry except the height
 
 
-    let panelBox = Main.layoutManager.panelBox;
+    const panelBox = Main.layoutManager.panelBox;
 
-    let sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY);
+    const sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY);
 
-    let leftPaddingSpec = this._settings.get_string(TERMINAL_LEFT_PADDING_SETTING_KEY);
+    const leftPaddingSpec = this._settings.get_string(TERMINAL_LEFT_PADDING_SETTING_KEY);
 
-    let rightPaddingSpec = this._settings.get_string(TERMINAL_RIGHT_PADDING_SETTING_KEY);
+    const rightPaddingSpec = this._settings.get_string(TERMINAL_RIGHT_PADDING_SETTING_KEY);
 
-    let topPaddingSpec = this._settings.get_string(TERMINAL_TOP_PADDING_SETTING_KEY);
+    const topPaddingSpec = this._settings.get_string(TERMINAL_TOP_PADDING_SETTING_KEY);
 
-    let bottomPaddingSpec = this._settings.get_string(TERMINAL_BOTTOM_PADDING_SETTING_KEY);
+    const bottomPaddingSpec = this._settings.get_string(TERMINAL_BOTTOM_PADDING_SETTING_KEY);
 
-    let panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0;
-    let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-    let workarea = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
-    let x1 = workarea.x / scaleFactor;
-    let y1 = workarea.y / scaleFactor;
-    let screenHeight = workarea.height / scaleFactor;
-    let screenWidth = workarea.width / scaleFactor;
-    let x2 = x1 + screenWidth;
-    let y2 = y1 + screenHeight;
+    const panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0;
+    const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+    const workarea = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
+    const x1 = workarea.x / scaleFactor;
+    const y1 = workarea.y / scaleFactor;
+    const screenHeight = workarea.height / scaleFactor;
+    const screenWidth = workarea.width / scaleFactor;
+    const x2 = x1 + screenWidth;
+    const y2 = y1 + screenHeight;
 
-    let leftPadding = this._evaluateSizeSpec(monitor, leftPaddingSpec, false);
+    const leftPadding = this._evaluateSizeSpec(monitor, leftPaddingSpec, false);
 
-    let rightPadding = this._evaluateSizeSpec(monitor, rightPaddingSpec, false);
+    const rightPadding = this._evaluateSizeSpec(monitor, rightPaddingSpec, false);
 
-    let topPadding = this._evaluateSizeSpec(monitor, topPaddingSpec, true);
+    const topPadding = this._evaluateSizeSpec(monitor, topPaddingSpec, true);
 
-    let bottomPadding = this._evaluateSizeSpec(monitor, bottomPaddingSpec, true);
+    const bottomPadding = this._evaluateSizeSpec(monitor, bottomPaddingSpec, true);
 
     switch (terminalPosition) {
       case LEFT_EDGE:
@@ -552,7 +544,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         break;
 
       case RIGHT_EDGE:
-        let width = this._evaluateSizeSpec(monitor, sizeSpec, false);
+        const width = this._evaluateSizeSpec(monitor, sizeSpec, false);
 
         this._windowX = x2 - width;
         this._windowY = y1;
@@ -561,7 +553,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         break;
 
       case BOTTOM_EDGE:
-        let height = this._evaluateSizeSpec(monitor, sizeSpec, true);
+        const height = this._evaluateSizeSpec(monitor, sizeSpec, true);
 
         this._windowX = x1;
         this._windowY = y2 - height;
@@ -619,7 +611,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     } // a lambda to request the focus asynchronously
 
 
-    let requestFocusAsync = Lang.bind(this, function () {
+    const requestFocusAsync = Lang.bind(this, function () {
       if (this._busProxy !== null) {
         this._busProxy.FocusRemote();
       }
@@ -627,7 +619,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     requestFocusAsync(); // a lambda to complete the opening sequence
 
-    let completeOpening = Lang.bind(this, function () {
+    const completeOpening = Lang.bind(this, function () {
       // registers a ctrl-alt-tab group
       Main.ctrlAltTabManager.addGroup(this._windowActor, _('Drop Down Terminal'), 'utilities-terminal-symbolic', {
         focusCallback: Lang.bind(this, requestFocusAsync)
@@ -648,11 +640,11 @@ const DropDownTerminalXExtension = new Lang.Class({
       //         Tonic: I added a workaround by making sure at least one pixel is on the screen.
       this._windowActor.opacity = 0;
       Mainloop.idle_add(Lang.bind(this, function () {
-        let terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+        const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         this._windowActor.opacity = 255; // Workaround animation bug by making sure the window is partially on screen.
 
-        let workaround = 1;
+        const workaround = 1;
 
         switch (terminalPosition) {
           case LEFT_EDGE:
@@ -696,7 +688,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._quitingChild = false;
     this._killingChild = false; // finds the forking arguments
 
-    let args = ['gjs', GLib.build_filenamev([Me.path, 'terminal.js']), Me.path]; // forks the process
+    const args = ['gjs', GLib.build_filenamev([Me.path, 'terminal.js']), Me.path]; // forks the process
 
     debug("forking '" + args.join(' ') + "'");
     let success, pid;
@@ -734,7 +726,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     if (this._childPid !== null) {
       // we are killing the child ourself, so set the flag telling this is intended
       this._killingChild = true;
-      let args = ['kill', '-9', '' + this._childPid];
+      const args = ['kill', '-9', '' + this._childPid];
 
       try {
         GLib.spawn_sync(null, args, null, GLib.SpawnFlags.SEARCH_PATH, null, null);
@@ -760,7 +752,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     var _this3 = this;
 
     // creates a dbus proxy on the interface exported by the child process
-    let DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface);
+    const DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface);
     this._busProxy = new DropDownTerminalXDBusProxy(Gio.DBus.session, 'pro.bigbn.DropDownTerminalX', '/pro/bigbn/DropDownTerminalX'); // connects to the Failure signal to report errors
 
     this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, _ref13) {
@@ -846,14 +838,14 @@ const DropDownTerminalXExtension = new Lang.Class({
   },
   _evaluateSizeSpec: function (monitor, heightSpec, vertical) {
     // updates the height from the height spec, so it's picked
-    let match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
+    const match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i);
 
     if (match === null) {
       return null;
     }
 
-    let value = parseInt(match[1]);
-    let type = match[2];
+    const value = parseInt(match[1]);
+    const type = match[2];
 
     if (type.toLowerCase() === 'px') {
       return value >= 0 ? value : null;
@@ -862,24 +854,24 @@ const DropDownTerminalXExtension = new Lang.Class({
         return null;
       }
 
-      let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+      const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
       if (vertical) {
-        let monitorHeight = monitor.height / scaleFactor;
-        let panelHeight = Main.layoutManager.panelBox.height;
+        const monitorHeight = monitor.height / scaleFactor;
+        const panelHeight = Main.layoutManager.panelBox.height;
         return parseInt((monitorHeight - panelHeight) * value / 100.0);
       } else {
-        let monitorWidth = monitor.width / scaleFactor;
+        const monitorWidth = monitor.width / scaleFactor;
         return parseInt(monitorWidth * value / 100.0);
       }
     }
   },
   _updateClip: function () {
-    let monitor = this._getCurrentMonitor();
+    const monitor = this._getCurrentMonitor();
 
     if (!this._windowActor || !this._windowActor.hasOwnProperty('allocation')) return;
-    let a = this._windowActor.allocation;
-    let clip = new Clutter.ActorBox({
+    const a = this._windowActor.allocation;
+    const clip = new Clutter.ActorBox({
       x1: Math.max(monitor.x, a.x1),
       y1: Math.max(monitor.y, a.y1),
       x2: Math.min(monitor.x + monitor.width, a.x2),
@@ -897,7 +889,7 @@ const DropDownTerminalXExtension = new Lang.Class({
       return false;
     }
 
-    for (let ext in ExtensionUtils.extensions) {
+    for (const ext in ExtensionUtils.extensions) {
       if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
         return false;
       }
@@ -907,15 +899,15 @@ const DropDownTerminalXExtension = new Lang.Class({
   },
   _getCommandEnv: function () {
     // builds the environment
-    let env = {};
+    const env = {};
     GLib.listenv().forEach(function (name) {
       env[name] = GLib.getenv(name);
     });
-    env['GJS_PATH'] = Me.path; // gets an array of key=value pairs
+    env.GJS_PATH = Me.path; // gets an array of key=value pairs
 
-    let envArray = [];
+    const envArray = [];
 
-    for (let key in env) {
+    for (const key in env) {
       envArray.push(key + '=' + (env[key] ? env[key] : ''));
     }
 
