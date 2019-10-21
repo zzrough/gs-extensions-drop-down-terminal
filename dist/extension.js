@@ -427,7 +427,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     if (this._busProxy !== null) {
       // if the actor is set, this means the terminal is opened, so we will handle closing
-      if (this._windowActor && this._windowActor.hasOwnProperty('allocation')) {
+      if (this._windowActor) {
         const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
         let targetY = this._windowY;
@@ -607,9 +607,11 @@ const DropDownTerminalXExtension = new Lang.Class({
   _windowMapped: function (wm, actor) {
     // filter out the actor using its name
     if (actor.get_name() != TERMINAL_WINDOW_ACTOR_NAME) {
+      log('ACTOR_NAME:' + actor.get_name());
       return;
-    } // a lambda to request the focus asynchronously
+    }
 
+    log('WINDOW_MAPPED:' + actor.get_name()); // a lambda to request the focus asynchronously
 
     const requestFocusAsync = Lang.bind(this, function () {
       if (this._busProxy !== null) {

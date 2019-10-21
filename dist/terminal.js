@@ -138,12 +138,20 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.show();
     const plusImage = new Gtk.Image();
     plusImage.set_from_icon_name('document-new-symbolic', Gtk.IconSize.SMALL_TOOLBAR);
+    const SSHImage = new Gtk.Image();
+    SSHImage.set_from_icon_name('utilities-terminal-symbolic', Gtk.IconSize.SMALL_TOOLBAR);
     const settingsImage = new Gtk.Image();
     settingsImage.set_from_icon_name('document-properties-symbolic', Gtk.IconSize.SMALL_TOOLBAR);
     const plusButton = new Gtk.Button({
       image: plusImage
     });
     plusButton.connect('clicked', Lang.bind(this, this.addTab));
+    const SSHButton = new Gtk.Button({
+      image: SSHImage
+    });
+    SSHButton.connect('clicked', function () {
+      return _this.openSSHSelector(SSHButton);
+    });
     const settingsButton = new Gtk.Button({
       image: settingsImage
     });
@@ -154,6 +162,7 @@ const DropDownTerminalX = new Lang.Class({
       homogeneous: true
     });
     box.pack_start(settingsButton, true, true, 0);
+    box.pack_start(SSHButton, true, true, 0);
     box.pack_start(plusButton, true, true, 0);
     this.notebook.set_action_widget(box, Gtk.PackType.END);
 
@@ -161,6 +170,7 @@ const DropDownTerminalX = new Lang.Class({
 
     box.show();
     plusButton.show();
+    SSHButton.show();
     settingsButton.show(); // gets the settings
 
     this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
@@ -232,6 +242,76 @@ const DropDownTerminalX = new Lang.Class({
     return Convenience.getPid();
   },
 
+  getSSHConfigHosts: function () {
+    const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.ssh/config']);
+
+    const _GLib$file_get_conten = GLib.file_get_contents(sshConfigPath),
+          _GLib$file_get_conten2 = _slicedToArray(_GLib$file_get_conten, 2),
+          ok = _GLib$file_get_conten2[0],
+          contents = _GLib$file_get_conten2[1];
+
+    if (ok) {
+      const lines = String(contents).split('\n').filter(function (line) {
+        line = line.trim().toLowerCase();
+
+        const _line$split = line.split(/\s+/),
+              _line$split2 = _slicedToArray(_line$split, 1),
+              key = _line$split2[0];
+
+        return key === 'host';
+      }).map(function (line) {
+        const _line$split3 = line.split(/\s+/),
+              _line$split4 = _slicedToArray(_line$split3, 2),
+              value = _line$split4[1];
+
+        return value;
+      }).filter(function (host) {
+        return host.trim() !== '*';
+      });
+      return lines;
+    } else return [];
+  },
+  openSSHSelector: function (button) {
+    var _this2 = this;
+
+    const _this$_window$get_siz = this._window.get_size(),
+          _this$_window$get_siz2 = _slicedToArray(_this$_window$get_siz, 2),
+          currentHeight = _this$_window$get_siz2[1];
+
+    const scrollArea = new Gtk.ScrolledWindow();
+    const list = new Gtk.ListBox(); // { selection_mode: Gtk.SelectionMode.NONE })
+
+    const hosts = this.getSSHConfigHosts();
+    hosts.forEach(function (host) {
+      const row = new Gtk.ListBoxRow();
+      row.data = host;
+      const vbox = new Gtk.Box({
+        orientation: Gtk.Orientation.VERTICAL,
+        spacing: 5
+      });
+      vbox.pack_start(new Gtk.Label({
+        label: ' ' + host,
+        xalign: 0
+      }), true, true, 5);
+      row.add(vbox);
+      list.add(row);
+    });
+    list.connect('row-activated', function (widget, row) {
+      popover.popdown(); // TODO: Dispose any related data
+
+      const host = row.data;
+
+      _this2.addTab(['ssh', host, '-v']);
+    });
+    scrollArea.set_size_request(200, currentHeight - 100);
+    scrollArea.add_with_viewport(list);
+    const popover = new Gtk.Popover();
+    popover.set_position(Gtk.PositionType.BOTTOM);
+    popover.set_relative_to(button);
+    popover.add(scrollArea);
+    popover.show_all();
+    popover.popup();
+  },
   _applyToAllTabs: function (cb) {
     this.tabs.forEach(Lang.bind(this, cb));
   },
@@ -286,7 +366,9 @@ const DropDownTerminalX = new Lang.Class({
     }).join(' ')));
   },
   addTab: function () {
-    var _this2 = this;
+    var _this3 = this;
+
+    let commandArgs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 
     const tab = this._createTerminalTab();
 
@@ -307,7 +389,7 @@ const DropDownTerminalX = new Lang.Class({
     const form = this._buildRenameForm(function (newName) {
       tab.name = newName;
 
-      _this2._changeTabLabel(tab);
+      _this3._changeTabLabel(tab);
 
       tab.popover.popdown();
     });
@@ -321,7 +403,7 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.append_page(tab.container, eventBox);
     this.notebook.set_tab_reorderable(tab.container, true);
     tab.terminal.connect('window-title-changed', function () {
-      return _this2._changeTabLabel(tab);
+      return _this3._changeTabLabel(tab);
     }); // CLose tab on middle mouse button click
 
     eventBox.connect('button-press-event', function (widget, event) {
@@ -331,11 +413,11 @@ const DropDownTerminalX = new Lang.Class({
             button = _event$get_button2[1];
 
       if (button === Gdk.BUTTON_MIDDLE) {
-        if (_this2.notebook.get_n_pages() === 1) return _this2._forkUserShell(tab.terminal);
+        if (_this3.notebook.get_n_pages() === 1) return _this3._forkUserShell(tab.terminal);
 
-        const pageNum = _this2.notebook.page_num(tab.container);
+        const pageNum = _this3.notebook.page_num(tab.container);
 
-        _this2._removeTab(pageNum);
+        _this3._removeTab(pageNum);
       }
 
       if (event.get_event_type() === Gdk.EventType.DOUBLE_BUTTON_PRESS || button === Gdk.BUTTON_SECONDARY) {
@@ -356,23 +438,23 @@ const DropDownTerminalX = new Lang.Class({
 
     this._addUriMatchers(tab);
 
-    this._forkUserShell(tab.terminal);
+    this._forkUserShell(tab.terminal, commandArgs);
 
     this._updateFocusMode(tab);
 
     return tab;
   },
   _createTerminalTab: function () {
-    var _this3 = this;
+    var _this4 = this;
 
     const terminal = this._createTerminalView();
 
     const onExit = terminal.connect('child-exited', function () {
-      if (_this3.notebook.get_n_pages() === 1) return _this3._forkUserShell(terminal);
+      if (_this4.notebook.get_n_pages() === 1) return _this4._forkUserShell(terminal);
 
-      const pageNum = _this3.notebook.get_current_page();
+      const pageNum = _this4.notebook.get_current_page();
 
-      _this3._removeTab(pageNum);
+      _this4._removeTab(pageNum);
     });
     const onRelease = terminal.connect('button-release-event', this._terminalButtonReleased.bind(this));
     const onPress = terminal.connect('button-press-event', this._terminalButtonPressed.bind(this));
@@ -403,10 +485,10 @@ const DropDownTerminalX = new Lang.Class({
           currentX = _this$_window$get_pos2[0],
           currentY = _this$_window$get_pos2[1];
 
-    const _this$_window$get_siz = this._window.get_size(),
-          _this$_window$get_siz2 = _slicedToArray(_this$_window$get_siz, 2),
-          currentWidth = _this$_window$get_siz2[0],
-          currentHeight = _this$_window$get_siz2[1];
+    const _this$_window$get_siz3 = this._window.get_size(),
+          _this$_window$get_siz4 = _slicedToArray(_this$_window$get_siz3, 2),
+          currentWidth = _this$_window$get_siz4[0],
+          currentHeight = _this$_window$get_siz4[1];
 
     Convenience.runInGdk(Lang.bind(this, function () {
       if (x != currentX || y != currentY) {
@@ -455,18 +537,18 @@ const DropDownTerminalX = new Lang.Class({
     terminal.set_font_scale(terminal.get_font_scale() - 0.1);
   },
   Toggle: function () {
-    var _this4 = this;
+    var _this5 = this;
 
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(function () {
-      if (_this4._window.visible) {
-        _this4._window.hide();
+      if (_this5._window.visible) {
+        _this5._window.hide();
 
-        _this4._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this4._window.visible]));
+        _this5._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this5._window.visible]));
       } else {
-        _this4._window.show();
+        _this5._window.show();
 
-        _this4._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this4._window.visible]));
+        _this5._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this5._window.visible]));
       }
 
       return false;
@@ -561,7 +643,7 @@ const DropDownTerminalX = new Lang.Class({
     return removedTab;
   },
   _createWindow: function () {
-    var _this5 = this;
+    var _this6 = this;
 
     const screen = Gdk.Screen.get_default();
     const window = new Gtk.Window({
@@ -590,17 +672,17 @@ const DropDownTerminalX = new Lang.Class({
     window.connect('delete-event', function () {
       window.hide();
 
-      _this5._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
+      _this6._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
 
       return true;
     });
     window.connect('destroy', Gtk.main_quit);
     window.connect('focus-out-event', function () {
-      if (_this5._isHideOnUnfocusEnabled) _this5._jentlyHide();
+      if (_this6._isHideOnUnfocusEnabled) _this6._jentlyHide();
       return true;
     });
     window.connect('key-press-event', function (widget, event, user_data) {
-      if (_this5._isHideOnEscapeEnabled) {
+      if (_this6._isHideOnEscapeEnabled) {
         const _event$get_keyval = event.get_keyval(),
               _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
               success = _event$get_keyval2[0],
@@ -609,35 +691,35 @@ const DropDownTerminalX = new Lang.Class({
 
         const keyname = Gdk.keyval_name(keyval); // string keyname
 
-        if (keyname === 'Escape') _this5._jentlyHide();
+        if (keyname === 'Escape') _this6._jentlyHide();
       }
     });
     return window;
   },
   _createPopupAndActions: function (tab) {
-    var _this6 = this;
+    var _this7 = this;
 
     // get some shortcuts
     const group = tab.actionGroup; // creates the actions and fills the action group
 
     this._createAction('Copy', 'Copy', Gtk.STOCK_COPY, '<shift><control>C', group, function () {
-      const terminal = _this6._getCurrentTerminal();
+      const terminal = _this7._getCurrentTerminal();
 
       terminal.copy_clipboard();
     });
 
     this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, function () {
-      const terminal = _this6._getCurrentTerminal();
+      const terminal = _this7._getCurrentTerminal();
 
       terminal.paste_clipboard();
     });
 
     this._createAction('Close', 'Close', Gtk.STOCK_STOP, '<shift><control>D', group, function () {
-      if (_this6.notebook.get_n_pages() === 1) return _this6._forkUserShell(tab.terminal);
+      if (_this7.notebook.get_n_pages() === 1) return _this7._forkUserShell(tab.terminal);
 
-      const pageNum = _this6.notebook.page_num(tab.container);
+      const pageNum = _this7.notebook.page_num(tab.container);
 
-      _this6._removeTab(pageNum);
+      _this7._removeTab(pageNum);
     }); // creates the UI manager
 
 
@@ -650,10 +732,10 @@ const DropDownTerminalX = new Lang.Class({
     return uiManager.get_widget('/TerminalPopup');
   },
   _forkUserShell: function (terminal) {
+    let commandArgs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
     terminal.reset(false, true);
-
-    const args = this._getCommandArgs();
-
+    let args;
+    if (commandArgs.length) args = commandArgs;else args = this._getCommandArgs();
     let success, pid;
 
     try {
