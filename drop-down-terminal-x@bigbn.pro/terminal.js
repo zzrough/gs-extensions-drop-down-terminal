@@ -194,11 +194,17 @@ const DropDownTerminalX = new Lang.Class({
     const plusImage = new Gtk.Image()
     plusImage.set_from_icon_name('document-new-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
 
+    const SSHImage = new Gtk.Image()
+    SSHImage.set_from_icon_name('utilities-terminal-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+
     const settingsImage = new Gtk.Image()
     settingsImage.set_from_icon_name('document-properties-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
 
     const plusButton = new Gtk.Button({ image: plusImage })
     plusButton.connect('clicked', Lang.bind(this, this.addTab))
+
+    const SSHButton = new Gtk.Button({ image: SSHImage })
+    SSHButton.connect('clicked', () => this.openSSHSelector(SSHButton))
 
     const settingsButton = new Gtk.Button({ image: settingsImage })
     settingsButton.connect('clicked', () => {
@@ -210,6 +216,7 @@ const DropDownTerminalX = new Lang.Class({
     })
 
     box.pack_start(settingsButton, true, true, 0)
+    box.pack_start(SSHButton, true, true, 0)
     box.pack_start(plusButton, true, true, 0)
 
     this.notebook.set_action_widget(box, Gtk.PackType.END)
@@ -218,6 +225,7 @@ const DropDownTerminalX = new Lang.Class({
 
     box.show()
     plusButton.show()
+    SSHButton.show()
     settingsButton.show()
 
     // gets the settings
@@ -281,6 +289,61 @@ const DropDownTerminalX = new Lang.Class({
     return Convenience.getPid()
   },
 
+  getSSHConfigHosts () {
+    const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.ssh/config'])
+    const [ok, contents] = GLib.file_get_contents(sshConfigPath)
+    if (ok) {
+      const lines = String(contents)
+        .split('\n')
+        .filter((line) => {
+          line = line.trim().toLowerCase()
+          const [key] = line.split(/\s+/)
+          return key === 'host'
+        })
+        .map((line) => {
+          const [, value] = line.split(/\s+/)
+          return value
+        })
+        .filter(host => host.trim() !== '*')
+
+      return lines
+    } else return []
+  },
+
+  openSSHSelector (button) {
+    const [, currentHeight] = this._window.get_size()
+    const scrollArea = new Gtk.ScrolledWindow()
+
+    const list = new Gtk.ListBox() // { selection_mode: Gtk.SelectionMode.NONE })
+    const hosts = this.getSSHConfigHosts()
+
+    hosts.forEach((host) => {
+      const row = new Gtk.ListBoxRow()
+      row.data = host
+
+      const vbox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 5 })
+      vbox.pack_start(new Gtk.Label({ label: ' ' + host, xalign: 0 }), true, true, 5)
+      row.add(vbox)
+      list.add(row)
+    })
+
+    list.connect('row-activated', (widget, row) => {
+      popover.popdown() // TODO: Dispose any related data
+      const host = row.data
+      this.addTab(['ssh', host, '-v'])
+    })
+
+    scrollArea.set_size_request(200, currentHeight - 100)
+    scrollArea.add_with_viewport(list)
+
+    const popover = new Gtk.Popover()
+    popover.set_position(Gtk.PositionType.BOTTOM)
+    popover.set_relative_to(button)
+    popover.add(scrollArea)
+    popover.show_all()
+    popover.popup()
+  },
+
   _applyToAllTabs: function (cb) {
     this.tabs.forEach(Lang.bind(this, cb))
   },
@@ -321,7 +384,7 @@ const DropDownTerminalX = new Lang.Class({
     tab.label.set_label(this._getTabName(tab.number, [prompt, lastDir].filter(s => s).join(' ')))
   },
 
-  addTab () {
+  addTab (commandArgs = []) {
     const tab = this._createTerminalTab()
     tab.number = this.tabs.length ? Math.max(...(this.tabs.map(tab => tab.number))) + 1 : 1
     const tabName = this._getTabName(tab.number)
@@ -374,7 +437,7 @@ const DropDownTerminalX = new Lang.Class({
     this._updateCustomCommand(tab)
     this._addUriMatchers(tab)
 
-    this._forkUserShell(tab.terminal)
+    this._forkUserShell(tab.terminal, commandArgs)
     this._updateFocusMode(tab)
     return tab
   },
@@ -645,10 +708,13 @@ const DropDownTerminalX = new Lang.Class({
     return uiManager.get_widget('/TerminalPopup')
   },
 
-  _forkUserShell: function (terminal) {
+  _forkUserShell (terminal, commandArgs = []) {
     terminal.reset(false, true)
 
-    const args = this._getCommandArgs()
+    let args
+    if (commandArgs.length) args = commandArgs
+    else args = this._getCommandArgs()
+
     let success, pid
 
     try {
