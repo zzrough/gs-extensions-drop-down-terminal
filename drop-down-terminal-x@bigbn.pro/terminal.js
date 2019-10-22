@@ -17,6 +17,7 @@
 const Lang = imports.lang
 const Gettext = imports.gettext.domain('drop-down-terminal-x')
 const _ = Gettext.gettext
+const Mainloop = imports.mainloop
 
 imports.gi.versions.Gdk = '3.0'
 imports.gi.versions.GdkX11 = '3.0'
@@ -194,6 +195,9 @@ const DropDownTerminalX = new Lang.Class({
     const plusImage = new Gtk.Image()
     plusImage.set_from_icon_name('document-new-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
 
+    const shorcutImage = new Gtk.Image()
+    shorcutImage.set_from_icon_name('view-more-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+
     const SSHImage = new Gtk.Image()
     SSHImage.set_from_icon_name('utilities-terminal-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
 
@@ -201,7 +205,10 @@ const DropDownTerminalX = new Lang.Class({
     settingsImage.set_from_icon_name('document-properties-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
 
     const plusButton = new Gtk.Button({ image: plusImage })
-    plusButton.connect('clicked', Lang.bind(this, this.addTab))
+    plusButton.connect('clicked', () => this.addTab())
+
+    const shortcutsButton = new Gtk.Button({ image: shorcutImage })
+    shortcutsButton.connect('clicked', () => this.openShortcutSelector(shortcutsButton))
 
     const SSHButton = new Gtk.Button({ image: SSHImage })
     SSHButton.connect('clicked', () => this.openSSHSelector(SSHButton))
@@ -216,6 +223,7 @@ const DropDownTerminalX = new Lang.Class({
     })
 
     box.pack_start(settingsButton, true, true, 0)
+    box.pack_start(shortcutsButton, true, true, 0)
     box.pack_start(SSHButton, true, true, 0)
     box.pack_start(plusButton, true, true, 0)
 
@@ -224,7 +232,9 @@ const DropDownTerminalX = new Lang.Class({
     this._window.add(this.notebook)
 
     box.show()
+
     plusButton.show()
+    shortcutsButton.show()
     SSHButton.show()
     settingsButton.show()
 
@@ -293,7 +303,7 @@ const DropDownTerminalX = new Lang.Class({
     const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.ssh/config'])
     const [ok, contents] = GLib.file_get_contents(sshConfigPath)
     if (ok) {
-      const lines = String(contents)
+      const hosts = String(contents)
         .split('\n')
         .filter((line) => {
           line = line.trim().toLowerCase()
@@ -306,8 +316,67 @@ const DropDownTerminalX = new Lang.Class({
         })
         .filter(host => host.trim() !== '*')
 
-      return lines
+      return hosts
     } else return []
+  },
+
+  getDDTXConfig () {
+    const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.config/drop-down-terminal-x/shortcuts'])
+    const [ok, contents] = GLib.file_get_contents(sshConfigPath)
+    if (ok) {
+      const shortcuts = String(contents)
+        .split('\n')
+        .filter(line => line.trim())
+        .map((line) => {
+          const [key, action] = line.split(/\s+:\s+/)
+          const def = JSON.parse(key)
+          const [name, icon, keybindings] = def
+          return {
+            name,
+            icon,
+            keybindings,
+            action
+          }
+        })
+        .filter(({ name, action }) => name && action)
+
+      return shortcuts
+    } else return []
+  },
+
+  openShortcutSelector (button) {
+    const [, currentHeight] = this._window.get_size()
+    const scrollArea = new Gtk.ScrolledWindow()
+
+    const list = new Gtk.ListBox()
+    const actions = this.getDDTXConfig()
+
+    actions.forEach(({ name, action }) => {
+      const row = new Gtk.ListBoxRow()
+      row.data = action
+
+      const vbox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 5 })
+      vbox.pack_start(new Gtk.Label({ label: ' ' + name, xalign: 0 }), true, true, 5)
+      row.add(vbox)
+      list.add(row)
+    })
+
+    list.connect('row-activated', (widget, row) => {
+      popover.popdown() // TODO: Dispose any related data
+      const action = row.data
+      const tab = this.addTab(action.split(/\s+/))
+      this.Focus()
+    })
+
+    scrollArea.set_size_request(200, currentHeight - 100)
+    scrollArea.add_with_viewport(list)
+
+    const popover = new Gtk.Popover()
+    popover.set_position(Gtk.PositionType.BOTTOM)
+    popover.set_relative_to(button)
+    popover.add(scrollArea)
+    popover.show_all()
+    popover.popup()
   },
 
   openSSHSelector (button) {
@@ -330,7 +399,8 @@ const DropDownTerminalX = new Lang.Class({
     list.connect('row-activated', (widget, row) => {
       popover.popdown() // TODO: Dispose any related data
       const host = row.data
-      this.addTab(['ssh', host, '-v'])
+      const tab = this.addTab(['ssh', host, '-v'])
+      this.Focus()
     })
 
     scrollArea.set_size_request(200, currentHeight - 100)
@@ -711,9 +781,7 @@ const DropDownTerminalX = new Lang.Class({
   _forkUserShell (terminal, commandArgs = []) {
     terminal.reset(false, true)
 
-    let args
-    if (commandArgs.length) args = commandArgs
-    else args = this._getCommandArgs()
+    const args = this._getCommandArgs()
 
     let success, pid
 
@@ -724,6 +792,11 @@ const DropDownTerminalX = new Lang.Class({
       } else {
         [success, pid] = terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
           GLib.SpawnFlags.SEARCH_PATH, null)
+      }
+
+      if (commandArgs.length) {
+        const extraCommand = commandArgs.join(' ') + '\n'
+        this.setTimeout(() => terminal.feed_child(extraCommand, extraCommand.length), 250)
       }
 
       terminal._lastForkFailed = false
@@ -749,6 +822,20 @@ const DropDownTerminalX = new Lang.Class({
     } else {
       terminal.get_pty_object().set_term('xterm')
     }
+  },
+
+  setTimeout (func, millis /* , ... args */) {
+    let args = []
+    if (arguments.length > 2) {
+      args = args.slice.call(arguments, 2)
+    }
+
+    const id = Mainloop.timeout_add(millis, () => {
+      func.apply(null, args)
+      return false // Stop repeating
+    }, null)
+
+    return id
   },
 
   _refreshWindow: function () {
@@ -925,7 +1012,7 @@ const DropDownTerminalX = new Lang.Class({
     Gtk.show_uri(screen, uri, time)
   },
 
-  _getCommandArgs: function () {
+  _getCommandArgs () {
     // custom command
     if (this._customCommandArgs.length > 0) {
       return this._customCommandArgs
@@ -934,11 +1021,9 @@ const DropDownTerminalX = new Lang.Class({
     // user shell
     try {
       const [parsed, args] = GLib.shell_parse_argv(Vte.get_user_shell())
-
-      if (parsed) {
-        return args
-      }
+      if (parsed) return args
     } catch (e) {
+      log(e)
       // nothing: we continue silently as this is totally expected
     }
 
