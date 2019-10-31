@@ -20,7 +20,7 @@ GtkWindow * {
     border-style: solid;
     background-color: #000;
 }
-
+.navbar=cyan;
 .menu {
     color: white;
     border-width: 2px;
