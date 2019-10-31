@@ -22,3 +22,4 @@ v28
 
 future
 - feature: pause the child process if term closed and no active pid (for powersaving, maybe an additional pref?)
+need fo ra separate scrollbar
