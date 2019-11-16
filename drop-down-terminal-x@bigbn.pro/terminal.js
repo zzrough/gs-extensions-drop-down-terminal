@@ -334,7 +334,9 @@ const DropDownTerminalX = new Lang.Class({
           .split('\n')
           .filter(line => line.trim() && !line.trim().startsWith('#'))
           .map((line) => {
-            const [key, action] = line.split(/\s?:\s?/)
+            let [key, ...action] = line.split(/\s?:\s?/)
+            action = action.join(':')
+
             const def = JSON.parse(key)
             const [name, icon, keybindings] = def
             return {
