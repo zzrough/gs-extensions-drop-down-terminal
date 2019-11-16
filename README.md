@@ -32,11 +32,15 @@ You can create file `~/.config/drop-down-terminal-x/shortcuts` with such format:
     ["Projects"]    :   cd /home/bigbn/projects
     ["MyIP"]        :   curl -s http://whatismijnip.nl | cut -d " " -f 5
    
-There is two parts divided by colon. 
-Right part is a command.
-Left part is a JSON array. It contains human readable name of launcher (maybe in future some new properties like icon, "open" mode etc will appear)
-These items displayed as executable actions under special button at right corner
-Line started with # interpreted as comment and will be ignored by parser.
+There is two parts divided by colon:
+right part is a command,
+left one is a JSON array, it contains string with human readable name of launcher (maybe some new properties like icon, "open" mode and etc will appear in future).
+
+Line started with `#` interpreted as comment and will be ignored by parser.
+
+These items are displayed as executable actions under special `kebab` button at right corner.
+
+
 
 ![Shortucts](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/shortcuts.png)
 
