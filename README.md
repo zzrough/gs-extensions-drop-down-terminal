@@ -36,9 +36,9 @@ There is two parts divided by colon:
 right part is a command,
 left one is a JSON array, it contains string with human readable name of launcher (maybe some new properties like icon, "open" mode and etc will appear in future).
 
-Line started with # interpreted as comment and will be ignored by parser.
+Line started with `#` interpreted as comment and will be ignored by parser.
 
-These items displayed as executable actions under special button at right corner.
+These items are displayed as executable actions under special `kebab` button at right corner.
 
 
 
