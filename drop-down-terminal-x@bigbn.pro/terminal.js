@@ -161,6 +161,9 @@ const UriHandlingProperties = [
   { pattern: "(?:news:|man:|info:)[[:alnum:]\\Q^_{|}~!\"#$%&'()*+,./;:=?`\\E]+", flavor: UriFlavor.AsIs }
 ]
 
+const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.ssh/config'])
+const shortcutsConfigFilePath = GLib.build_pathv('/', [GLib.get_home_dir(), '.config/drop-down-terminal-x/shortcuts'])
+
 // terminal class
 const DropDownTerminalX = new Lang.Class({
   Name: 'DropDownTerminalX',
@@ -235,8 +238,10 @@ const DropDownTerminalX = new Lang.Class({
     box.show()
 
     plusButton.show()
-    shortcutsButton.show()
-    SSHButton.show()
+
+    if (GLib.file_test(sshConfigPath, GLib.FileTest.EXISTS)) shortcutsButton.show()
+    if (GLib.file_test(shortcutsConfigFilePath, GLib.FileTest.EXISTS)) SSHButton.show()
+
     settingsButton.show()
 
     // gets the settings
@@ -322,26 +327,40 @@ const DropDownTerminalX = new Lang.Class({
   },
 
   getDDTXConfig () {
-    const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.config/drop-down-terminal-x/shortcuts'])
-    const [ok, contents] = GLib.file_get_contents(sshConfigPath)
+    const [ok, contents] = GLib.file_get_contents(shortcutsConfigFilePath)
     if (ok) {
-      const shortcuts = String(contents)
-        .split('\n')
-        .filter(line => line.trim())
-        .map((line) => {
-          const [key, action] = line.split(/\s+:\s+/)
-          const def = JSON.parse(key)
-          const [name, icon, keybindings] = def
-          return {
-            name,
-            icon,
-            keybindings,
-            action
-          }
-        })
-        .filter(({ name, action }) => name && action)
+      try {
+        const shortcuts = String(contents)
+          .split('\n')
+          .filter(line => line.trim() && !line.trim().startsWith('#'))
+          .map((line) => {
+            const [key, action] = line.split(/\s?:\s?/)
+            const def = JSON.parse(key)
+            const [name, icon, keybindings] = def
+            return {
+              name,
+              icon,
+              keybindings,
+              action
+            }
+          })
+          .filter(({ name, action }) => name && action)
 
-      return shortcuts
+        return shortcuts
+      } catch (e) {
+        const messageDialog = new Gtk.MessageDialog({
+          transient_for: this._window,
+          modal: true,
+          buttons: Gtk.ButtonsType.OK,
+          message_type: Gtk.MessageType.WARNING,
+          title: 'Unable to parse shortcuts file',
+          text: e.message
+        })
+
+        messageDialog.connect('response', () => messageDialog.destroy())
+        messageDialog.show()
+        return []
+      }
     } else return []
   },
 
