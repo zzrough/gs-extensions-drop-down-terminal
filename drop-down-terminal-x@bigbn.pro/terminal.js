@@ -100,6 +100,7 @@ const ENABLE_TABS_SETTING_KEY = 'enable-tabs'
 const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus'
 const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape'
 const TABS_POSITION_SETTING_KEY = 'tabs-position'
+const MOTR_VERSION_SETTING_KEY = 'motr-version'
 
 // gnome desktop wm settings
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences'
@@ -785,6 +786,8 @@ const DropDownTerminalX = new Lang.Class({
 
     let success, pid
 
+    this.showMOTR(terminal)
+
     try {
       if (terminal.spawn_sync) { // 0.37.0
         [success, pid] = terminal.spawn_sync(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(),
@@ -821,6 +824,35 @@ const DropDownTerminalX = new Lang.Class({
       // (nothing, the default is the user choice at build-time, which defaults to xterm anyway)
     } else {
       terminal.get_pty_object().set_term('xterm')
+    }
+  },
+
+  showMOTR (terminal) {
+    const currentVersion = '1.3.0'
+    const lastVersion = this._settings.get_string(MOTR_VERSION_SETTING_KEY).trim()
+
+    if (lastVersion !== currentVersion) {
+      terminal.feed('\n\r')
+      terminal.feed(' ▒█▄░▒█ █▀▀█ ▀█░█▀ █▀▀ █▀▄▀█ █▀▀▄ █▀▀ █▀▀█ 　 █▀█ █▀▀█ ▄█░ ▄▀▀▄ \n\r')
+      terminal.feed(' ▒█▒█▒█ █░░█ ░█▄█░ █▀▀ █░▀░█ █▀▀▄ █▀▀ █▄▄▀ 　 ░▄▀ █▄▀█ ░█░ ▀▄▄█ \n\r')
+      terminal.feed(' ▒█░░▀█ ▀▀▀▀ ░░▀░░ ▀▀▀ ▀░░░▀ ▀▀▀░ ▀▀▀ ▀░▀▀ 　 █▄▄ █▄▄█ ▄█▄ ░▄▄▀ \n\r')
+      terminal.feed('\n\r')
+      terminal.feed('  Release notes for 1.3.0\n\r')
+      terminal.feed('\n\r')
+      terminal.feed('  - Added support for the ~/.ssh/config file.\n\r')
+      terminal.feed('    Now you can get quick access to any your ssh host in one click; \n\r')
+      terminal.feed('\n\r')
+      terminal.feed('  - Added support for ~/.config/drop-down-terminal-x/shortcuts file \n\r')
+      terminal.feed('    Now you can define any action that will become available in a special drop-down list for quick launch. \n\r')
+      terminal.feed('    This small improvement can improve your productivity \n\r')
+      terminal.feed('    See file format at https://github.com/bigbn/drop-down-terminal-x')
+      terminal.feed('\n\r')
+      terminal.feed('\n\r')
+      terminal.feed('  Thank you for choosing drop-down-terminal-x! \n\r')
+      terminal.feed('\n\r')
+      terminal.feed('\n\r')
+
+      this._settings.set_string(MOTR_VERSION_SETTING_KEY, currentVersion)
     }
   },
 

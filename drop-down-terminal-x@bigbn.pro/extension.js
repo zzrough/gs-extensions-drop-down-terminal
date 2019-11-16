@@ -725,7 +725,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._killingChild = false
 
     // finds the forking arguments
-    const args = ['gjs', GLib.build_filenamev([Me.path, 'terminal.js']), Me.path]
+    const args = ['gjs', GLib.build_filenamev([Me.path, 'terminal.js']), Me.path, Me.metadata.vesion]
 
     // forks the process
     debug("forking '" + args.join(' ') + "'")
