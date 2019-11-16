@@ -614,10 +614,6 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _bindShortcut: function (key, action) {
     // introduced in 3.16
-    log('Binding action')
-    log(key)
-    log(action)
-
     if (Main.wm.addKeybinding && Shell.ActionMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, action.bind(this))
     // introduced in 3.7.5
     else if (Main.wm.addKeybinding && Shell.KeyBindingMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY, action.bind(this))
@@ -630,7 +626,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _windowCreated: function (display, window) {
     // filter out the terminal window using its wmclass
-    if (window.get_wm_class() != TERMINAL_WINDOW_WM_CLASS) {
+    if (String(window.get_wm_class()) !== TERMINAL_WINDOW_WM_CLASS) {
       return
     }
 
@@ -641,12 +637,9 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _windowMapped: function (wm, actor) {
     // filter out the actor using its name
-    if (actor.get_name() != TERMINAL_WINDOW_ACTOR_NAME) {
-      log('ACTOR_NAME:' + actor.get_name())
+    if (String(actor.get_name()) !== TERMINAL_WINDOW_ACTOR_NAME) {
       return
     }
-
-    log('WINDOW_MAPPED:' + actor.get_name())
 
     // a lambda to request the focus asynchronously
     const requestFocusAsync = Lang.bind(this, function () {
