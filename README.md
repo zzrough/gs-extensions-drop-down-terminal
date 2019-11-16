@@ -34,13 +34,12 @@ You can create file `~/.config/drop-down-terminal-x/shortcuts` with such format:
    
 There is two parts divided by colon:
 right part is a command,
-left one is a JSON array.
+left one is a JSON array, it contains string with human readable name of launcher (maybe some new properties like icon, "open" mode and etc will appear in future).
 
-It contains human readable name of launcher (maybe some new properties like icon, "open" mode and etc will appear in future).
+Line started with # interpreted as comment and will be ignored by parser.
 
 These items displayed as executable actions under special button at right corner.
 
-Line started with # interpreted as comment and will be ignored by parser.
 
 
 ![Shortucts](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/shortcuts.png)
