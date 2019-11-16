@@ -9,6 +9,14 @@ GtkWindow * {
     box-shadow: none; /* removes the container's faint shadow */
 }
 
+.frame {
+    padding: 0;
+    margin: 0;
+    border-width: 0;
+    border-color:rgba(0,0,0,0.0);
+    background-color: rgba(0,0,0,0.0);    
+}
+
 /* Do not display the undershoot */
 scrolledwindow undershoot.top,
 scrolledwindow undershoot.right,

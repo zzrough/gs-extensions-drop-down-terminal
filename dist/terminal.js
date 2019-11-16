@@ -64,7 +64,8 @@ const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell';
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs';
 const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus';
 const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape';
-const TABS_POSITION_SETTING_KEY = 'tabs-position'; // gnome desktop wm settings
+const TABS_POSITION_SETTING_KEY = 'tabs-position';
+const MOTR_VERSION_SETTING_KEY = 'motr-version'; // gnome desktop wm settings
 
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences';
 const WM_FOCUS_MODE_SETTING_KEY = 'focus-mode';
@@ -107,7 +108,9 @@ const UriHandlingProperties = [{
 }, {
   pattern: "(?:news:|man:|info:)[[:alnum:]\\Q^_{|}~!\"#$%&'()*+,./;:=?`\\E]+",
   flavor: UriFlavor.AsIs
-}]; // terminal class
+}];
+const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.ssh/config']);
+const shortcutsConfigFilePath = GLib.build_pathv('/', [GLib.get_home_dir(), '.config/drop-down-terminal-x/shortcuts']); // terminal class
 
 const DropDownTerminalX = new Lang.Class({
   Name: 'DropDownTerminalX',
@@ -182,8 +185,8 @@ const DropDownTerminalX = new Lang.Class({
 
     box.show();
     plusButton.show();
-    shortcutsButton.show();
-    SSHButton.show();
+    if (GLib.file_test(sshConfigPath, GLib.FileTest.EXISTS)) shortcutsButton.show();
+    if (GLib.file_test(shortcutsConfigFilePath, GLib.FileTest.EXISTS)) SSHButton.show();
     settingsButton.show(); // gets the settings
 
     this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
@@ -285,41 +288,55 @@ const DropDownTerminalX = new Lang.Class({
     } else return [];
   },
   getDDTXConfig: function () {
-    const sshConfigPath = GLib.build_pathv('/', [GLib.get_home_dir(), '.config/drop-down-terminal-x/shortcuts']);
-
-    const _GLib$file_get_conten3 = GLib.file_get_contents(sshConfigPath),
+    const _GLib$file_get_conten3 = GLib.file_get_contents(shortcutsConfigFilePath),
           _GLib$file_get_conten4 = _slicedToArray(_GLib$file_get_conten3, 2),
           ok = _GLib$file_get_conten4[0],
           contents = _GLib$file_get_conten4[1];
 
     if (ok) {
-      const shortcuts = String(contents).split('\n').filter(function (line) {
-        return line.trim();
-      }).map(function (line) {
-        const _line$split5 = line.split(/\s+:\s+/),
-              _line$split6 = _slicedToArray(_line$split5, 2),
-              key = _line$split6[0],
-              action = _line$split6[1];
+      try {
+        const shortcuts = String(contents).split('\n').filter(function (line) {
+          return line.trim() && !line.trim().startsWith('#');
+        }).map(function (line) {
+          const _line$split5 = line.split(/\s?:\s?/),
+                _line$split6 = _slicedToArray(_line$split5, 2),
+                key = _line$split6[0],
+                action = _line$split6[1];
 
-        const def = JSON.parse(key);
+          const def = JSON.parse(key);
 
-        const _def = _slicedToArray(def, 3),
-              name = _def[0],
-              icon = _def[1],
-              keybindings = _def[2];
+          const _def = _slicedToArray(def, 3),
+                name = _def[0],
+                icon = _def[1],
+                keybindings = _def[2];
 
-        return {
-          name: name,
-          icon: icon,
-          keybindings: keybindings,
-          action: action
-        };
-      }).filter(function (_ref) {
-        let name = _ref.name,
-            action = _ref.action;
-        return name && action;
-      });
-      return shortcuts;
+          return {
+            name: name,
+            icon: icon,
+            keybindings: keybindings,
+            action: action
+          };
+        }).filter(function (_ref) {
+          let name = _ref.name,
+              action = _ref.action;
+          return name && action;
+        });
+        return shortcuts;
+      } catch (e) {
+        const messageDialog = new Gtk.MessageDialog({
+          transient_for: this._window,
+          modal: true,
+          buttons: Gtk.ButtonsType.OK,
+          message_type: Gtk.MessageType.WARNING,
+          title: 'Unable to parse shortcuts file',
+          text: e.message
+        });
+        messageDialog.connect('response', function () {
+          return messageDialog.destroy();
+        });
+        messageDialog.show();
+        return [];
+      }
     } else return [];
   },
   openShortcutSelector: function (button) {
@@ -835,6 +852,7 @@ const DropDownTerminalX = new Lang.Class({
     const args = this._getCommandArgs();
 
     let success, pid;
+    this.showMOTR(terminal);
 
     try {
       if (terminal.spawn_sync) {
@@ -879,6 +897,35 @@ const DropDownTerminalX = new Lang.Class({
       // (nothing, the default is the user choice at build-time, which defaults to xterm anyway)
     } else {
       terminal.get_pty_object().set_term('xterm');
+    }
+  },
+  showMOTR: function (terminal) {
+    const currentVersion = '1.3.0';
+
+    const lastVersion = this._settings.get_string(MOTR_VERSION_SETTING_KEY).trim();
+
+    if (lastVersion !== currentVersion) {
+      terminal.feed('\n\r');
+      terminal.feed(' ▒█▄░▒█ █▀▀█ ▀█░█▀ █▀▀ █▀▄▀█ █▀▀▄ █▀▀ █▀▀█ 　 █▀█ █▀▀█ ▄█░ ▄▀▀▄ \n\r');
+      terminal.feed(' ▒█▒█▒█ █░░█ ░█▄█░ █▀▀ █░▀░█ █▀▀▄ █▀▀ █▄▄▀ 　 ░▄▀ █▄▀█ ░█░ ▀▄▄█ \n\r');
+      terminal.feed(' ▒█░░▀█ ▀▀▀▀ ░░▀░░ ▀▀▀ ▀░░░▀ ▀▀▀░ ▀▀▀ ▀░▀▀ 　 █▄▄ █▄▄█ ▄█▄ ░▄▄▀ \n\r');
+      terminal.feed('\n\r');
+      terminal.feed('  Release notes for 1.3.0\n\r');
+      terminal.feed('\n\r');
+      terminal.feed('  - Added support for the ~/.ssh/config file.\n\r');
+      terminal.feed('    Now you can get quick access to any your ssh host in one click; \n\r');
+      terminal.feed('\n\r');
+      terminal.feed('  - Added support for ~/.config/drop-down-terminal-x/shortcuts file \n\r');
+      terminal.feed('    Now you can define any action that will become available in a special drop-down list for quick launch. \n\r');
+      terminal.feed('    This small improvement can improve your productivity \n\r');
+      terminal.feed('    See file format at https://github.com/bigbn/drop-down-terminal-x');
+      terminal.feed('\n\r');
+      terminal.feed('\n\r');
+      terminal.feed('  Thank you for choosing drop-down-terminal-x! \n\r');
+      terminal.feed('\n\r');
+      terminal.feed('\n\r');
+
+      this._settings.set_string(MOTR_VERSION_SETTING_KEY, currentVersion);
     }
   },
   setTimeout: function (func, millis

@@ -291,5 +291,13 @@
       </description>
     </key>
 
+    <key name="motr-version" type="s">
+      <default>''</default>
+      <summary>The last shown message of release message</summary>
+      <description>
+        Value must be equal to extension version to MOTR disappear
+      </description>
+    </key>
+
   </schema>
 </schemalist>
