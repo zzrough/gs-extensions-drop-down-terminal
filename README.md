@@ -12,6 +12,8 @@ Includes
 - Multi-monitor support
 - Font scaling support
 - [Focus out] / [Escape pressed] events for hide
+- Custom shortcuts
+- SSH ~/.config hosts fast acess 
 
 [<img src="https://github.com/bigbn/drop-down-terminal-x/raw/master/get.png" height="100">](https://extensions.gnome.org/extension/1509/drop-down-terminal-x)
 
@@ -21,6 +23,22 @@ Includes
 
     $ git clone https://github.com/bigbn/gs-extensions-drop-down-terminal.git /tmp/drop-down-terminal
     $ cp -R /tmp/drop-down-terminal/drop-down-terminal-x@bigbn.pro ~/.local/share/gnome-shell/extensions/
+
+
+### Shortcuts file format
+You can create file `~/.config/drop-down-terminal-x/shortcuts` with such format:
+
+    # You can define any actions you want
+    ["Projects"]    :   cd /home/bigbn/projects
+    ["MyIP"]        :   curl -s http://whatismijnip.nl | cut -d " " -f 5
+   
+There is two parts divided by colon. 
+Right part is a command.
+Left part is a JSON array. It contains human readable name of launcher (maybe in future some new properties like icon, "open" mode etc will appear)
+These items displayed as executable actions under special button at right corner
+Line started with # interpreted as comment and will be ignored by parser.
+
+![Shortucts](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/shortcuts.png)
 
 
 Screenshots
