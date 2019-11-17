@@ -38,7 +38,7 @@ left one is a JSON array, it contains string with human readable name of launche
 
 Line started with `#` interpreted as comment and will be ignored by parser.
 
-These items are displayed as executable actions under special `kebab` button at right corner.
+These items are displayed as executable actions under special `kebab` button at right corner. Extension must be restarted (off/on in gnome-tweaks) after file creation to take effect.
 
 
 
