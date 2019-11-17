@@ -685,7 +685,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._quitingChild = false;
     this._killingChild = false; // finds the forking arguments
 
-    const args = ['gjs', GLib.build_filenamev([Me.path, 'terminal.js']), Me.path, Me.metadata.vesion]; // forks the process
+    const args = ['gjs', GLib.build_filenamev([Me.path, 'terminal.js']), Me.path]; // forks the process
 
     debug("forking '" + args.join(' ') + "'");
     let success, pid;
@@ -698,7 +698,10 @@ const DropDownTerminalXExtension = new Lang.Class({
       success = _GLib$spawn_async2[0];
       pid = _GLib$spawn_async2[1];
     } catch (err) {
-      // beautify the most common error message
+      log(err.message);
+      log('--------');
+      log(JSON.stringify(this._getCommandEnv())); // beautify the most common error message
+
       if (err.code == GLib.SpawnError.G_SPAWN_ERROR_NOENT) {
         err.message = _('gjs not found in PATH');
       }
