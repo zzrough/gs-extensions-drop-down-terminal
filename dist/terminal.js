@@ -187,8 +187,8 @@ const DropDownTerminalX = new Lang.Class({
 
     box.show();
     plusButton.show();
-    if (GLib.file_test(sshConfigPath, GLib.FileTest.EXISTS)) shortcutsButton.show();
-    if (GLib.file_test(shortcutsConfigFilePath, GLib.FileTest.EXISTS)) SSHButton.show();
+    if (GLib.file_test(shortcutsConfigFilePath, GLib.FileTest.EXISTS)) shortcutsButton.show();
+    if (GLib.file_test(sshConfigPath, GLib.FileTest.EXISTS)) SSHButton.show();
     settingsButton.show(); // gets the settings
 
     this._settings = Convenience.getSettings(EXTENSION_PATH, EXTENSION_ID);
