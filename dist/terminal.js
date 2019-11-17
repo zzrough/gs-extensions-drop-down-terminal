@@ -2,9 +2,11 @@ function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableTo
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
 
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } }
+
+function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
@@ -298,11 +300,12 @@ const DropDownTerminalX = new Lang.Class({
         const shortcuts = String(contents).split('\n').filter(function (line) {
           return line.trim() && !line.trim().startsWith('#');
         }).map(function (line) {
-          const _line$split5 = line.split(/\s?:\s?/),
-                _line$split6 = _slicedToArray(_line$split5, 2),
-                key = _line$split6[0],
-                action = _line$split6[1];
+          let _line$split5 = line.split(/\s?:\s?/),
+              _line$split6 = _toArray(_line$split5),
+              key = _line$split6[0],
+              action = _line$split6.slice(1);
 
+          action = action.join(':');
           const def = JSON.parse(key);
 
           const _def = _slicedToArray(def, 3),
