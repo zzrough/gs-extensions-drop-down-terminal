@@ -739,12 +739,7 @@ const DropDownTerminalX = new Lang.Class({
     window.set_deletable(false)
     window.stick()
 
-    if (Convenience.GTK_VERSION >= 31800) {
-      window.set_type_hint(Gdk.WindowTypeHint.DOCK)
-    } else {
-      window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU)
-    }
-
+    window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU)
     window.set_visual(screen.get_rgba_visual())
 
     window.connect('enter_notify_event', Lang.bind(this, this._windowMouseEnter))
