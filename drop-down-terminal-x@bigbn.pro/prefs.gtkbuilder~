@@ -1131,6 +1131,8 @@
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="xpad">6</property>
+                <property name="ypad">6</property>
                 <property name="label" translatable="yes">Fullscreen</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>

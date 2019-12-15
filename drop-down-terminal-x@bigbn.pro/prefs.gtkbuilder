@@ -1102,6 +1102,8 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="model">fullscreen-shortcut-liststore</property>
+                            <property name="headers_visible">False</property>
+                            <property name="search_column">0</property>
                             <child internal-child="selection">
                               <object class="GtkTreeSelection"/>
                             </child>
