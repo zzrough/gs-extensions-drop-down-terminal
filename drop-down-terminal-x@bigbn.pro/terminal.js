@@ -885,6 +885,7 @@ const DropDownTerminalX = new Lang.Class({
       terminal.feed('\n\r')
       terminal.feed('  - Keybinding to maximize terminal window; \n\r')
       terminal.feed('  - Keybinding to manually focus terminal window; \n\r')
+      terminal.feed('  - Scrolling the volume indicator not affecting terminal; \n\r')
       terminal.feed('\n\r')
       terminal.feed('\n\r')
       terminal.feed('  Thank you for using Drop-down-terminal-x! Enjoy the future! \n\r')
