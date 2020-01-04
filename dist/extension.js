@@ -57,7 +57,6 @@ const Convenience = Me.imports.convenience; // constants
 const ANIMATION_CONFLICT_EXTENSION_UUIDS = ['window-open-animation-rotate-in@mengzhuo.org', 'window-open-animation-slide-in@mengzhuo.org', 'window-open-animation-scale-in@mengzhuo.org'];
 const TERMINAL_WINDOW_ACTOR_NAME = 'dropDownTerminalXWindow';
 const TERMINAL_WINDOW_WM_CLASS = 'DropDownTerminalXWindow';
-const DEBUG = false;
 const FIRST_START_SETTING_KEY = 'first-start';
 const ENABLE_ANIMATION_SETTING_KEY = 'enable-animation';
 const OPENING_ANIMATION_TIME_SETTING_KEY = 'opening-animation-time';
@@ -77,6 +76,7 @@ const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut';
 const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut';
 const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut';
 const FULLSCREEN_SHORTCUT_SETTING_KEY = 'toggle-fullscreen-shortcut';
+const CAPTURE_FOCUS_SETTING_KEY = 'capture-focus-shortcut';
 const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor';
 const TOP_EDGE = 0;
 const LEFT_EDGE = 1;
@@ -95,37 +95,22 @@ const console = {
   } // dbus interface
 
 };
-const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"ToggleFullscreen\">\n            <arg name=\"enable\" type=\"b\" direction=\"in\"/>\n        </method>\n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>\n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>\n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">                                   \n          <arg type=\"b\" name=\"state\"/>\n        </signal>                                                   \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
-
-function debug(text) {
-  DEBUG && log('[DDT] ' + text);
-} // window border effect class
+const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"ToggleFullscreen\">\n            <arg name=\"enable\" type=\"b\" direction=\"in\"/>\n        </method>\n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>\n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>\n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">                                   \n          <arg type=\"b\" name=\"state\"/>\n        </signal>                                                   \n     </interface>                                                 \n     </node>"; // window border effect class
 //
 // we should use a delegate to avoid the GType crashes (https://bugzilla.gnome.org/show_bug.cgi?id=688973)
 // but we can't since the Clutter.Effect is abstract, so let's add a crappy hack there
 
-
-if (window.__DDTInstance === undefined) {
-  window.__DDTInstance = 1;
-}
-
+if (window.__DDTInstance === undefined) window.__DDTInstance = 1;
 const SouthBorderEffect = new Lang.Class({
   Name: 'SouthBorderEffect-' + window.__DDTInstance++,
   Extends: Clutter.Effect,
   _init: function () {
-    this.parent(); // ExtensionUtils.initTranslations()
-
+    this.parent();
     this._color = new Cogl.Color();
 
-    if (Convenience.GTK_VERSION >= 31590) {
-      this._color.init_from_4ub(0x1c, 0x1f, 0x1f, 0xff);
+    this._color.init_from_4ub(0x1c, 0x1f, 0x1f, 0xff);
 
-      this._width = 1;
-    } else {
-      this._color.init_from_4ub(0xa5, 0xa5, 0xa5, 0xff);
-
-      this._width = 2;
-    }
+    this._width = 1;
   },
   vfunc_paint: function () {
     const actor = this.get_actor();
@@ -212,12 +197,12 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._windowCreatedHandlerId = this._display.connect('window-created', Lang.bind(this, this._windowCreated));
     this._actorMappedHandlerId = global.window_manager.connect('map', Lang.bind(this, this._windowMapped)); // geometry update on monitor configuration change or panel size change
 
-    this._monitorsChangedHandlerId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, function () {
-      Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-    }));
-    this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect('notify::allocation', Lang.bind(this, function () {
-      Convenience.throttle(100, this, this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
-    }));
+    this._monitorsChangedHandlerId = Main.layoutManager.connect('monitors-changed', function () {
+      Convenience.throttle(100, _this, _this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
+    });
+    this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect('notify::allocation', function () {
+      Convenience.throttle(100, _this, _this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
+    });
     this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled));
 
     const busRun = function (actionName) {
@@ -242,6 +227,8 @@ const DropDownTerminalXExtension = new Lang.Class({
       return busRun('IncreaseFontSizeRemote');
     }], [DECREASE_TEXT_SHORTCUT_SETTING_KEY, function () {
       return busRun('DecreaseFontSizeRemote');
+    }], [CAPTURE_FOCUS_SETTING_KEY, function () {
+      return busRun('FocusRemote');
     }], [FULLSCREEN_SHORTCUT_SETTING_KEY, function () {
       _this.fullscreenEnabled = !_this.fullscreenEnabled;
 
