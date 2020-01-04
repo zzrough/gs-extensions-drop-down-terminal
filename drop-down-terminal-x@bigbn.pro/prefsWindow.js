@@ -62,6 +62,7 @@ const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut'
 const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
 
 const FULLSCREEN_SHORTCUT_SETTING_KEY = 'toggle-fullscreen-shortcut'
+const CAPTURE_FOCUS_SETTING_KEY = 'capture-focus-shortcut'
 
 const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor'
 const MULTI_MONITOR_MODE_SETTING_KEY = 'multi-monitor-mode'
@@ -145,6 +146,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       this._makeShortcutEdit('increase-text-shortcut-treeview', 'increase-text-shortcut-liststore', INCREASE_TEXT_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('decrease-text-shortcut-treeview', 'decrease-text-shortcut-liststore', DECREASE_TEXT_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('fullscreen-shortcut-treeview', 'fullscreen-shortcut-liststore', FULLSCREEN_SHORTCUT_SETTING_KEY)
+      this._makeShortcutEdit('capture-focus-tree-view', 'capture-focus-liststore', CAPTURE_FOCUS_SETTING_KEY)
 
       this._initMonitorWidgets()
       this._initTabsPositionWidgets()

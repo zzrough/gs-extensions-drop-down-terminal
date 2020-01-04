@@ -56,7 +56,6 @@ const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
 
 const TERMINAL_WINDOW_ACTOR_NAME = 'dropDownTerminalXWindow'
 const TERMINAL_WINDOW_WM_CLASS = 'DropDownTerminalXWindow'
-const DEBUG = false
 
 const FIRST_START_SETTING_KEY = 'first-start'
 const ENABLE_ANIMATION_SETTING_KEY = 'enable-animation'
@@ -79,6 +78,7 @@ const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut'
 const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut'
 const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
 const FULLSCREEN_SHORTCUT_SETTING_KEY = 'toggle-fullscreen-shortcut'
+const CAPTURE_FOCUS_SETTING_KEY = 'capture-focus-shortcut'
 
 const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor'
 
@@ -134,42 +134,27 @@ const DropDownTerminalXIface =
      </interface>                                                 
      </node>`
 
-// helper to only log in debug mode
-function debug (text) { DEBUG && log('[DDT] ' + text) }
-
 // window border effect class
 //
 // we should use a delegate to avoid the GType crashes (https://bugzilla.gnome.org/show_bug.cgi?id=688973)
 // but we can't since the Clutter.Effect is abstract, so let's add a crappy hack there
-if (window.__DDTInstance === undefined) {
-  window.__DDTInstance = 1
-}
+if (window.__DDTInstance === undefined) window.__DDTInstance = 1
 
 const SouthBorderEffect = new Lang.Class({
   Name: 'SouthBorderEffect-' + window.__DDTInstance++,
   Extends: Clutter.Effect,
 
-  _init: function () {
+  _init () {
     this.parent()
-    // ExtensionUtils.initTranslations()
-
     this._color = new Cogl.Color()
-
-    if (Convenience.GTK_VERSION >= 31590) {
-      this._color.init_from_4ub(0x1c, 0x1f, 0x1f, 0xff)
-      this._width = 1
-    } else {
-      this._color.init_from_4ub(0xa5, 0xa5, 0xa5, 0xff)
-      this._width = 2
-    }
+    this._color.init_from_4ub(0x1c, 0x1f, 0x1f, 0xff)
+    this._width = 1
   },
 
-  vfunc_paint: function () {
+  vfunc_paint () {
     const actor = this.get_actor()
     const geom = actor.get_allocation_geometry()
-
     actor.continue_paint()
-
     Cogl.set_source_color(this._color)
     Cogl.rectangle(0, geom.height, geom.width, geom.height - this._width)
   }
@@ -179,7 +164,7 @@ const SouthBorderEffect = new Lang.Class({
 const MissingVteDialog = new Lang.Class({
   Name: 'MissingDepsDialog',
 
-  _init: function () {
+  _init () {
     this._delegate = new ModalDialog.ModalDialog({ styleClass: 'modal-dialog' })
 
     this._delegate.setButtons([{
@@ -222,7 +207,7 @@ const MissingVteDialog = new Lang.Class({
     this._delegate.contentLayout.add(box)
   },
 
-  open: function () {
+  open () {
     this._delegate.open()
   }
 })
@@ -231,12 +216,12 @@ const MissingVteDialog = new Lang.Class({
 const DropDownTerminalXExtension = new Lang.Class({
   Name: 'DropDownTerminalXExtension',
 
-  _init: function () {
+  _init () {
     // retrieves the settings
     this._settings = Convenience.getSettings(Me.path, Me.metadata.id)
   },
 
-  enable: function () {
+  enable () {
     // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
     this._childPid = null
 
@@ -257,13 +242,13 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._actorMappedHandlerId = global.window_manager.connect('map', Lang.bind(this, this._windowMapped))
 
     // geometry update on monitor configuration change or panel size change
-    this._monitorsChangedHandlerId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, function () {
+    this._monitorsChangedHandlerId = Main.layoutManager.connect('monitors-changed', () => {
       Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-    }))
+    })
 
-    this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect('notify::allocation', Lang.bind(this, function () {
+    this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect('notify::allocation', () => {
       Convenience.throttle(100, this, this._updateWindowGeometry) // throttles at 10Hz (it's an "heavy weight" setting)
-    }))
+    })
 
     this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled))
     const busRun = (actionName, ...args) => this._busProxy && this._busProxy[actionName](...args)
@@ -276,6 +261,7 @@ const DropDownTerminalXExtension = new Lang.Class({
       [CLOSE_TAB_SHORTCUT_SETTING_KEY, () => busRun('CloseTabRemote')],
       [INCREASE_TEXT_SHORTCUT_SETTING_KEY, () => busRun('IncreaseFontSizeRemote')],
       [DECREASE_TEXT_SHORTCUT_SETTING_KEY, () => busRun('DecreaseFontSizeRemote')],
+      [CAPTURE_FOCUS_SETTING_KEY, () => busRun('FocusRemote')],
       [FULLSCREEN_SHORTCUT_SETTING_KEY, () => {
         this.fullscreenEnabled = !this.fullscreenEnabled
         this._updateWindowGeometry(this.fullscreenEnabled)
@@ -377,7 +363,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._handleFirstStart()
   },
 
-  disable: function () {
+  disable () {
     // unbinds the shortcut
     this.bindings.forEach(([key]) => this._unbindShortcut(key))
 
@@ -450,7 +436,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._display = null
   },
 
-  _toggle: function () {
+  _toggle () {
     console.log('Asked to toggle')
 
     // checks if there is not an instance of a previous child, mainly because it survived a shell restart
@@ -518,7 +504,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     }
   },
 
-  _panelScrolled: function (actor, event) {
+  _panelScrolled (actor, event) {
     // checks if toggle on scroll is enabled
     if (!this._toggleOnScrollEnabled) return
     const direction = event.get_scroll_direction()
@@ -530,13 +516,13 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._toggle()
   },
 
-  _updateAnimationProperties: function () {
+  _updateAnimationProperties () {
     this._animationEnabled = this._settings.get_boolean(ENABLE_ANIMATION_SETTING_KEY)
     this._openingAnimationTimeMillis = this._settings.get_uint(OPENING_ANIMATION_TIME_SETTING_KEY)
     this._closingAnimationTimeMillis = this._settings.get_uint(CLOSING_ANIMATION_TIME_SETTING_KEY)
   },
 
-  _updateToggleOnScroll: function () {
+  _updateToggleOnScroll () {
     this._toggleOnScrollEnabled = this._settings.get_boolean(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY)
   },
 
@@ -628,19 +614,19 @@ const DropDownTerminalXExtension = new Lang.Class({
     return false
   },
 
-  _bindShortcut: function (key, action) {
+  _bindShortcut (key, action) {
     // introduced in 3.16
     if (Main.wm.addKeybinding && Shell.ActionMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, action.bind(this))
     // introduced in 3.7.5
     else if (Main.wm.addKeybinding && Shell.KeyBindingMode) Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE, Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY, action.bind(this))
   },
 
-  _unbindShortcut: function (key) {
+  _unbindShortcut (key) {
     if (Main.wm.removeKeybinding) Main.wm.removeKeybinding(key)
     else global.display.remove_keybinding(key)
   },
 
-  _windowCreated: function (display, window) {
+  _windowCreated (display, window) {
     // filter out the terminal window using its wmclass
     if (String(window.get_wm_class()) !== TERMINAL_WINDOW_WM_CLASS) {
       return
@@ -651,7 +637,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._setWindowActor(window.get_compositor_private())
   },
 
-  _windowMapped: function (wm, actor) {
+  _windowMapped (wm, actor) {
     // filter out the actor using its name
     if (String(actor.get_name()) !== TERMINAL_WINDOW_ACTOR_NAME) {
       return
@@ -728,7 +714,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     }
   },
 
-  _forkChild: function () {
+  _forkChild () {
     // resets the child finishing flags
     this._quitingChild = false
     this._killingChild = false
@@ -775,7 +761,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid, Lang.bind(this, this._childExited), null)
   },
 
-  _killChild: function () {
+  _killChild () {
     if (this._childPid !== null) {
       // we are killing the child ourself, so set the flag telling this is intended
       this._killingChild = true
@@ -807,7 +793,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._forgetChild()
   },
 
-  _busNameAppeared: function (connection, name, nameOwner) {
+  _busNameAppeared (connection, name, nameOwner) {
     // creates a dbus proxy on the interface exported by the child process
     const DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface)
 
@@ -853,13 +839,13 @@ const DropDownTerminalXExtension = new Lang.Class({
     }
   },
 
-  _busNameVanished: function (connection, name) {
+  _busNameVanished (connection, name) {
     // forgets the bus proxy and the child entirely since they will be automatically picked
     // up again once available, even if that means spawning the child again if necessary
     this._forgetChild()
   },
 
-  _forgetChild: function () {
+  _forgetChild () {
     // destroys the dbus proxy aggressively
     delete this._busProxy
     this._busProxy = null
@@ -869,7 +855,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._childPid = null
   },
 
-  _setWindowActor: function (actor) {
+  _setWindowActor (actor) {
     // adds a gray border on south of the actor to mimick the shell borders
     actor.clear_effects()
     actor.add_effect(new SouthBorderEffect())
@@ -881,7 +867,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._windowActor = actor
   },
 
-  _evaluateSizeSpec: function (monitor, heightSpec, vertical) {
+  _evaluateSizeSpec (monitor, heightSpec, vertical) {
     // updates the height from the height spec, so it's picked
     const match = heightSpec.trim().match(/^([1-9]\d*)\s*(px|%)$/i)
 
@@ -912,7 +898,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     }
   },
 
-  _updateClip: function () {
+  _updateClip () {
     const monitor = this._getCurrentMonitor()
     if (!this._windowActor || !this._windowActor.hasOwnProperty('allocation')) return
     const a = this._windowActor.allocation
@@ -931,7 +917,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._windowActor.set_clip(clip.x1, clip.y1, clip.x2 - clip.x1, clip.y2 - clip.y1)
   },
 
-  _shouldAnimateWindow: function () {
+  _shouldAnimateWindow () {
     if (!this._animationEnabled || !Main.wm._shouldAnimate()) {
       return false
     }
@@ -945,7 +931,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     return true
   },
 
-  _getCommandEnv: function () {
+  _getCommandEnv () {
     // builds the environment
     const env = {}
 
@@ -965,7 +951,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     return envArray
   },
 
-  _handleFirstStart: function () {
+  _handleFirstStart () {
     // checks the first start key
     if (!this._settings.get_boolean(FIRST_START_SETTING_KEY)) {
       return
@@ -983,7 +969,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._settings.set_boolean(FIRST_START_SETTING_KEY, false)
   },
 
-  _checkDependencies: function () {
+  _checkDependencies () {
     try {
       imports.gi.Vte
     } catch (e) {

@@ -307,5 +307,13 @@
       </description>
     </key>
 
+    <key name="capture-focus-shortcut" type="as">
+      <default><![CDATA[['<Primary><Alt>grave']]]></default>
+      <summary>Shortcut used to toggle focus</summary>
+      <description>
+        Shortcut used to toggle focus
+      </description>
+    </key>
+
   </schema>
 </schemalist>

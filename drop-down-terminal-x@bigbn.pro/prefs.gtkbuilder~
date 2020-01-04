@@ -2,6 +2,14 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.0"/>
+  <object class="GtkListStore" id="capture-focus-liststore">
+    <columns>
+      <!-- column-name key -->
+      <column type="gint"/>
+      <!-- column-name mods -->
+      <column type="gint"/>
+    </columns>
+  </object>
   <object class="GtkListStore" id="close-tab-shortcut-liststore">
     <columns>
       <!-- column-name key -->
@@ -1079,13 +1087,15 @@
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="row_spacing">12</property>
+                    <property name="column_spacing">6</property>
                     <property name="row_homogeneous">True</property>
                     <property name="column_homogeneous">True</property>
                     <child>
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Toggle</property>
+                        <property name="label" translatable="yes">Toggle maximize</property>
                         <property name="xalign">0.89999997615814209</property>
                       </object>
                       <packing>
@@ -1125,6 +1135,45 @@
                         <property name="top_attach">0</property>
                       </packing>
                     </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Capture focus</property>
+                        <property name="xalign">0.89999997615814209</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">	</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkTreeView" id="capture-focus-tree-view">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">capture-focus-liststore</property>
+                        <property name="headers_visible">False</property>
+                        <property name="search_column">0</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
                   </object>
                 </child>
               </object>
@@ -1135,7 +1184,7 @@
                 <property name="can_focus">False</property>
                 <property name="xpad">6</property>
                 <property name="ypad">6</property>
-                <property name="label" translatable="yes">Fullscreen</property>
+                <property name="label" translatable="yes">Miscellaneous</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
                 </attributes>
