@@ -45,6 +45,9 @@ const DropDownTerminalXIface =
             <arg name="height" type="i" direction="in"/>          
         </method>                                                 
         <method name="Toggle"/> 
+        <method name="ToggleFullscreen">
+            <arg name="enable" type="b" direction="in"/>
+        </method>
         <method name="GetVisibilityState">
           <arg name="state" type="b" direction="out"/>
         </method>                                  
@@ -568,19 +571,14 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
 
-  SetGeometry: function (x, y, width, height) {
+  SetGeometry (x, y, width, height) {
     const [currentX, currentY] = this._window.get_position()
     const [currentWidth, currentHeight] = this._window.get_size()
 
-    Convenience.runInGdk(Lang.bind(this, function () {
-      if (x != currentX || y != currentY) {
-        this._window.move(x, y)
-      }
-
-      if (width != currentWidth || height != currentHeight) {
-        this._window.resize(width, height)
-      }
-    }))
+    Convenience.runInGdk(() => {
+      if (x !== currentX || y !== currentY) this._window.move(x, y)
+      if (width !== currentWidth || height !== currentHeight) this._window.resize(width, height)
+    })
   },
 
   NewTab () {
@@ -620,11 +618,12 @@ const DropDownTerminalX = new Lang.Class({
     terminal.set_font_scale(terminal.get_font_scale() - 0.1)
   },
 
-  Toggle: function () {
+  Toggle () {
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(() => {
       if (this._window.visible) {
         this._window.hide()
+        this._window.unfullscreen()
         this._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [this._window.visible]))
       } else {
         this._window.show()
@@ -632,6 +631,17 @@ const DropDownTerminalX = new Lang.Class({
       }
       return false
     })
+  },
+
+  // I'm unable to implement fullscreen without issues, so this option called 'maximize' in UI
+  // This is not full screen but anyway better than nothing
+  ToggleFullscreen (enable) {
+    if (this._window.visible) {
+      Convenience.runInGdk(() => {
+        if (enable) this._window.fullscreen()
+        else this._window.unfullscreen()
+      })
+    }
   },
 
   GetVisibilityState () {
@@ -753,6 +763,19 @@ const DropDownTerminalX = new Lang.Class({
       if (this._isHideOnUnfocusEnabled) this._jentlyHide()
       return true
     })
+
+    // window.connect('window-state-event', (widget, event) => {
+    //   log('-------')
+    //   log(event.changed_mask)
+    //   log(event.new_window_state)
+    //   log(widget.get_state())
+    //   log(Gdk.WindowState.FULLSCREEN)
+
+    //   if (event.changed_mask & Gdk.WindowState.FULLSCREEN) {
+    //     log('FIULALSI')
+    //     this._window.inFullscreen = true
+    //   } else this._window.inFullscreen = false
+    // })
 
     window.connect('key-press-event', (widget, event, user_data) => {
       if (this._isHideOnEscapeEnabled) {
