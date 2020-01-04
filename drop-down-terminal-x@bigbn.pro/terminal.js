@@ -867,7 +867,7 @@ const DropDownTerminalX = new Lang.Class({
   },
 
   showMOTR (terminal) {
-    const currentVersion = '1.4.0'
+    const currentVersion = '1.4.1'
     const lastVersion = this._settings.get_string(MOTR_VERSION_SETTING_KEY).trim()
 
     if (lastVersion !== currentVersion) {
@@ -878,13 +878,13 @@ const DropDownTerminalX = new Lang.Class({
       terminal.feed('▒█▄▄█ ▀░░▀ ▀░░▀ ░▀▀▀ ▀░░▀ ▀░▀▀ ▄▄▄█ 　 █▄▄ █▄▄█ █▄▄ █▄▄█ \n\r')
 
       terminal.feed('\n\r')
-      terminal.feed('  Release notes for 1.4.0\n\r')
+      terminal.feed('  Release notes for 1.4.1\n\r')
       terminal.feed('\n\r')
       terminal.feed('  - Fixed fullscreen window priority \n\r')
       terminal.feed('    Terminal will not lose its visibility even you watch youtube in full screen; \n\r')
       terminal.feed('\n\r')
-      terminal.feed('  - Maximize mode \n\r')
-      terminal.feed('    ... \n\r')
+      terminal.feed('  - Keybinding to maximize terminal window; \n\r')
+      terminal.feed('  - Keybinding to manually focus terminal window; \n\r')
       terminal.feed('\n\r')
       terminal.feed('\n\r')
       terminal.feed('  Thank you for using Drop-down-terminal-x! Enjoy the future! \n\r')

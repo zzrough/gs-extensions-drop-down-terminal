@@ -218,6 +218,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _init () {
     // retrieves the settings
+    this.fullscreenEnabled = false
     this._settings = Convenience.getSettings(Me.path, Me.metadata.id)
   },
 
@@ -506,6 +507,9 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _panelScrolled (actor, event) {
     // checks if toggle on scroll is enabled
+    const source = event.get_source()
+    if (source !== actor) return
+
     if (!this._toggleOnScrollEnabled) return
     const direction = event.get_scroll_direction()
 
