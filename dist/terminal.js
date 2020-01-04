@@ -44,7 +44,7 @@ const Gtk = imports.gi.Gtk;
 const Vte = imports.gi.Vte;
 const Convenience = imports.convenience; // dbus interface
 
-const DropDownTerminalXIface = "<node>                                                        \n    <interface name=\"pro.bigbn.DropDownTerminalX\">  \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/> \n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>                                  \n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>  \n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">      \n            <arg type=\"b\" name=\"state\"/>                           \n        </signal>                                                \n    </interface>                                                  \n    </node>"; // uimanager popup information
+const DropDownTerminalXIface = "<node>                                                        \n    <interface name=\"pro.bigbn.DropDownTerminalX\">  \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/> \n        <method name=\"ToggleFullscreen\">\n            <arg name=\"enable\" type=\"b\" direction=\"in\"/>\n        </method>\n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>                                  \n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>  \n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">      \n            <arg type=\"b\" name=\"state\"/>                           \n        </signal>                                                \n    </interface>                                                  \n    </node>"; // uimanager popup information
 
 const PopupUi = "<ui>                               \n        <popup name=\"TerminalPopup\">   \n            <menuitem action=\"Copy\"/>  \n            <menuitem action=\"Paste\"/> \n            <menuitem action=\"Close\"/> \n        </popup>                       \n    </ui>"; // constants for the location of the extension
 
@@ -597,6 +597,8 @@ const DropDownTerminalX = new Lang.Class({
     };
   },
   SetGeometry: function (x, y, width, height) {
+    var _this6 = this;
+
     const _this$_window$get_pos = this._window.get_position(),
           _this$_window$get_pos2 = _slicedToArray(_this$_window$get_pos, 2),
           currentX = _this$_window$get_pos2[0],
@@ -607,15 +609,10 @@ const DropDownTerminalX = new Lang.Class({
           currentWidth = _this$_window$get_siz6[0],
           currentHeight = _this$_window$get_siz6[1];
 
-    Convenience.runInGdk(Lang.bind(this, function () {
-      if (x != currentX || y != currentY) {
-        this._window.move(x, y);
-      }
-
-      if (width != currentWidth || height != currentHeight) {
-        this._window.resize(width, height);
-      }
-    }));
+    Convenience.runInGdk(function () {
+      if (x !== currentX || y !== currentY) _this6._window.move(x, y);
+      if (width !== currentWidth || height !== currentHeight) _this6._window.resize(width, height);
+    });
   },
   NewTab: function () {
     if (!this._window.visible) return;
@@ -654,22 +651,35 @@ const DropDownTerminalX = new Lang.Class({
     terminal.set_font_scale(terminal.get_font_scale() - 0.1);
   },
   Toggle: function () {
-    var _this6 = this;
+    var _this7 = this;
 
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(function () {
-      if (_this6._window.visible) {
-        _this6._window.hide();
+      if (_this7._window.visible) {
+        _this7._window.hide();
 
-        _this6._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this6._window.visible]));
+        _this7._window.unfullscreen();
+
+        _this7._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this7._window.visible]));
       } else {
-        _this6._window.show();
+        _this7._window.show();
 
-        _this6._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this6._window.visible]));
+        _this7._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this7._window.visible]));
       }
 
       return false;
     });
+  },
+  // I'm unable to implement fullscreen without issues, so this option called 'maximize' in UI
+  // This is not full screen but anyway better than nothing
+  ToggleFullscreen: function (enable) {
+    var _this8 = this;
+
+    if (this._window.visible) {
+      Convenience.runInGdk(function () {
+        if (enable) _this8._window.fullscreen();else _this8._window.unfullscreen();
+      });
+    }
   },
   GetVisibilityState: function () {
     return this._window.visible;
@@ -760,7 +770,7 @@ const DropDownTerminalX = new Lang.Class({
     return removedTab;
   },
   _createWindow: function () {
-    var _this7 = this;
+    var _this9 = this;
 
     const screen = Gdk.Screen.get_default();
     const window = new Gtk.Window({
@@ -783,17 +793,28 @@ const DropDownTerminalX = new Lang.Class({
     window.connect('delete-event', function () {
       window.hide();
 
-      _this7._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
+      _this9._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
 
       return true;
     });
     window.connect('destroy', Gtk.main_quit);
     window.connect('focus-out-event', function () {
-      if (_this7._isHideOnUnfocusEnabled) _this7._jentlyHide();
+      if (_this9._isHideOnUnfocusEnabled) _this9._jentlyHide();
       return true;
-    });
+    }); // window.connect('window-state-event', (widget, event) => {
+    //   log('-------')
+    //   log(event.changed_mask)
+    //   log(event.new_window_state)
+    //   log(widget.get_state())
+    //   log(Gdk.WindowState.FULLSCREEN)
+    //   if (event.changed_mask & Gdk.WindowState.FULLSCREEN) {
+    //     log('FIULALSI')
+    //     this._window.inFullscreen = true
+    //   } else this._window.inFullscreen = false
+    // })
+
     window.connect('key-press-event', function (widget, event, user_data) {
-      if (_this7._isHideOnEscapeEnabled) {
+      if (_this9._isHideOnEscapeEnabled) {
         const _event$get_keyval = event.get_keyval(),
               _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
               success = _event$get_keyval2[0],
@@ -802,35 +823,35 @@ const DropDownTerminalX = new Lang.Class({
 
         const keyname = Gdk.keyval_name(keyval); // string keyname
 
-        if (keyname === 'Escape') _this7._jentlyHide();
+        if (keyname === 'Escape') _this9._jentlyHide();
       }
     });
     return window;
   },
   _createPopupAndActions: function (tab) {
-    var _this8 = this;
+    var _this10 = this;
 
     // get some shortcuts
     const group = tab.actionGroup; // creates the actions and fills the action group
 
     this._createAction('Copy', 'Copy', Gtk.STOCK_COPY, '<shift><control>C', group, function () {
-      const terminal = _this8._getCurrentTerminal();
+      const terminal = _this10._getCurrentTerminal();
 
       terminal.copy_clipboard();
     });
 
     this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, function () {
-      const terminal = _this8._getCurrentTerminal();
+      const terminal = _this10._getCurrentTerminal();
 
       terminal.paste_clipboard();
     });
 
     this._createAction('Close', 'Close', Gtk.STOCK_STOP, '<shift><control>D', group, function () {
-      if (_this8.notebook.get_n_pages() === 1) return _this8._forkUserShell(tab.terminal);
+      if (_this10.notebook.get_n_pages() === 1) return _this10._forkUserShell(tab.terminal);
 
-      const pageNum = _this8.notebook.page_num(tab.container);
+      const pageNum = _this10.notebook.page_num(tab.container);
 
-      _this8._removeTab(pageNum);
+      _this10._removeTab(pageNum);
     }); // creates the UI manager
 
 
@@ -897,28 +918,26 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
   showMOTR: function (terminal) {
-    const currentVersion = '1.3.0';
+    const currentVersion = '1.4.0';
 
     const lastVersion = this._settings.get_string(MOTR_VERSION_SETTING_KEY).trim();
 
     if (lastVersion !== currentVersion) {
       terminal.feed('\n\r');
-      terminal.feed(' ▒█▄░▒█ █▀▀█ ▀█░█▀ █▀▀ █▀▄▀█ █▀▀▄ █▀▀ █▀▀█ 　 █▀█ █▀▀█ ▄█░ ▄▀▀▄ \n\r');
-      terminal.feed(' ▒█▒█▒█ █░░█ ░█▄█░ █▀▀ █░▀░█ █▀▀▄ █▀▀ █▄▄▀ 　 ░▄▀ █▄▀█ ░█░ ▀▄▄█ \n\r');
-      terminal.feed(' ▒█░░▀█ ▀▀▀▀ ░░▀░░ ▀▀▀ ▀░░░▀ ▀▀▀░ ▀▀▀ ▀░▀▀ 　 █▄▄ █▄▄█ ▄█▄ ░▄▄▀ \n\r');
+      terminal.feed('░░░▒█ █▀▀█ █▀▀▄ █░░█ █▀▀█ █▀▀█ █░░█ 　 █▀█ █▀▀█ █▀█ █▀▀█ \n\r');
+      terminal.feed('░▄░▒█ █▄▄█ █░░█ █░░█ █▄▄█ █▄▄▀ █▄▄█ 　 ░▄▀ █▄▀█ ░▄▀ █▄▀█ \n\r');
+      terminal.feed('▒█▄▄█ ▀░░▀ ▀░░▀ ░▀▀▀ ▀░░▀ ▀░▀▀ ▄▄▄█ 　 █▄▄ █▄▄█ █▄▄ █▄▄█ \n\r');
       terminal.feed('\n\r');
-      terminal.feed('  Release notes for 1.3.0\n\r');
+      terminal.feed('  Release notes for 1.4.0\n\r');
       terminal.feed('\n\r');
-      terminal.feed('  - Added support for the ~/.ssh/config file.\n\r');
-      terminal.feed('    Now you can get quick access to any your ssh host in one click; \n\r');
+      terminal.feed('  - Fixed fullscreen window priority \n\r');
+      terminal.feed('    Terminal will not lose its visibility even you watch youtube in full screen; \n\r');
       terminal.feed('\n\r');
-      terminal.feed('  - Added support for ~/.config/drop-down-terminal-x/shortcuts file \n\r');
-      terminal.feed('    Now you can define any action that will become available in a special drop-down list for quick launch. \n\r');
-      terminal.feed('    This small improvement can improve your productivity \n\r');
-      terminal.feed('    See file format at https://github.com/bigbn/drop-down-terminal-x');
+      terminal.feed('  - Maximize mode \n\r');
+      terminal.feed('    ... \n\r');
       terminal.feed('\n\r');
       terminal.feed('\n\r');
-      terminal.feed('  Thank you for choosing drop-down-terminal-x! \n\r');
+      terminal.feed('  Thank you for using Drop-down-terminal-x! Enjoy the future! \n\r');
       terminal.feed('\n\r');
       terminal.feed('\n\r');
 

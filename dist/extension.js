@@ -76,14 +76,26 @@ const NEXT_TAB_SHORTCUT_SETTING_KEY = 'next-tab-shortcut';
 const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut';
 const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut';
 const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut';
+const FULLSCREEN_SHORTCUT_SETTING_KEY = 'toggle-fullscreen-shortcut';
 const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor';
 const TOP_EDGE = 0;
 const LEFT_EDGE = 1;
 const RIGHT_EDGE = 2;
 const BOTTOM_EDGE = 3;
-const SHELL_VERSION = 10 * parseFloat('0.' + Config.PACKAGE_VERSION.split('.').join('')).toFixed(10); // dbus interface
+const SHELL_VERSION = 10 * parseFloat('0.' + Config.PACKAGE_VERSION.split('.').join('')).toFixed(10);
+const console = {
+  log: function () {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
 
-const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>\n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>\n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">                                   \n          <arg type=\"b\" name=\"state\"/>\n        </signal>                                                   \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
+    print(args.map(function (msg) {
+      return String(msg);
+    }).join('\t'));
+  } // dbus interface
+
+};
+const DropDownTerminalXIface = "<node>                                                       \n     <interface name=\"pro.bigbn.DropDownTerminalX\"> \n        <property name=\"Pid\" type=\"i\" access=\"read\"/>             \n        <method name=\"SetGeometry\">                               \n            <arg name=\"x\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"y\" type=\"i\" direction=\"in\"/>               \n            <arg name=\"width\" type=\"i\" direction=\"in\"/>           \n            <arg name=\"height\" type=\"i\" direction=\"in\"/>          \n        </method>                                                 \n        <method name=\"Toggle\"/>                                   \n        <method name=\"ToggleFullscreen\">\n            <arg name=\"enable\" type=\"b\" direction=\"in\"/>\n        </method>\n        <method name=\"GetVisibilityState\">\n          <arg name=\"state\" type=\"b\" direction=\"out\"/>\n        </method>\n        <method name=\"Focus\"/>                                    \n        <method name=\"NewTab\"/>                                    \n        <method name=\"PrevTab\"/>                                    \n        <method name=\"NextTab\"/>                                    \n        <method name=\"CloseTab\"/>                                    \n        <method name=\"IncreaseFontSize\"/>                                    \n        <method name=\"DecreaseFontSize\"/>                                    \n        <method name=\"Quit\"/>                                     \n        <signal name=\"Failure\">                                   \n            <arg type=\"s\" name=\"name\"/>                           \n            <arg type=\"s\" name=\"cause\"/>                          \n        </signal>\n        <signal name=\"VisibilityStateChanged\">                                   \n            <arg type=\"b\" name=\"state\"/>\n        </signal>\n        <signal name=\"SettingsRequested\">                                   \n          <arg type=\"b\" name=\"state\"/>\n        </signal>                                                   \n     </interface>                                                 \n     </node>"; // helper to only log in debug mode
 
 function debug(text) {
   DEBUG && log('[DDT] ' + text);
@@ -185,8 +197,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     var _this = this;
 
     // initializes the child pid and bus proxy members early as it used to know if it has been spawn already
-    this._childPid = null;
-    log(_('Tabs') + '@'); // initializes other members used to toggle the terminal
+    this._childPid = null; // initializes other members used to toggle the terminal
 
     this._busProxy = null;
     this._windowActor = null;
@@ -210,7 +221,13 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled));
 
     const busRun = function (actionName) {
-      return _this._busProxy && _this._busProxy[actionName]();
+      var _this$_busProxy;
+
+      for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+        args[_key2 - 1] = arguments[_key2];
+      }
+
+      return _this._busProxy && (_this$_busProxy = _this._busProxy)[actionName].apply(_this$_busProxy, args);
     };
 
     this.bindings = [[TOGGLE_SHORTCUT_SETTING_KEY, this._toggle, true], [NEW_TAB_SHORTCUT_SETTING_KEY, function () {
@@ -225,6 +242,12 @@ const DropDownTerminalXExtension = new Lang.Class({
       return busRun('IncreaseFontSizeRemote');
     }], [DECREASE_TEXT_SHORTCUT_SETTING_KEY, function () {
       return busRun('DecreaseFontSizeRemote');
+    }], [FULLSCREEN_SHORTCUT_SETTING_KEY, function () {
+      _this.fullscreenEnabled = !_this.fullscreenEnabled;
+
+      _this._updateWindowGeometry(_this.fullscreenEnabled);
+
+      busRun('ToggleFullscreenRemote', _this.fullscreenEnabled);
     }]]; // honours setting changes
 
     this._settingChangedHandlerIds = [this._settings.connect('changed::' + ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY, Lang.bind(this, this._updateToggleOnScroll))].concat(_toConsumableArray([ENABLE_ANIMATION_SETTING_KEY, OPENING_ANIMATION_TIME_SETTING_KEY, CLOSING_ANIMATION_TIME_SETTING_KEY].map(function (key) {
@@ -236,11 +259,8 @@ const DropDownTerminalXExtension = new Lang.Class({
           key = _ref2[0],
           message = _ref2[1];
 
-      log(key, message);
       return _this._settings.connect('changed::' + key, function () {
         if (_this._windowActor !== null) {
-          log(message);
-
           _this._windowActor.remove_clip();
 
           Convenience.throttle(100, _this, _this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
@@ -300,7 +320,7 @@ const DropDownTerminalXExtension = new Lang.Class({
       this._display.get_tab_list = Lang.bind(this, function (type, screen, workspace) {
         let windows = Lang.bind(this._display, oldGetTabList)(type, screen, workspace);
         windows = windows.filter(function (win) {
-          return win.get_wm_class() != TERMINAL_WINDOW_WM_CLASS;
+          return win.get_wm_class() !== TERMINAL_WINDOW_WM_CLASS;
         });
         return windows;
       });
@@ -314,7 +334,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     const windowActors = global.get_window_actors();
 
     for (const i in windowActors) {
-      if (windowActors[i].get_meta_window().get_wm_class() == TERMINAL_WINDOW_WM_CLASS) {
+      if (windowActors[i].get_meta_window().get_wm_class() === TERMINAL_WINDOW_WM_CLASS) {
         this._setWindowActor(windowActors[i]);
 
         break;
@@ -350,16 +370,13 @@ const DropDownTerminalXExtension = new Lang.Class({
     // the extension already rebinds with the terminal on enable, so we just need not to quit the terminal
     // if the screen is getting locked
 
-    const lockingScreen = Main.sessionMode.currentMode == 'unlock-dialog' || // unlock-dialog == shield/curtain (before lock-screen w/ gdm)
-    Main.sessionMode.currentMode == 'lock-screen'; // lock-screen == lock screen (after unlock-dialog or w/o gdm)
+    const lockingScreen = Main.sessionMode.currentMode === 'unlock-dialog' || // unlock-dialog == shield/curtain (before lock-screen w/ gdm)
+    Main.sessionMode.currentMode === 'lock-screen'; // lock-screen == lock screen (after unlock-dialog or w/o gdm)
     // checks if there is not an instance of a previous child, mainly because it survived a shell restart
     // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
 
-    if (this._childPid === null && this._busProxy !== null) {
-      this._childPid = this._busProxy.Pid;
-    } // quit and/or kill the child process if it exists, except if we are going to the lock
+    if (this._childPid === null && this._busProxy !== null) this._childPid = this._busProxy.Pid; // quit and/or kill the child process if it exists, except if we are going to the lock
     // screen, as the user will obviously unlock and he expects his terminal back
-
 
     if (!lockingScreen && this._childPid !== null) {
       try {
@@ -371,7 +388,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
         this._childPid = null;
       } catch (e) {
-        debug('error asking the terminal to quit gracefully (cause: ' + e.name + ' - ' + e.message + ')'); // quiting failed, so mark it and kills the process
+        console.log('error asking the terminal to quit gracefully (cause: ' + e.name + ' - ' + e.message + ')'); // quiting failed, so mark it and kills the process
 
         this._quitingChild = false;
 
@@ -405,7 +422,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._display = null;
   },
   _toggle: function () {
-    debug('asked to toggle'); // checks if there is not an instance of a previous child, mainly because it survived a shell restart
+    console.log('Asked to toggle'); // checks if there is not an instance of a previous child, mainly because it survived a shell restart
     // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
 
     if (this._childPid === null && this._busProxy !== null) {
@@ -414,7 +431,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
 
     if (this._childPid === null) {
-      debug('forking and connecting to the terminal dbus interface');
+      console.log('forking and connecting to the terminal dbus interface');
       this._toggleOnBusNameAppearance = true;
 
       this._forkChild();
@@ -422,7 +439,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     //        the "monitors-changed" signal
 
 
-    this._updateWindowGeometry(); // the bus proxy might not be ready, in this case we will be called later once the bus name appears
+    this._updateWindowGeometry(this.fullscreenEnabled); // the bus proxy might not be ready, in this case we will be called later once the bus name appears
 
 
     if (this._busProxy !== null) {
@@ -433,7 +450,6 @@ const DropDownTerminalXExtension = new Lang.Class({
         let targetY = this._windowY;
         let targetX = this._windowX;
         const animationTime = this._shouldAnimateWindow() ? this._closingAnimationTimeMillis / 1000.0 : 0;
-        const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
         switch (terminalPosition) {
           case LEFT_EDGE:
@@ -497,15 +513,13 @@ const DropDownTerminalXExtension = new Lang.Class({
     if (monitorIndex === -1) monitorIndex = screenProxy.get_primary_monitor();
     return Main.layoutManager.monitors[monitorIndex] || Main.layoutManager.primaryMonitor;
   },
-  _updateWindowGeometry: function () {
-    const screenProxy = global.screen || global.display;
+  _updateWindowGeometry: function (fullscreen) {
+    console.log('Updating window geometry', fullscreen);
 
     const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
     const monitor = this._getCurrentMonitor(); // computes the window geometry except the height
 
-
-    const panelBox = Main.layoutManager.panelBox;
 
     const sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY);
 
@@ -517,7 +531,6 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     const bottomPaddingSpec = this._settings.get_string(TERMINAL_BOTTOM_PADDING_SETTING_KEY);
 
-    const panelHeight = panelBox.anchor_y === 0 ? Main.layoutManager.panelBox.height : 0;
     const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
     const workarea = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
     const x1 = workarea.x / scaleFactor;
@@ -537,29 +550,35 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     switch (terminalPosition) {
       case LEFT_EDGE:
-        this._windowX = x1;
-        this._windowY = y1;
-        this._windowWidth = this._evaluateSizeSpec(monitor, sizeSpec, false);
-        this._windowHeight = screenHeight;
-        break;
+        {
+          this._windowX = x1;
+          this._windowY = y1;
+          this._windowWidth = this._evaluateSizeSpec(monitor, sizeSpec, false);
+          this._windowHeight = screenHeight;
+          break;
+        }
 
       case RIGHT_EDGE:
-        const width = this._evaluateSizeSpec(monitor, sizeSpec, false);
+        {
+          const width = this._evaluateSizeSpec(monitor, sizeSpec, false);
 
-        this._windowX = x2 - width;
-        this._windowY = y1;
-        this._windowWidth = width;
-        this._windowHeight = screenHeight;
-        break;
+          this._windowX = x2 - width;
+          this._windowY = y1;
+          this._windowWidth = width;
+          this._windowHeight = screenHeight;
+          break;
+        }
 
       case BOTTOM_EDGE:
-        const height = this._evaluateSizeSpec(monitor, sizeSpec, true);
+        {
+          const height = this._evaluateSizeSpec(monitor, sizeSpec, true);
 
-        this._windowX = x1;
-        this._windowY = y2 - height;
-        this._windowWidth = screenWidth;
-        this._windowHeight = height;
-        break;
+          this._windowX = x1;
+          this._windowY = y2 - height;
+          this._windowWidth = screenWidth;
+          this._windowHeight = height;
+          break;
+        }
 
       default:
       case TOP_EDGE:
@@ -573,13 +592,19 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._windowX = this._windowX + leftPadding;
     this._windowY = this._windowY + topPadding;
     this._windowWidth = this._windowWidth - leftPadding - rightPadding;
-    this._windowHeight = this._windowHeight - topPadding - bottomPadding; // applies the change dynamically if the terminal is already spawn
+    this._windowHeight = this._windowHeight - topPadding - bottomPadding;
+
+    if (fullscreen) {
+      this._windowX = 0;
+      this._windowY = 0;
+      this._windowWidth = screenWidth;
+      this._windowHeight = screenHeight;
+    } // applies the change dynamically if the terminal is already spawn
+
 
     if (this._busProxy !== null && this._windowHeight !== null) {
       this._busProxy.SetGeometryRemote(this._windowX, this._windowY, this._windowWidth, this._windowHeight);
-    } else if (this._windowActor != null) {
-      this._windowActor.set_position(this._windowX, this._windowY);
-    }
+    } else if (this._windowActor != null) this._windowActor.set_position(this._windowX, this._windowY);
 
     return false;
   },
@@ -687,7 +712,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     const args = ['gjs', GLib.build_filenamev([Me.path, 'terminal.js']), Me.path]; // forks the process
 
-    debug("forking '" + args.join(' ') + "'");
+    console.log("forking '" + args.join(' ') + "'");
     let success, pid;
 
     try {
@@ -706,7 +731,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         err.message = _('gjs not found in PATH');
       }
 
-      debug('failed to fork the terminal script (' + err.code + ', ' + err.message + ')'); // The exception from gjs contains an error string like:
+      console.log('failed to fork the terminal script (' + err.code + ', ' + err.message + ')'); // The exception from gjs contains an error string like:
       //   Error invoking GLib.spawn_command_line_async: Failed to
       //   execute child process "foo" (No such file or directory)
       // We are only interested in the part in the parentheses. (And
@@ -741,7 +766,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     GLib.spawn_close_pid(pid); // check the exit status
 
     if (!this._quitingChild && !this._killingChild) {
-      debug('terminal exited abruptly with status ' + status);
+      console.log('terminal exited abruptly with status ' + status);
       Main.notifyError(_('Drop Down Terminal ended abruptly'), _('You can activate the debug mode to nail down the issue'));
     } // forgets the child and the bus proxy
 
@@ -760,7 +785,7 @@ const DropDownTerminalXExtension = new Lang.Class({
           name = _ref14[0],
           cause = _ref14[1];
 
-      debug('failure reported by the terminal: ' + cause);
+      console.log('failure reported by the terminal: ' + cause);
 
       if (name === 'ForkUserShellFailed') {
         Main.notifyError(_('Drop Down Terminal failed to start'), _('The user shell could not be spawn in the terminal.') + '\n\n' + _('You can activate the debug mode to nail down the issue'));
@@ -783,6 +808,8 @@ const DropDownTerminalXExtension = new Lang.Class({
 
           return _this3._bindShortcut(key, action);
         });
+
+        _this3._busProxy && _this3._busProxy.ToggleFullscreenRemote(_this3.fullscreenEnabled);
       } else {
         _this3.temporaryBindings.forEach(function (_ref19) {
           let _ref20 = _slicedToArray(_ref19, 2),

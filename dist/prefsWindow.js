@@ -61,6 +61,8 @@ const CLOSE_TAB_SHORTCUT_SETTING_KEY = 'close-tab-shortcut'
 const INCREASE_TEXT_SHORTCUT_SETTING_KEY = 'increase-text-shortcut'
 const DECREASE_TEXT_SHORTCUT_SETTING_KEY = 'decrease-text-shortcut'
 
+const FULLSCREEN_SHORTCUT_SETTING_KEY = 'toggle-fullscreen-shortcut'
+
 const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor'
 const MULTI_MONITOR_MODE_SETTING_KEY = 'multi-monitor-mode'
 
@@ -90,13 +92,13 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     this._settings = this._convenience.getSettings(path, metadata.id)
 
     // creates the ui builder and add the main resource file
-    let uiFilePath = path + '/prefs.gtkbuilder'
-    let builder = this.builder = new Gtk.Builder()
+    const uiFilePath = path + '/prefs.gtkbuilder'
+    const builder = this.builder = new Gtk.Builder()
 
     if (builder.add_from_file(uiFilePath) === 0) {
       log('could not load the ui file: %s'.format(uiFilePath))
 
-      let label = new Gtk.Label({
+      const label = new Gtk.Label({
         label: _('Could not load the preferences UI file'),
         vexpand: true
       })
@@ -104,33 +106,33 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       this.pack_start(label, true, true, 0)
     } else {
       // gets the interesting builder objects
-      let mainNotebook = builder.get_object('main-notebook')
-      let enableAnimationCheckButton = builder.get_object('enable-animation-checkbutton')
-      let openingAnimationTimeSpinButton = builder.get_object('opening-animation-time-spinbutton')
-      let closingAnimationTimeSpinButton = builder.get_object('closing-animation-time-spinbutton')
-      let transparentTerminalCheckButton = builder.get_object('transparent-terminal-checkbutton')
-      let scrollbarVisibleCheckButton = builder.get_object('scrollbar-visible-checkbutton')
-      let scrollOnOutputCheckButton = builder.get_object('scroll-on-output-checkbutton')
-      let terminalSizeEntry = builder.get_object('terminal-size-entry')
-      let terminalSizeResetButton = builder.get_object('terminal-size-reset-button')
-      let terminalLeftPaddingEntry = builder.get_object('terminal-left-padding-entry')
-      let terminalLeftPaddingResetButton = builder.get_object('terminal-left-padding-reset-button')
-      let terminalRightPaddingEntry = builder.get_object('terminal-right-padding-entry')
-      let terminalRightPaddingResetButton = builder.get_object('terminal-right-padding-reset-button')
-      let terminalTopPaddingEntry = builder.get_object('terminal-top-padding-entry')
-      let terminalTopPaddingResetButton = builder.get_object('terminal-top-padding-reset-button')
-      let terminalBottomPaddingEntry = builder.get_object('terminal-bottom-padding-entry')
-      let terminalBottomPaddingResetButton = builder.get_object('terminal-bottom-padding-reset-button')
-      let transparencyLevelSpinButton = builder.get_object('transparency-level-spinbutton')
-      let enableToggleOnScrollCheckButton = builder.get_object('enable-toggle-on-scroll-checkbutton')
-      let foregroundColorResetButton = builder.get_object('foreground-color-reset-button')
-      let backgroundColorResetButton = builder.get_object('background-color-reset-button')
-      let positionComboBox = builder.get_object('position-combobox')
-      let cursorComboBox = builder.get_object('cursor-combobox')
-      let enableAudibleBellCheckButton = builder.get_object('enable-audible-bell-checkbutton')
-      let enableTabsCheckButton = builder.get_object('enable-tabs-checkbutton')
-      let enableHideOnUnfocusButton = builder.get_object('hide-on-unfocus-checkbutton')
-      let enableHideOnEscapeButton = builder.get_object('hide-on-escape-checkbutton')
+      const mainNotebook = builder.get_object('main-notebook')
+      const enableAnimationCheckButton = builder.get_object('enable-animation-checkbutton')
+      const openingAnimationTimeSpinButton = builder.get_object('opening-animation-time-spinbutton')
+      const closingAnimationTimeSpinButton = builder.get_object('closing-animation-time-spinbutton')
+      const transparentTerminalCheckButton = builder.get_object('transparent-terminal-checkbutton')
+      const scrollbarVisibleCheckButton = builder.get_object('scrollbar-visible-checkbutton')
+      const scrollOnOutputCheckButton = builder.get_object('scroll-on-output-checkbutton')
+      const terminalSizeEntry = builder.get_object('terminal-size-entry')
+      const terminalSizeResetButton = builder.get_object('terminal-size-reset-button')
+      const terminalLeftPaddingEntry = builder.get_object('terminal-left-padding-entry')
+      const terminalLeftPaddingResetButton = builder.get_object('terminal-left-padding-reset-button')
+      const terminalRightPaddingEntry = builder.get_object('terminal-right-padding-entry')
+      const terminalRightPaddingResetButton = builder.get_object('terminal-right-padding-reset-button')
+      const terminalTopPaddingEntry = builder.get_object('terminal-top-padding-entry')
+      const terminalTopPaddingResetButton = builder.get_object('terminal-top-padding-reset-button')
+      const terminalBottomPaddingEntry = builder.get_object('terminal-bottom-padding-entry')
+      const terminalBottomPaddingResetButton = builder.get_object('terminal-bottom-padding-reset-button')
+      const transparencyLevelSpinButton = builder.get_object('transparency-level-spinbutton')
+      const enableToggleOnScrollCheckButton = builder.get_object('enable-toggle-on-scroll-checkbutton')
+      const foregroundColorResetButton = builder.get_object('foreground-color-reset-button')
+      const backgroundColorResetButton = builder.get_object('background-color-reset-button')
+      const positionComboBox = builder.get_object('position-combobox')
+      const cursorComboBox = builder.get_object('cursor-combobox')
+      const enableAudibleBellCheckButton = builder.get_object('enable-audible-bell-checkbutton')
+      const enableTabsCheckButton = builder.get_object('enable-tabs-checkbutton')
+      const enableHideOnUnfocusButton = builder.get_object('hide-on-unfocus-checkbutton')
+      const enableHideOnEscapeButton = builder.get_object('hide-on-escape-checkbutton')
 
       this._foregroundColorButton = builder.get_object('foreground-color-button')
       this._backgroundColorButton = builder.get_object('background-color-button')
@@ -142,6 +144,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       this._makeShortcutEdit('close-tab-shortcut-treeview', 'close-tab-shortcut-liststore', CLOSE_TAB_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('increase-text-shortcut-treeview', 'increase-text-shortcut-liststore', INCREASE_TEXT_SHORTCUT_SETTING_KEY)
       this._makeShortcutEdit('decrease-text-shortcut-treeview', 'decrease-text-shortcut-liststore', DECREASE_TEXT_SHORTCUT_SETTING_KEY)
+      this._makeShortcutEdit('fullscreen-shortcut-treeview', 'fullscreen-shortcut-liststore', FULLSCREEN_SHORTCUT_SETTING_KEY)
 
       this._initMonitorWidgets()
       this._initTabsPositionWidgets()
@@ -155,7 +158,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       // gives a hint on invalid window height input (does not prevent from writing a wrong value)
       terminalSizeEntry.connect('changed', () => this._validatePaddingValue(terminalSizeEntry, true));
 
-      [ terminalLeftPaddingEntry,
+      [terminalLeftPaddingEntry,
         terminalRightPaddingEntry,
         terminalTopPaddingEntry,
         terminalBottomPaddingEntry
@@ -182,7 +185,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       this._settings.bind(SCROLLBAR_VISIBLE_SETTING_KEY, scrollbarVisibleCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
 
       this._settings.bind(SCROLL_ON_OUTPUT_SETTING_KEY, scrollOnOutputCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
-            
+
       // binds the tabs state setting
       this._settings.bind(ENABLE_TABS_SETTING_KEY, enableTabsCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
 
@@ -275,19 +278,19 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
   },
 
   _makeShortcutEdit (widgetId, storeId, settingKey, defaultValue) {
-    let view = this.builder.get_object(widgetId)
-    let store = this.builder.get_object(storeId)
-    let renderer = new Gtk.CellRendererAccel({ editable: true })
-    let column = new Gtk.TreeViewColumn()
-    let iter = store.append()
+    const view = this.builder.get_object(widgetId)
+    const store = this.builder.get_object(storeId)
+    const renderer = new Gtk.CellRendererAccel({ editable: true })
+    const column = new Gtk.TreeViewColumn()
+    const iter = store.append()
 
-    let updateShortcutRow = (accel) => {
-      let [key, mods] = accel ? Gtk.accelerator_parse(accel) : [0, 0]
+    const updateShortcutRow = (accel) => {
+      const [key, mods] = accel ? Gtk.accelerator_parse(accel) : [0, 0]
       store.set(iter, [COLUMN_KEY, COLUMN_MODS], [key, mods])
     }
 
     renderer.connect('accel-edited', (renderer, path, key, mods, hwCode) => {
-      let accel = Gtk.accelerator_name(key, mods)
+      const accel = Gtk.accelerator_name(key, mods)
       updateShortcutRow(accel)
       this._settings.set_strv(settingKey, [accel])
     })
@@ -310,12 +313,12 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
   },
 
   _validatePaddingValue (view, strictMode) {
-    let match = view.get_text().trim().match(/^([0-9]\d*)\s*(px|%)$/i)
+    const match = view.get_text().trim().match(/^([0-9]\d*)\s*(px|%)$/i)
     let valid = (match !== null)
 
     if (valid) {
-      let value = parseInt(match[1])
-      let type = match[2]
+      const value = parseInt(match[1])
+      const type = match[2]
 
       if (type.toLowerCase() === 'px') {
         valid = strictMode ? (value > 0) : (value >= 0)
@@ -342,14 +345,14 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
   },
 
   _checkCustomCommandEntry: function () {
-    let runCustomCommand = this._runCustomCommandCheckButton.get_active()
+    const runCustomCommand = this._runCustomCommandCheckButton.get_active()
     let error = null
 
     if (runCustomCommand) {
-      let customCommand = this._customCommandEntry.get_text().trim()
+      const customCommand = this._customCommandEntry.get_text().trim()
 
       try {
-        let [parsed, args] = GLib.shell_parse_argv(customCommand)
+        const [parsed, args] = GLib.shell_parse_argv(customCommand)
         if (!parsed) {
           error = _('no argument found')
         }
@@ -363,11 +366,11 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
   },
 
   _initMonitorWidgets () {
-    let monitorComboxbox = this.builder.get_object('monitor-combobox')
-    let monitorListstore = this.builder.get_object('monitors-liststore')
-    let multyMonitorCheckbox = this.builder.get_object('multi-monitor-checkbox')
-    let primaryMonitorIndex = this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY)
-    let monitors = []
+    const monitorComboxbox = this.builder.get_object('monitor-combobox')
+    const monitorListstore = this.builder.get_object('monitors-liststore')
+    const multyMonitorCheckbox = this.builder.get_object('multi-monitor-checkbox')
+    const primaryMonitorIndex = this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY)
+    const monitors = []
 
     monitorListstore.set(monitorListstore.append(), [0, 1], ['-1', _('Default (Primary monitor)')])
     for (let i = 0, monitorNum = Gdk.Screen.get_default().get_n_monitors(); i < monitorNum; ++i) {
@@ -383,9 +386,9 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     monitorComboxbox.set_active_id(primaryMonitorIndex)
 
     monitorComboxbox.connect('changed', (entry) => {
-      let [success, iter] = monitorComboxbox.get_active_iter()
+      const [success, iter] = monitorComboxbox.get_active_iter()
       if (!success) return
-      let monitorIndex = monitorListstore.get_value(iter, 0)
+      const monitorIndex = monitorListstore.get_value(iter, 0)
       this._settings.set_string(PRIMARY_MONITOR_SETTING_KEY, monitorIndex)
     })
 
@@ -396,7 +399,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     }
     */
 
-    let renderer = new Gtk.CellRendererText()
+    const renderer = new Gtk.CellRendererText()
     monitorComboxbox.pack_start(renderer, true)
     monitorComboxbox.add_attribute(renderer, 'text', 1)
 
@@ -404,22 +407,22 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
   },
 
   _initTabsPositionWidgets () {
-    let comboBox = this.builder.get_object('tabs-position')
-    let listStore = this.builder.get_object('tabs-position-store')
+    const comboBox = this.builder.get_object('tabs-position')
+    const listStore = this.builder.get_object('tabs-position-store')
 
-    let currentPosition = this._settings.get_uint(TABS_POSITION_SETTING_KEY)
+    const currentPosition = this._settings.get_uint(TABS_POSITION_SETTING_KEY)
 
     comboBox.set_id_column(1)
     comboBox.set_active_id(String(currentPosition))
 
     comboBox.connect('changed', (entry) => {
-      let [success, iter] = comboBox.get_active_iter()
+      const [success, iter] = comboBox.get_active_iter()
       if (!success) return
-      let index = listStore.get_value(iter, 1)
+      const index = listStore.get_value(iter, 1)
       this._settings.set_uint(TABS_POSITION_SETTING_KEY, index)
     })
 
-    let renderer = new Gtk.CellRendererText()
+    const renderer = new Gtk.CellRendererText()
     comboBox.pack_start(renderer, true)
     comboBox.add_attribute(renderer, 'text', 0)
   }

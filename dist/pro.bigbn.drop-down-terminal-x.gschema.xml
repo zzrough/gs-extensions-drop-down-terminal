@@ -299,5 +299,13 @@
       </description>
     </key>
 
+    <key name="toggle-fullscreen-shortcut" type="as">
+      <default><![CDATA[['F11']]]></default>
+      <summary>Shortcut used to toggle fullscreen</summary>
+      <description>
+        Shortcut used to toggle fullscreen
+      </description>
+    </key>
+
   </schema>
 </schemalist>
