@@ -873,9 +873,9 @@ const DropDownTerminalX = new Lang.Class({
     if (lastVersion !== currentVersion) {
       terminal.feed('\n\r')
 
-      terminal.feed('▒█▀▀▄ █▀▀ █▀▀ █▀▀ █▀▄▀█ █▀▀▄ █▀▀ █▀▀█ 　 █▀█ █▀▀█ ▄█░ ▄▀▀▄ \n\r')
-      terminal.feed('▒█░▒█ █▀▀ █░░ █▀▀ █░▀░█ █▀▀▄ █▀▀ █▄▄▀ 　 ░▄▀ █▄▀█ ░█░ ▀▄▄█ \n\r')
-      terminal.feed('▒█▄▄▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀░░░▀ ▀▀▀░ ▀▀▀ ▀░▀▀ 　 █▄▄ █▄▄█ ▄█▄ ░▄▄▀ \n\r')
+      terminal.feed('░░░▒█ █▀▀█ █▀▀▄ █░░█ █▀▀█ █▀▀█ █░░█ 　 █▀█ █▀▀█ █▀█ █▀▀█ \n\r')
+      terminal.feed('░▄░▒█ █▄▄█ █░░█ █░░█ █▄▄█ █▄▄▀ █▄▄█ 　 ░▄▀ █▄▀█ ░▄▀ █▄▀█ \n\r')
+      terminal.feed('▒█▄▄█ ▀░░▀ ▀░░▀ ░▀▀▀ ▀░░▀ ▀░▀▀ ▄▄▄█ 　 █▄▄ █▄▄█ █▄▄ █▄▄█ \n\r')
 
       terminal.feed('\n\r')
       terminal.feed('  Release notes for 1.4.0\n\r')
@@ -883,11 +883,11 @@ const DropDownTerminalX = new Lang.Class({
       terminal.feed('  - Fixed fullscreen window priority \n\r')
       terminal.feed('    Terminal will not lose its visibility even you watch youtube in full screen; \n\r')
       terminal.feed('\n\r')
-      terminal.feed('  - Fullscreen mode \n\r')
+      terminal.feed('  - Maximize mode \n\r')
       terminal.feed('    ... \n\r')
       terminal.feed('\n\r')
       terminal.feed('\n\r')
-      terminal.feed('  Thank you for using Drop-down-terminal-x! Have a magical holiday season! \n\r')
+      terminal.feed('  Thank you for using Drop-down-terminal-x! Enjoy the future! \n\r')
       terminal.feed('\n\r')
       terminal.feed('\n\r')
 
