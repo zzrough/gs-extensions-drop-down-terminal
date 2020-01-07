@@ -29,7 +29,7 @@ Just enable it on at https://extensions.gnome.org/extension/1509/drop-down-termi
 
 #### Arch Linux
 
-Package in AUR: `gnome-shell-extension-drop-down-terminal-x`
+Package in AUR: [gnome-shell-extension-drop-down-terminal-x](https://aur.archlinux.org/packages/gnome-shell-extension-drop-down-terminal-x/)
 
 ### Shortcuts file format
 You can create file `~/.config/drop-down-terminal-x/shortcuts` with such format:
