@@ -15,15 +15,21 @@ Includes
 - Custom shortcuts
 - SSH ~/.config hosts fast acess 
 
+![Terminal](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/animated.gif)
+
+## Installation
 [<img src="https://github.com/bigbn/drop-down-terminal-x/raw/master/get.png" height="100">](https://extensions.gnome.org/extension/1509/drop-down-terminal-x)
 
-![Terminal](https://raw.githubusercontent.com/bigbn/gs-extensions-drop-down-terminal/master/animated.gif)
+Just enable it on at https://extensions.gnome.org/extension/1509/drop-down-terminal-x
 
 ### Manual installation
 
     $ git clone https://github.com/bigbn/gs-extensions-drop-down-terminal.git /tmp/drop-down-terminal
     $ cp -R /tmp/drop-down-terminal/drop-down-terminal-x@bigbn.pro ~/.local/share/gnome-shell/extensions/
 
+#### Arch Linux
+
+Package in AUR: `gnome-shell-extension-drop-down-terminal-x`
 
 ### Shortcuts file format
 You can create file `~/.config/drop-down-terminal-x/shortcuts` with such format:
