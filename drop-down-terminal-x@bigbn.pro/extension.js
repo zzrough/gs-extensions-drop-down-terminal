@@ -624,10 +624,10 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._windowHeight = this._windowHeight - topPadding - bottomPadding
 
     if (fullscreen) {
-      this._windowX = 0
-      this._windowY = 0
-      this._windowWidth = screenWidth
-      this._windowHeight = screenHeight
+      this._windowX = workarea.x
+      this._windowY = workarea.y
+      this._windowWidth = workarea.width
+      this._windowHeight = workarea.height
     }
 
     // applies the change dynamically if the terminal is already spawn
