@@ -69,6 +69,7 @@ const TERMINAL_BOTTOM_PADDING_SETTING_KEY = 'terminal-bottom-padding';
 const TOGGLE_SHORTCUT_SETTING_KEY = 'other-shortcut';
 const ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY = 'enable-toggle-on-scroll';
 const TERMINAL_POSITION_SETTING_KEY = 'terminal-position';
+const MULTI_MONITOR_MODE_SETTING_KEY = 'multi-monitor-mode';
 const NEW_TAB_SHORTCUT_SETTING_KEY = 'new-tab-shortcut';
 const PREV_TAB_SHORTCUT_SETTING_KEY = 'prev-tab-shortcut';
 const NEXT_TAB_SHORTCUT_SETTING_KEY = 'next-tab-shortcut';
@@ -187,7 +188,8 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     this._busProxy = null;
     this._windowActor = null;
-    this._firstDisplay = true; // initializes if we should toggle on bus name appearance
+    this._firstDisplay = true;
+    this._currentMonitor = null; // initializes if we should toggle on bus name appearance
 
     this._toggleOnBusNameAppearance = false; // check dependencies
 
@@ -242,7 +244,7 @@ const DropDownTerminalXExtension = new Lang.Class({
       return _this._settings.connect('changed::' + key, function () {
         return _this._updateAnimationProperties();
       });
-    })), _toConsumableArray([[TERMINAL_SIZE_SETTING_KEY, 'size changed'], [PRIMARY_MONITOR_SETTING_KEY, 'primary monitor changed'], [TERMINAL_LEFT_PADDING_SETTING_KEY, 'left padding changed'], [TERMINAL_RIGHT_PADDING_SETTING_KEY, 'right padding changed'], [TERMINAL_TOP_PADDING_SETTING_KEY, 'top padding changed'], [TERMINAL_BOTTOM_PADDING_SETTING_KEY, 'bottom padding changed'], [TERMINAL_POSITION_SETTING_KEY, 'position changed']].map(function (_ref) {
+    })), _toConsumableArray([[TERMINAL_SIZE_SETTING_KEY, 'size changed'], [PRIMARY_MONITOR_SETTING_KEY, 'primary monitor changed'], [TERMINAL_LEFT_PADDING_SETTING_KEY, 'left padding changed'], [TERMINAL_RIGHT_PADDING_SETTING_KEY, 'right padding changed'], [TERMINAL_TOP_PADDING_SETTING_KEY, 'top padding changed'], [TERMINAL_BOTTOM_PADDING_SETTING_KEY, 'bottom padding changed'], [TERMINAL_POSITION_SETTING_KEY, 'position changed'], [MULTI_MONITOR_MODE_SETTING_KEY, 'multi monitor mode changed']].map(function (_ref) {
       let _ref2 = _slicedToArray(_ref, 2),
           key = _ref2[0],
           message = _ref2[1];
@@ -251,7 +253,11 @@ const DropDownTerminalXExtension = new Lang.Class({
         if (_this._windowActor !== null) {
           _this._windowActor.remove_clip();
 
-          Convenience.throttle(100, _this, _this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
+          Convenience.throttle(100, _this, function () {
+            _this._updateCurrentMonitor();
+
+            _this._updateWindowGeometry();
+          }); // throttles at 10Hz (it's an "heavy weight" setting)
         }
       });
     })), _toConsumableArray(this.bindings.map(function (_ref3) {
@@ -268,6 +274,8 @@ const DropDownTerminalXExtension = new Lang.Class({
         }
       });
     }))); // applies the settings initially
+
+    this._updateCurrentMonitor();
 
     this._updateAnimationProperties();
 
@@ -423,6 +431,11 @@ const DropDownTerminalXExtension = new Lang.Class({
       this._toggleOnBusNameAppearance = true;
 
       this._forkChild();
+    } // Make sure the current monitor is updated
+
+
+    if (this._windowActor === null) {
+      this._updateCurrentMonitor();
     } // FIXME: pull request #69, we should really not have to do that as we already monitor
     //        the "monitors-changed" signal
 
@@ -497,18 +510,42 @@ const DropDownTerminalXExtension = new Lang.Class({
   _updateToggleOnScroll: function () {
     this._toggleOnScrollEnabled = this._settings.get_boolean(ENABLE_TOGGLE_ON_SCROLL_SETTING_KEY);
   },
-  _getCurrentMonitor: function () {
+  _updateCurrentMonitor: function () {
     const screenProxy = global.screen || global.display;
     let monitorIndex = Number(this._settings.get_string(PRIMARY_MONITOR_SETTING_KEY));
+
+    const multiMonitorMode = this._settings.get_boolean(MULTI_MONITOR_MODE_SETTING_KEY); // Get current monitor index based on cursor position
+
+
+    if (multiMonitorMode) {
+      const gdkDisplay = Gdk.Display.get_default();
+
+      const _gdkDisplay$get_devic = gdkDisplay.get_device_manager().get_client_pointer().get_position(),
+            _gdkDisplay$get_devic2 = _slicedToArray(_gdkDisplay$get_devic, 3),
+            mouseX = _gdkDisplay$get_devic2[1],
+            mouseY = _gdkDisplay$get_devic2[2];
+
+      const _gdkDisplay$get_monit = gdkDisplay.get_monitor_at_point(mouseX, mouseY).get_geometry(),
+            x = _gdkDisplay$get_monit.x,
+            y = _gdkDisplay$get_monit.y,
+            width = _gdkDisplay$get_monit.width,
+            height = _gdkDisplay$get_monit.height;
+
+      monitorIndex = screenProxy.get_monitor_index_for_rect(new Meta.Rectangle({
+        x: x,
+        y: y,
+        width: width,
+        height: height
+      }));
+    }
+
     if (monitorIndex === -1) monitorIndex = screenProxy.get_primary_monitor();
-    return Main.layoutManager.monitors[monitorIndex] || Main.layoutManager.primaryMonitor;
+    this._currentMonitor = Main.layoutManager.monitors[monitorIndex] || Main.layoutManager.primaryMonitor;
   },
   _updateWindowGeometry: function (fullscreen) {
     console.log('Updating window geometry', fullscreen);
 
-    const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
-
-    const monitor = this._getCurrentMonitor(); // computes the window geometry except the height
+    const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY); // computes the window geometry except the height
 
 
     const sizeSpec = this._settings.get_string(TERMINAL_SIZE_SETTING_KEY);
@@ -522,7 +559,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     const bottomPaddingSpec = this._settings.get_string(TERMINAL_BOTTOM_PADDING_SETTING_KEY);
 
     const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-    const workarea = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
+    const workarea = Main.layoutManager.getWorkAreaForMonitor(this._currentMonitor.index);
     const x1 = workarea.x / scaleFactor;
     const y1 = workarea.y / scaleFactor;
     const screenHeight = workarea.height / scaleFactor;
@@ -530,27 +567,27 @@ const DropDownTerminalXExtension = new Lang.Class({
     const x2 = x1 + screenWidth;
     const y2 = y1 + screenHeight;
 
-    const leftPadding = this._evaluateSizeSpec(monitor, leftPaddingSpec, false);
+    const leftPadding = this._evaluateSizeSpec(this._currentMonitor, leftPaddingSpec, false);
 
-    const rightPadding = this._evaluateSizeSpec(monitor, rightPaddingSpec, false);
+    const rightPadding = this._evaluateSizeSpec(this._currentMonitor, rightPaddingSpec, false);
 
-    const topPadding = this._evaluateSizeSpec(monitor, topPaddingSpec, true);
+    const topPadding = this._evaluateSizeSpec(this._currentMonitor, topPaddingSpec, true);
 
-    const bottomPadding = this._evaluateSizeSpec(monitor, bottomPaddingSpec, true);
+    const bottomPadding = this._evaluateSizeSpec(this._currentMonitor, bottomPaddingSpec, true);
 
     switch (terminalPosition) {
       case LEFT_EDGE:
         {
           this._windowX = x1;
           this._windowY = y1;
-          this._windowWidth = this._evaluateSizeSpec(monitor, sizeSpec, false);
+          this._windowWidth = this._evaluateSizeSpec(this._currentMonitor, sizeSpec, false);
           this._windowHeight = screenHeight;
           break;
         }
 
       case RIGHT_EDGE:
         {
-          const width = this._evaluateSizeSpec(monitor, sizeSpec, false);
+          const width = this._evaluateSizeSpec(this._currentMonitor, sizeSpec, false);
 
           this._windowX = x2 - width;
           this._windowY = y1;
@@ -561,7 +598,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
       case BOTTOM_EDGE:
         {
-          const height = this._evaluateSizeSpec(monitor, sizeSpec, true);
+          const height = this._evaluateSizeSpec(this._currentMonitor, sizeSpec, true);
 
           this._windowX = x1;
           this._windowY = y2 - height;
@@ -575,7 +612,7 @@ const DropDownTerminalXExtension = new Lang.Class({
         this._windowX = x1;
         this._windowY = y1;
         this._windowWidth = screenWidth;
-        this._windowHeight = this._evaluateSizeSpec(monitor, sizeSpec, true);
+        this._windowHeight = this._evaluateSizeSpec(this._currentMonitor, sizeSpec, true);
         break;
     }
 
@@ -585,10 +622,10 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._windowHeight = this._windowHeight - topPadding - bottomPadding;
 
     if (fullscreen) {
-      this._windowX = 0;
-      this._windowY = 0;
-      this._windowWidth = screenWidth;
-      this._windowHeight = screenHeight;
+      this._windowX = workarea.x;
+      this._windowY = workarea.y;
+      this._windowWidth = workarea.width;
+      this._windowHeight = workarea.height;
     } // applies the change dynamically if the terminal is already spawn
 
 
@@ -884,8 +921,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     }
   },
   _updateClip: function () {
-    const monitor = this._getCurrentMonitor();
-
+    const monitor = this._currentMonitor;
     if (!this._windowActor || !this._windowActor.hasOwnProperty('allocation')) return;
     const a = this._windowActor.allocation;
     const clip = new Clutter.ActorBox({
