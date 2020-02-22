@@ -49,6 +49,7 @@ const BACKGROUND_COLOR_SETTING_KEY = 'background-color'
 const RUN_CUSTOM_COMMAND_SETTING_KEY = 'run-custom-command'
 const CUSTOM_COMMAND_SETTING_KEY = 'custom-command'
 const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell'
+const ENABLE_OPEN_NEW_TERMINAL_IN_CURRENT_DIRECTORY_KEY = 'enable-open-new-terminal-in-current-directory'
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs'
 const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus'
 const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape'
@@ -131,6 +132,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       const positionComboBox = builder.get_object('position-combobox')
       const cursorComboBox = builder.get_object('cursor-combobox')
       const enableAudibleBellCheckButton = builder.get_object('enable-audible-bell-checkbutton')
+      const enableOpenNewTerminalInCurrentDirectoryCheckButton = builder.get_object('enable-open-new-terminal-in-current-directory-checkbutton')
       const enableTabsCheckButton = builder.get_object('enable-tabs-checkbutton')
       const enableHideOnUnfocusButton = builder.get_object('hide-on-unfocus-checkbutton')
       const enableHideOnEscapeButton = builder.get_object('hide-on-escape-checkbutton')
@@ -232,6 +234,9 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
       // binds the terminal bett setting
       this._settings.bind(ENABLE_AUDIBLE_BELL_KEY, enableAudibleBellCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
+
+      // binds the open new terminal in current directory setting
+      this._settings.bind(ENABLE_OPEN_NEW_TERMINAL_IN_CURRENT_DIRECTORY_KEY, enableOpenNewTerminalInCurrentDirectoryCheckButton, 'active', Gio.SettingsBindFlags.DEFAULT)
 
       // binds the color settings
       this._foregroundColorButton.connect('color-set', Lang.bind(this, function () {

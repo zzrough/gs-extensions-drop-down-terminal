@@ -63,6 +63,7 @@ const COLOR_BACKGROUND_SETTING_KEY = 'background-color';
 const RUN_CUSTOM_COMMAND_SETTING_KEY = 'run-custom-command';
 const CUSTOM_COMMAND_SETTING_KEY = 'custom-command';
 const ENABLE_AUDIBLE_BELL_KEY = 'enable-audible-bell';
+const ENABLE_OPEN_NEW_TERMINAL_IN_CURRENT_DIRECTORY_KEY = 'enable-open-new-terminal-in-current-directory';
 const ENABLE_TABS_SETTING_KEY = 'enable-tabs';
 const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus';
 const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape';
@@ -122,7 +123,8 @@ const DropDownTerminalX = new Lang.Class({
 
     // initializes the state
     this._customCommandArgs = [];
-    this._visible = false; // loads the custom CSS to mimick the shell style
+    this._visible = false;
+    this._openNewTerminalInCurrentDirectory = false; // loads the custom CSS to mimick the shell style
 
     const provider = new Gtk.CssProvider();
 
@@ -202,6 +204,8 @@ const DropDownTerminalX = new Lang.Class({
 
     this._updateUnfocusSupport();
 
+    this._updateCurrentDirectorySettings();
+
     const reApplyPrefs = function () {
       return _this._applyToAllTabs(function (tab) {
         return Convenience.runInGdk(function () {
@@ -236,6 +240,8 @@ const DropDownTerminalX = new Lang.Class({
     this._settings.connect('changed::' + HIDE_ON_ESCAPE_SETTING_KEY, Lang.bind(this, this._updateEscapeSupport));
 
     this._settings.connect('changed::' + ENABLE_AUDIBLE_BELL_KEY, Lang.bind(this, updateBellSettings));
+
+    this._settings.connect('changed::' + ENABLE_OPEN_NEW_TERMINAL_IN_CURRENT_DIRECTORY_KEY, Lang.bind(this, this._updateCurrentDirectorySettings));
 
     this._settings.connect('changed::' + TABS_POSITION_SETTING_KEY, Lang.bind(this, this._updateTabsPosition)); // connect to gnome settings changes
 
@@ -544,7 +550,10 @@ const DropDownTerminalX = new Lang.Class({
       }
     });
     tab.container.show();
-    tab.terminal.show();
+    tab.terminal.show(); // get the current working directory before changing the page
+
+    const currenWorkingDir = this._getCurrentWorkingDirectory();
+
     this.notebook.set_current_page(this.notebook.get_n_pages() - 1);
 
     this._updateFont(tab);
@@ -555,11 +564,23 @@ const DropDownTerminalX = new Lang.Class({
 
     this._addUriMatchers(tab);
 
-    this._forkUserShell(tab.terminal, commandArgs);
+    this._forkUserShell(tab.terminal, currenWorkingDir, commandArgs);
 
     this._updateFocusMode(tab);
 
     return tab;
+  },
+  _getCurrentWorkingDirectory: function () {
+    let workingDir = GLib.get_home_dir();
+
+    if (this.tabs.length === 0 || !this._openNewTerminalInCurrentDirectory) {
+      return workingDir;
+    }
+
+    const currentTerminal = this.tabs[this.notebook.get_current_page()].terminal;
+    workingDir = currentTerminal.get_current_directory_uri() || GLib.get_home_dir(); // get_current_directory_uri returns an uri like file://hostname/home/username. So parse it to a path.
+
+    return workingDir.replace(new RegExp(/file:\/\/.*?\/(.*)/g), '/$1');
   },
   _createTerminalTab: function () {
     var _this5 = this;
@@ -863,26 +884,27 @@ const DropDownTerminalX = new Lang.Class({
 
     return uiManager.get_widget('/TerminalPopup');
   },
-  _forkUserShell: function (terminal) {
-    let commandArgs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+  _forkUserShell: function (terminal, workingDir) {
+    let commandArgs = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
     terminal.reset(false, true);
 
     const args = this._getCommandArgs();
 
     let success, pid;
     this.showMOTR(terminal);
+    workingDir = workingDir || GLib.get_home_dir();
 
     try {
       if (terminal.spawn_sync) {
         // 0.37.0
-        var _terminal$spawn_sync = terminal.spawn_sync(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(), GLib.SpawnFlags.SEARCH_PATH, null, null);
+        var _terminal$spawn_sync = terminal.spawn_sync(Vte.PtyFlags.DEFAULT, workingDir, args, this._getCommandEnv(), GLib.SpawnFlags.SEARCH_PATH, null, null);
 
         var _terminal$spawn_sync2 = _slicedToArray(_terminal$spawn_sync, 2);
 
         success = _terminal$spawn_sync2[0];
         pid = _terminal$spawn_sync2[1];
       } else {
-        var _terminal$fork_comman = terminal.fork_command_full(Vte.PtyFlags.DEFAULT, GLib.get_home_dir(), args, this._getCommandEnv(), GLib.SpawnFlags.SEARCH_PATH, null);
+        var _terminal$fork_comman = terminal.fork_command_full(Vte.PtyFlags.DEFAULT, workingDir, args, this._getCommandEnv(), GLib.SpawnFlags.SEARCH_PATH, null);
 
         var _terminal$fork_comman2 = _slicedToArray(_terminal$fork_comman, 2);
 
@@ -1064,6 +1086,9 @@ const DropDownTerminalX = new Lang.Class({
   },
   _updateFocusMode: function (tab) {
     this._focusMode = this._desktopSettings ? this._desktopSettings.get_string(WM_FOCUS_MODE_SETTING_KEY) : FOCUS_MODE_CLICK;
+  },
+  _updateCurrentDirectorySettings: function () {
+    this._openNewTerminalInCurrentDirectory = this._settings.get_boolean(ENABLE_OPEN_NEW_TERMINAL_IN_CURRENT_DIRECTORY_KEY);
   },
   _windowMouseEnter: function (window, event) {
     if (this._focusMode != FOCUS_MODE_CLICK) {
