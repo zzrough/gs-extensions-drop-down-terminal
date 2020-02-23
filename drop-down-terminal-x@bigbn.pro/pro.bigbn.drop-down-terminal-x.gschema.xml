@@ -315,5 +315,13 @@
       </description>
     </key>
 
+    <key name="enable-open-new-terminal-in-current-directory" type="b">
+      <default>false</default>
+      <summary>Open new terminal in current directory</summary>
+      <description>
+        Open new terminal in current directory
+      </description>
+    </key>
+
   </schema>
 </schemalist>
