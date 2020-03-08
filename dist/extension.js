@@ -113,12 +113,15 @@ const SouthBorderEffect = new Lang.Class({
 
     this._width = 1;
   },
-  vfunc_paint: function () {
+  vfunc_paint: function (paintContext) {
+    const framebuffer = paintContext.get_framebuffer();
+    const coglContext = framebuffer.get_context();
     const actor = this.get_actor();
-    const geom = actor.get_allocation_geometry();
-    actor.continue_paint();
-    Cogl.set_source_color(this._color);
-    Cogl.rectangle(0, geom.height, geom.width, geom.height - this._width);
+    const alloc = actor.get_allocation_box();
+    actor.continue_paint(paintContext);
+    let pipeline = new Cogl.Pipeline(coglContext);
+    pipeline.set_color(this._color);
+    framebuffer.draw_rectangle(pipeline, 0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width);
   }
 }); // missing dependencies dialog
 
@@ -206,7 +209,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect('notify::allocation', function () {
       Convenience.throttle(100, _this, _this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
     });
-    this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled));
+    this._panelScrollEventHandlerId = Main.panel.connect('scroll-event', Lang.bind(this, this._panelScrolled));
 
     const busRun = function (actionName) {
       var _this$_busProxy;
@@ -405,7 +408,7 @@ const DropDownTerminalXExtension = new Lang.Class({
     global.window_manager.disconnect(this._actorMappedHandlerId);
     Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
     Main.layoutManager.panelBox.disconnect(this._panelAllocationNotificationHandlerId);
-    Main.panel.actor.disconnect(this._panelScrollEventHandlerId);
+    Main.panel.disconnect(this._panelScrollEventHandlerId);
 
     this._display.disconnect(this._windowCreatedHandlerId);
 
@@ -772,7 +775,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
     this._childPid = pid; // adds a watch to know when the child process ends
 
-    GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid, Lang.bind(this, this._childExited), null);
+    GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid, Lang.bind(this, this._childExited));
   },
   _killChild: function () {
     if (this._childPid !== null) {
@@ -942,8 +945,10 @@ const DropDownTerminalXExtension = new Lang.Class({
       return false;
     }
 
-    for (const ext in ExtensionUtils.extensions) {
-      if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
+    for (const extUUID in Main.extensionManager.getUuids()) {
+      const ext = Main.extensionManager.lookup(extUUID);
+
+      if (ext && ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
         return false;
       }
     }

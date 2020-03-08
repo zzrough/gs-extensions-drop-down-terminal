@@ -26,11 +26,11 @@ const Gio = imports.gi.Gio
 const GLib = imports.gi.GLib
 const Gtk = imports.gi.Gtk
 
-const GLIB_VERSION = GLib.MAJOR_VERSION * 10000 +
+var GLIB_VERSION = GLib.MAJOR_VERSION * 10000 +
                    GLib.MINOR_VERSION * 100 +
                    GLib.MICRO_VERSION
 
-const GTK_VERSION = Gtk.MAJOR_VERSION * 10000 +
+var GTK_VERSION = Gtk.MAJOR_VERSION * 10000 +
                   Gtk.MINOR_VERSION * 100 +
                   Gtk.MICRO_VERSION
 

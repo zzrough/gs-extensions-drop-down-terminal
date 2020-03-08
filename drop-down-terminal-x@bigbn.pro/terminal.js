@@ -1165,7 +1165,7 @@ const DropDownTerminalX = new Lang.Class({
 })
 
 // sets a nice program name and initializes gtk
-Gtk.init(null, 0)
+Gtk.init(null)
 
 // sets the setting to prefer a dark theme
 Gtk.Settings.get_default()['gtk-application-prefer-dark-theme'] = true
