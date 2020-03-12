@@ -209,7 +209,8 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._panelAllocationNotificationHandlerId = Main.layoutManager.panelBox.connect('notify::allocation', function () {
       Convenience.throttle(100, _this, _this._updateWindowGeometry); // throttles at 10Hz (it's an "heavy weight" setting)
     });
-    this._panelScrollEventHandlerId = Main.panel.connect('scroll-event', Lang.bind(this, this._panelScrolled));
+
+    this._connectPanelScrollEvent();
 
     const busRun = function (actionName) {
       var _this$_busProxy;
@@ -408,7 +409,8 @@ const DropDownTerminalXExtension = new Lang.Class({
     global.window_manager.disconnect(this._actorMappedHandlerId);
     Main.layoutManager.disconnect(this._monitorsChangedHandlerId);
     Main.layoutManager.panelBox.disconnect(this._panelAllocationNotificationHandlerId);
-    Main.panel.disconnect(this._panelScrollEventHandlerId);
+
+    this._disconnectPanelScrollEvent();
 
     this._display.disconnect(this._windowCreatedHandlerId);
 
@@ -1000,6 +1002,12 @@ const DropDownTerminalXExtension = new Lang.Class({
       logError(e, 'Vte could not be imported');
       throw e;
     }
+  },
+  _connectPanelScrollEvent: function () {
+    Main.panel.connect ? this._panelScrollEventHandlerId = Main.panel.connect('scroll-event', Lang.bind(this, this._panelScrolled)) : this._panelScrollEventHandlerId = Main.panel.actor.connect('scroll-event', Lang.bind(this, this._panelScrolled)); //can be dropped when debian-stable reaches 3.36
+  },
+  _disconnectPanelScrollEvent: function () {
+    Main.panel.disconnect ? Main.panel.disconnect(this._panelScrollEventHandlerId) : Main.panel.actor.disconnect(this._panelScrollEventHandlerId); // can be dropped when debian-stable reaches 3.36
   }
 }); // extension init hook
 
