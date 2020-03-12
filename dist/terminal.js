@@ -940,23 +940,23 @@ const DropDownTerminalX = new Lang.Class({
     }
   },
   showMOTR: function (terminal) {
-    const currentVersion = '1.4.3';
+    const currentVersion = '1.4.4';
 
     const lastVersion = this._settings.get_string(MOTR_VERSION_SETTING_KEY).trim();
 
     if (lastVersion !== currentVersion) {
       terminal.feed('\n\r');
-      terminal.feed('▒█▀▀▀ █▀▀ █▀▀▄ █▀▀█ █░░█ █▀▀█ █▀▀█ █░░█ 　 █▀█ █▀▀█ █▀█ █▀▀█ \n\r');
-      terminal.feed('▒█▀▀▀ █▀▀ █▀▀▄ █▄▄▀ █░░█ █▄▄█ █▄▄▀ █▄▄█ 　 ░▄▀ █▄▀█ ░▄▀ █▄▀█ \n\r');
-      terminal.feed('▒█░░░ ▀▀▀ ▀▀▀░ ▀░▀▀ ░▀▀▀ ▀░░▀ ▀░▀▀ ▄▄▄█ 　 █▄▄ █▄▄█ █▄▄ █▄▄█ \n\r');
+      terminal.feed('▒█▀▄▀█ █▀▀█ █▀▀█ █▀▀ █░░█ 　 █▀█ █▀▀█ █▀█ █▀▀█ \n\r');
+      terminal.feed('▒█▒█▒█ █▄▄█ █▄▄▀ █░░ █▀▀█ 　 ░▄▀ █▄▀█ ░▄▀ █▄▀█ \n\r');
+      terminal.feed('▒█░░▒█ ▀░░▀ ▀░▀▀ ▀▀▀ ▀░░▀ 　 █▄▄ █▄▄█ █▄▄ █▄▄█ \n\r');
       terminal.feed('\n\r');
-      terminal.feed('  Release notes for 1.4.3\n\r');
+      terminal.feed('  Release notes for 1.4.4\n\r');
       terminal.feed('\n\r');
-      terminal.feed(' - Multi monitor enhancements \n\r');
-      terminal.feed(' - Workarea of current monitor for a maximized mode \n\r');
+      terminal.feed(' - Gnome 3.36 support \n\r');
+      terminal.feed(' - New settings for opening tab in current directory  \n\r');
       terminal.feed('\n\r');
       terminal.feed('\n\r');
-      terminal.feed('  Thanks oae (https://github.com/oae) for a such cool improvements! \n\r');
+      terminal.feed('  And again, thanks oae (https://github.com/oae) for a such cool improvements! \n\r');
       terminal.feed('\n\r');
       terminal.feed('\n\r');
 
