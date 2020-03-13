@@ -129,7 +129,7 @@ const SouthBorderEffect = new Lang.Class({
         actor.continue_paint(paintContext);
 
         Cogl.set_source_color(this._color);
-        Cogl.path_round_rectangle(0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width);
+        Cogl.rectangle(0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width);
     },
 });
 
