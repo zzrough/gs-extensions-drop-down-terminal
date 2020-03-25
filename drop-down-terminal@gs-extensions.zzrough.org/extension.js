@@ -122,14 +122,14 @@ const SouthBorderEffect = new Lang.Class({
         }
     },
 
-    vfunc_paint: function() {
+    vfunc_paint: function(paintContext) {
         let actor = this.get_actor();
-        let geom = actor.get_allocation_geometry();
+        let alloc = actor.get_allocation_box();
 
-        actor.continue_paint();
+        actor.continue_paint(paintContext);
 
         Cogl.set_source_color(this._color);
-        Cogl.rectangle(0, geom.height, geom.width, geom.height - this._width);
+        Cogl.rectangle(0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width);
     },
 });
 
