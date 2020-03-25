@@ -124,12 +124,26 @@ const SouthBorderEffect = new Lang.Class({
 
     vfunc_paint: function(paintContext) {
         let actor = this.get_actor();
-        let alloc = actor.get_allocation_box();
 
-        actor.continue_paint(paintContext);
+        if (paintContext.get_framebuffer) {
+            let alloc = actor.get_allocation_box();
 
-        Cogl.set_source_color(this._color);
-        Cogl.rectangle(0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width);
+            actor.continue_paint(paintContext);
+
+            let framebuffer = paintContext.get_framebuffer();
+            let coglContext = framebuffer.get_context();
+
+            let pipeline = new Cogl.Pipeline(coglContext);
+            pipeline.set_color(this._color)
+            framebuffer.draw_rectangle(pipeline, 0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width)
+        } else {
+            let alloc = actor.get_allocation_box();
+
+            actor.continue_paint(paintContext);
+
+            Cogl.set_source_color(this._color);
+            Cogl.rectangle(0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width);
+        }
     },
 });
 
