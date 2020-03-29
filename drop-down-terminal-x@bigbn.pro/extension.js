@@ -956,13 +956,23 @@ const DropDownTerminalXExtension = new Lang.Class({
       return false
     }
 
-    for (const extUUID in Main.extensionManager.getUuids()) {
-      const ext = Main.extensionManager.lookup(extUUID)
-      if (ext && ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
-        return false
+    if (Main.extensionManager) {
+      // since gnome 3.36
+      for (const extUUID in Main.extensionManager.getUuids()) {
+        const ext = Main.extensionManager.lookup(extUUID)
+        if (ext && ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
+          return false
+        }
+      }  
+    } else {
+      // for legacy versions 
+      for (const ext in ExtensionUtils.extensions) {
+        if (ANIMATION_CONFLICT_EXTENSION_UUIDS.indexOf(ext.uuid) >= 0 && ext.state == ExtensionSystem.ExtensionState.ENABLED) {
+          return false
+        }
       }
     }
-
+    
     return true
   },
 
