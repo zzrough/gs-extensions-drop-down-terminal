@@ -175,6 +175,8 @@ const DropDownTerminalX = new Lang.Class({
 
   _init: function () {
     // initializes the state
+    this.detachedMode = Boolean(GLib.getenv('DETACHED'))
+    
     this._customCommandArgs = []
     this._visible = false
     this._openNewTerminalInCurrentDirectory = false
@@ -306,6 +308,11 @@ const DropDownTerminalX = new Lang.Class({
     this._bus.export(Gio.DBus.session, '/pro/bigbn/DropDownTerminalX')
 
     this.addTab()
+
+    if (this.detachedMode) {
+      this._window.show()
+    }
+    
   },
 
   get Pid () {
@@ -737,7 +744,7 @@ const DropDownTerminalX = new Lang.Class({
     terminal.set_encoding('UTF-8')
     // FIXME: we get weird colors when we apply tango colors
     //
-    // terminal.set_colors(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
+    terminal.set_colors(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
 
     return terminal
   },
@@ -765,16 +772,22 @@ const DropDownTerminalX = new Lang.Class({
     window.set_title('Drop Down Terminal')
     window.set_icon_name('utilities-terminal')
     window.set_wmclass('Drop Down Terminal', 'DropDownTerminalXWindow')
-    window.set_decorated(false)
+    
     window.set_skip_taskbar_hint(true)
     window.set_skip_pager_hint(true)
-    window.set_resizable(true)
-    window.set_keep_above(true)
+    window.set_resizable(true)    
     window.set_accept_focus(true)
-    window.set_deletable(false)
-    window.stick()
+    
+    // DETACHED=1 gjs -I . terminal.js      # to run in single mode
+    if (!this.detachedMode) {
+      window.set_keep_above(true)
+      window.set_deletable(false)
+      window.set_decorated(false)
+      window.stick()
+      window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU)
+    }
 
-    window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU)
+
     window.set_visual(screen.get_rgba_visual())
 
     window.connect('enter_notify_event', Lang.bind(this, this._windowMouseEnter))
