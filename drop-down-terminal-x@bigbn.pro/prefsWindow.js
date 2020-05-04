@@ -71,6 +71,10 @@ const MULTI_MONITOR_MODE_SETTING_KEY = 'multi-monitor-mode'
 
 const TABS_POSITION_SETTING_KEY = 'tabs-position'
 
+const USE_DEFAULT_COLORS_SETTING_KEY = 'use-default-colors'
+const COLOR_SCHEME_NAME_SETTING_KEY = 'color-scheme-name'
+const COLOR_PALETTE_NAME_SETTINGS_KEY = 'color-palette-name'
+
 // tree view columns
 const COLUMN_KEY = 0
 const COLUMN_MODS = 1
@@ -418,6 +422,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
   _initColorsWidgets () {
     const schemeComboBox = this.builder.get_object('color-scheme-combobox')
     const paletteComboBox = this.builder.get_object('palette-combobox')
+    const useSystemColorsCheckbox = this.builder.get_object('system-colors-checkbox')
 
     const colorSchemeListStore = this.builder.get_object('color-scheme-liststore')
     const paletteListStore = this.builder.get_object('palette-liststore')
@@ -434,13 +439,40 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
     const renderer = new Gtk.CellRendererText()
     schemeComboBox.set_id_column(0)
-    // schemeComboBox.set_active_id(primaryMonitorIndex)
     schemeComboBox.pack_start(renderer, true)
     schemeComboBox.add_attribute(renderer, 'text', 0)
 
     paletteComboBox.set_id_column(0)
     paletteComboBox.pack_start(renderer, true)
     paletteComboBox.add_attribute(renderer, 'text', 0)
+
+    const schemeName = this._settings.get_string(COLOR_SCHEME_NAME_SETTING_KEY)
+    const paletteName = this._settings.get_string(COLOR_PALETTE_NAME_SETTINGS_KEY)
+    schemeComboBox.set_active_id(schemeName)
+    paletteComboBox.set_active_id(paletteName)
+
+    schemeComboBox.connect('changed', (entry) => {
+      const [success, iter] = schemeComboBox.get_active_iter()
+      if (!success) return
+      const schemeName = colorSchemeListStore.get_value(iter, 0)
+      this._settings.set_string(COLOR_SCHEME_NAME_SETTING_KEY, schemeName)
+    })
+
+    paletteComboBox.connect('changed', (entry) => {
+      const [success, iter] = paletteComboBox.get_active_iter()
+      if (!success) return
+      const paletteName = paletteListStore.get_value(iter, 0)
+      this._settings.set_string(COLOR_PALETTE_NAME_SETTINGS_KEY, paletteName)
+    })
+
+    schemeComboBox.set_sensitive(!useSystemColorsCheckbox.get_active())
+    paletteComboBox.set_sensitive(!useSystemColorsCheckbox.get_active())
+    useSystemColorsCheckbox.connect('toggled', () => {
+      schemeComboBox.set_sensitive(!useSystemColorsCheckbox.get_active())
+      paletteComboBox.set_sensitive(!useSystemColorsCheckbox.get_active())
+    })
+    
+    this._settings.bind(USE_DEFAULT_COLORS_SETTING_KEY, useSystemColorsCheckbox, 'active', Gio.SettingsBindFlags.DEFAULT)
   },
 
   _initTabsPositionWidgets () {

@@ -1343,7 +1343,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkComboBox">
+                      <object class="GtkComboBox" id="palette-combobox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="model">palette-liststore</property>
