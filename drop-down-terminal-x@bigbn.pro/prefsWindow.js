@@ -24,6 +24,7 @@ const GObject = imports.gi.GObject
 const Gio = imports.gi.Gio
 const Gtk = imports.gi.Gtk
 const Gdk = imports.gi.Gdk
+const Convenience = imports.convenience
 
 const _ = Gettext.gettext
 
@@ -152,6 +153,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
       this._initMonitorWidgets()
       this._initTabsPositionWidgets()
+      this._initColorsWidgets()
 
       this._runCustomCommandCheckButton = builder.get_object('run-custom-command-checkbutton')
       this._customCommandBox = builder.get_object('custom-command-box')
@@ -411,6 +413,34 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     monitorComboxbox.add_attribute(renderer, 'text', 1)
 
     this._settings.bind(MULTI_MONITOR_MODE_SETTING_KEY, multyMonitorCheckbox, 'active', Gio.SettingsBindFlags.DEFAULT)
+  },
+
+  _initColorsWidgets () {
+    const schemeComboBox = this.builder.get_object('color-scheme-combobox')
+    const paletteComboBox = this.builder.get_object('palette-combobox')
+
+    const colorSchemeListStore = this.builder.get_object('color-scheme-liststore')
+    const paletteListStore = this.builder.get_object('palette-liststore')
+
+    const systemColors = this.builder.get_object('system-colors-checkbox')
+
+    for (const schemeName in Convenience.ColorSchemes) {
+      colorSchemeListStore.set(colorSchemeListStore.append(), [0], [schemeName])
+    }
+
+    for (const paletteName in Convenience.Palettes) {
+      paletteListStore.set(paletteListStore.append(),[0], [paletteName])
+    }
+
+    const renderer = new Gtk.CellRendererText()
+    schemeComboBox.set_id_column(0)
+    // schemeComboBox.set_active_id(primaryMonitorIndex)
+    schemeComboBox.pack_start(renderer, true)
+    schemeComboBox.add_attribute(renderer, 'text', 0)
+
+    paletteComboBox.set_id_column(0)
+    paletteComboBox.pack_start(renderer, true)
+    paletteComboBox.add_attribute(renderer, 'text', 0)
   },
 
   _initTabsPositionWidgets () {

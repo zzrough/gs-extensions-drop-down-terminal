@@ -117,24 +117,6 @@ const FOCUS_MODE_SLOPPY = 'sloppy'
 const ForegroundColor = Convenience.parseRgbaColor('#aaaaaaaaaaaa')
 const BackgroundColor = Convenience.parseRgbaColor('#000000000000')
 
-const TangoPalette = [
-  Convenience.parseRgbaColor('#000000000000'),
-  Convenience.parseRgbaColor('#cccc00000000'),
-  Convenience.parseRgbaColor('#4e4e9a9a0606'),
-  Convenience.parseRgbaColor('#c4c4a0a00000'),
-  Convenience.parseRgbaColor('#34346565a4a4'),
-  Convenience.parseRgbaColor('#757550507b7b'),
-  Convenience.parseRgbaColor('#060698209a9a'),
-  Convenience.parseRgbaColor('#d3d3d7d7cfcf'),
-  Convenience.parseRgbaColor('#555557575353'),
-  Convenience.parseRgbaColor('#efef29292929'),
-  Convenience.parseRgbaColor('#8a8ae2e23434'),
-  Convenience.parseRgbaColor('#fcfce9e94f4f'),
-  Convenience.parseRgbaColor('#72729f9fcfcf'),
-  Convenience.parseRgbaColor('#adad7f7fa8a8'),
-  Convenience.parseRgbaColor('#3434e2e2e2e2'),
-  Convenience.parseRgbaColor('#eeeeeeeeecec')
-]
 
 const UserCharsPattern = '-[:alnum:]'
 const UserCharsClassPattern = '[' + UserCharsPattern + ']'
@@ -744,7 +726,9 @@ const DropDownTerminalX = new Lang.Class({
     terminal.set_encoding('UTF-8')
     // FIXME: we get weird colors when we apply tango colors
     //
-    terminal.set_colors(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
+
+    Convenience.ColorSchemes["Green on black"]
+    // terminal.set_colors(Convenience.ColorSchemes["Green on black"][0],  Convenience.ColorSchemes["Green on black"][1], Convenience.Palettes.Gnome, Convenience.Palettes.Gnome.length);
 
     return terminal
   },
@@ -967,21 +951,21 @@ const DropDownTerminalX = new Lang.Class({
     const fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY))
     const bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY))
 
-    if (tab.terminal.set_color_foreground_rgba) { // removed in vte 0.38
-      tab.terminal.set_color_foreground_rgba(fgColor)
-    } else {
-      tab.terminal.set_color_foreground(fgColor)
-    }
+    // if (tab.terminal.set_color_foreground_rgba) { // removed in vte 0.38
+    //   tab.terminal.set_color_foreground_rgba(fgColor)
+    // } else {
+    //   tab.terminal.set_color_foreground(fgColor)
+    // }
 
-    // Note: by applying the transparency only to the background colour of the terminal, the text stays
-    //       readable in any case
-    bgColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha
+    // // Note: by applying the transparency only to the background colour of the terminal, the text stays
+    // //       readable in any case
+    // bgColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha
 
-    if (tab.terminal.set_color_background_rgba) { // removed in vte 0.38
-      tab.terminal.set_color_background_rgba(bgColor)
-    } else {
-      tab.terminal.set_color_background(bgColor)
-    }
+    // if (tab.terminal.set_color_background_rgba) { // removed in vte 0.38
+    //   tab.terminal.set_color_background_rgba(bgColor)
+    // } else {
+    //   tab.terminal.set_color_background(bgColor)
+    // }
 
     tab.terminal.set_scroll_on_output(scrollOnOutput)
     tab.container.set_policy(Gtk.PolicyType.AUTOMATIC,
