@@ -127,6 +127,7 @@ function getPid () {
 function parseRgbaColor (spec) {
   let col = new Gdk.RGBA()
   col.parse(spec)
+  col.spec = spec
   return col
 }
 

@@ -456,6 +456,10 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       if (!success) return
       const schemeName = colorSchemeListStore.get_value(iter, 0)
       this._settings.set_string(COLOR_SCHEME_NAME_SETTING_KEY, schemeName)
+      this._settings.set_string(FOREGROUND_COLOR_SETTING_KEY, Convenience.ColorSchemes[schemeName][0].spec)
+      this._settings.set_string(BACKGROUND_COLOR_SETTING_KEY, Convenience.ColorSchemes[schemeName][1].spec)      
+      this._updateForegroundColorButton()
+      this._updateBackgroundColorButton()
     })
 
     paletteComboBox.connect('changed', (entry) => {
