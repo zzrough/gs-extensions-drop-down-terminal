@@ -105,6 +105,9 @@ const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus'
 const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape'
 const TABS_POSITION_SETTING_KEY = 'tabs-position'
 const MOTR_VERSION_SETTING_KEY = 'motr-version'
+const USE_DEFAULT_COLORS_SETTING_KEY = 'use-default-colors'
+const COLOR_SCHEME_NAME_SETTING_KEY = 'color-scheme-name'
+const COLOR_PALETTE_NAME_SETTINGS_KEY = 'color-palette-name'
 
 // gnome desktop wm settings
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences'
@@ -727,9 +730,14 @@ const DropDownTerminalX = new Lang.Class({
     // FIXME: we get weird colors when we apply tango colors
     //
 
-    Convenience.ColorSchemes["Green on black"]
-    // terminal.set_colors(Convenience.ColorSchemes["Green on black"][0],  Convenience.ColorSchemes["Green on black"][1], Convenience.Palettes.Gnome, Convenience.Palettes.Gnome.length);
-
+    if (!this._settings.get_boolean(USE_DEFAULT_COLORS_SETTING_KEY)) {
+      const bgColor = this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY)
+      const fgColor = this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY)
+      const paletteName = this._settings.get_string(COLOR_PALETTE_NAME_SETTINGS_KEY)
+      const palette = Convenience.Palettes[paletteName]
+      terminal.set_colors(Convenience.parseRgbaColor(fgColor), Convenience.parseRgbaColor(bgColor), palette, palette.length);
+    }
+    
     return terminal
   },
 
