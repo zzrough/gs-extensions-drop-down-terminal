@@ -24,7 +24,9 @@ const GObject = imports.gi.GObject
 const Gio = imports.gi.Gio
 const Gtk = imports.gi.Gtk
 const Gdk = imports.gi.Gdk
-const Convenience = imports.convenience
+
+const Me = imports.misc.extensionUtils.getCurrentExtension()
+const Convenience = Me.imports.convenience
 
 const _ = Gettext.gettext
 
