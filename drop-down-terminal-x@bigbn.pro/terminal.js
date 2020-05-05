@@ -905,20 +905,20 @@ const DropDownTerminalX = new Lang.Class({
   },
 
   showMOTR (terminal) {
-    const currentVersion = '1.4.6'
+    const currentVersion = '1.5.0'
     const lastVersion = this._settings.get_string(MOTR_VERSION_SETTING_KEY).trim()
 
     if (lastVersion !== currentVersion) {
       terminal.feed('\n\r')
 
-      terminal.feed('▒█▀▄▀█ █▀▀█ █▀▀█ █▀▀ █░░█ 　 █▀█ █▀▀█ █▀█ █▀▀█ \n\r')
-      terminal.feed('▒█▒█▒█ █▄▄█ █▄▄▀ █░░ █▀▀█ 　 ░▄▀ █▄▀█ ░▄▀ █▄▀█ \n\r')
-      terminal.feed('▒█░░▒█ ▀░░▀ ▀░▀▀ ▀▀▀ ▀░░▀ 　 █▄▄ █▄▄█ █▄▄ █▄▄█ \n\r')
+      terminal.feed(' ░█▀▄▀█ █▀▀█ █──█ 　 █▀█ █▀▀█ █▀█ █▀▀█  \n\r')
+      terminal.feed(' ░█░█░█ █▄▄█ █▄▄█ 　 ─▄▀ █▄▀█ ─▄▀ █▄▀█  \n\r')
+      terminal.feed(' ░█──░█ ▀──▀ ▄▄▄█ 　 █▄▄ █▄▄█ █▄▄ █▄▄█  \n\r')
 
       terminal.feed('\n\r')
-      terminal.feed('  Release notes for 1.4.6\n\r')
+      terminal.feed('  Release notes for 1.5.0\n\r')
       terminal.feed('\n\r')
-      terminal.feed(' - Gnome 3.28 backward compatibility \n\r')
+      terminal.feed(' - Spring, sun and COLORS. Yeah! \n\r')
       terminal.feed('\n\r')
 
       this._settings.set_string(MOTR_VERSION_SETTING_KEY, currentVersion)
