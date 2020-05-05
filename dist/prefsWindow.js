@@ -24,6 +24,7 @@ const GObject = imports.gi.GObject
 const Gio = imports.gi.Gio
 const Gtk = imports.gi.Gtk
 const Gdk = imports.gi.Gdk
+const Convenience = imports.convenience
 
 const _ = Gettext.gettext
 
@@ -69,6 +70,10 @@ const PRIMARY_MONITOR_SETTING_KEY = 'primary-monitor'
 const MULTI_MONITOR_MODE_SETTING_KEY = 'multi-monitor-mode'
 
 const TABS_POSITION_SETTING_KEY = 'tabs-position'
+
+const USE_DEFAULT_COLORS_SETTING_KEY = 'use-default-colors'
+const COLOR_SCHEME_NAME_SETTING_KEY = 'color-scheme-name'
+const COLOR_PALETTE_NAME_SETTINGS_KEY = 'color-palette-name'
 
 // tree view columns
 const COLUMN_KEY = 0
@@ -127,8 +132,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       const terminalBottomPaddingResetButton = builder.get_object('terminal-bottom-padding-reset-button')
       const transparencyLevelSpinButton = builder.get_object('transparency-level-spinbutton')
       const enableToggleOnScrollCheckButton = builder.get_object('enable-toggle-on-scroll-checkbutton')
-      const foregroundColorResetButton = builder.get_object('foreground-color-reset-button')
-      const backgroundColorResetButton = builder.get_object('background-color-reset-button')
+      
       const positionComboBox = builder.get_object('position-combobox')
       const cursorComboBox = builder.get_object('cursor-combobox')
       const enableAudibleBellCheckButton = builder.get_object('enable-audible-bell-checkbutton')
@@ -137,6 +141,8 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
       const enableHideOnUnfocusButton = builder.get_object('hide-on-unfocus-checkbutton')
       const enableHideOnEscapeButton = builder.get_object('hide-on-escape-checkbutton')
 
+      this._foregroundColorResetButton = builder.get_object('foreground-color-reset-button')
+      this._backgroundColorResetButton = builder.get_object('background-color-reset-button')
       this._foregroundColorButton = builder.get_object('foreground-color-button')
       this._backgroundColorButton = builder.get_object('background-color-button')
 
@@ -152,6 +158,7 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
 
       this._initMonitorWidgets()
       this._initTabsPositionWidgets()
+      this._initColorsWidgets()
 
       this._runCustomCommandCheckButton = builder.get_object('run-custom-command-checkbutton')
       this._customCommandBox = builder.get_object('custom-command-box')
@@ -249,12 +256,12 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
         this._updateBackgroundColorButton()
       }))
 
-      foregroundColorResetButton.connect('clicked', Lang.bind(this, function () {
+      this._foregroundColorResetButton.connect('clicked', Lang.bind(this, function () {
         this._settings.reset(FOREGROUND_COLOR_SETTING_KEY)
         this._updateForegroundColorButton()
       }))
 
-      backgroundColorResetButton.connect('clicked', Lang.bind(this, function () {
+      this._backgroundColorResetButton.connect('clicked', Lang.bind(this, function () {
         this._settings.reset(BACKGROUND_COLOR_SETTING_KEY)
         this._updateBackgroundColorButton()
       }))
@@ -411,6 +418,75 @@ var DropDownTerminalSettingsWidget = new GObject.Class({
     monitorComboxbox.add_attribute(renderer, 'text', 1)
 
     this._settings.bind(MULTI_MONITOR_MODE_SETTING_KEY, multyMonitorCheckbox, 'active', Gio.SettingsBindFlags.DEFAULT)
+  },
+
+  _initColorsWidgets () {
+    const schemeComboBox = this.builder.get_object('color-scheme-combobox')
+    const paletteComboBox = this.builder.get_object('palette-combobox')
+    const useSystemColorsCheckbox = this.builder.get_object('system-colors-checkbox')
+
+    const colorSchemeListStore = this.builder.get_object('color-scheme-liststore')
+    const paletteListStore = this.builder.get_object('palette-liststore')
+
+    const systemColors = this.builder.get_object('system-colors-checkbox')
+
+    for (const schemeName in Convenience.ColorSchemes) {
+      colorSchemeListStore.set(colorSchemeListStore.append(), [0], [schemeName])
+    }
+
+    for (const paletteName in Convenience.Palettes) {
+      paletteListStore.set(paletteListStore.append(),[0], [paletteName])
+    }
+
+    const renderer = new Gtk.CellRendererText()
+    schemeComboBox.set_id_column(0)
+    schemeComboBox.pack_start(renderer, true)
+    schemeComboBox.add_attribute(renderer, 'text', 0)
+
+    paletteComboBox.set_id_column(0)
+    paletteComboBox.pack_start(renderer, true)
+    paletteComboBox.add_attribute(renderer, 'text', 0)
+
+    const schemeName = this._settings.get_string(COLOR_SCHEME_NAME_SETTING_KEY)
+    const paletteName = this._settings.get_string(COLOR_PALETTE_NAME_SETTINGS_KEY)
+    schemeComboBox.set_active_id(schemeName)
+    paletteComboBox.set_active_id(paletteName)
+
+    schemeComboBox.connect('changed', (entry) => {
+      const [success, iter] = schemeComboBox.get_active_iter()
+      if (!success) return
+      const schemeName = colorSchemeListStore.get_value(iter, 0)
+      this._settings.set_string(COLOR_SCHEME_NAME_SETTING_KEY, schemeName)
+      this._settings.set_string(FOREGROUND_COLOR_SETTING_KEY, Convenience.ColorSchemes[schemeName][0].spec)
+      this._settings.set_string(BACKGROUND_COLOR_SETTING_KEY, Convenience.ColorSchemes[schemeName][1].spec)      
+      this._updateForegroundColorButton()
+      this._updateBackgroundColorButton()
+    })
+
+    paletteComboBox.connect('changed', (entry) => {
+      const [success, iter] = paletteComboBox.get_active_iter()
+      if (!success) return
+      const paletteName = paletteListStore.get_value(iter, 0)
+      this._settings.set_string(COLOR_PALETTE_NAME_SETTINGS_KEY, paletteName)
+    })
+
+    const initialState = !useSystemColorsCheckbox.get_active()
+    const relatedWidgets = [
+      schemeComboBox,
+      paletteComboBox,
+      this._foregroundColorButton,
+      this._backgroundColorButton,
+      this._foregroundColorResetButton,
+      this._backgroundColorResetButton,
+    ]
+
+    relatedWidgets.forEach(widget => widget.set_sensitive(initialState))   
+    useSystemColorsCheckbox.connect('toggled', () => {
+      const state = !useSystemColorsCheckbox.get_active();
+      relatedWidgets.forEach(widget => widget.set_sensitive(state))
+    })
+    
+    this._settings.bind(USE_DEFAULT_COLORS_SETTING_KEY, useSystemColorsCheckbox, 'active', Gio.SettingsBindFlags.DEFAULT)
   },
 
   _initTabsPositionWidgets () {

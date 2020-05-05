@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 -->
+<!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.0"/>
   <object class="GtkListStore" id="capture-focus-liststore">
@@ -23,6 +23,12 @@
     <property name="value">250</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+  </object>
+  <object class="GtkListStore" id="color-scheme-liststore">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
   </object>
   <object class="GtkListStore" id="cursorTypesStore">
     <columns>
@@ -99,6 +105,12 @@
     <property name="value">250</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+  </object>
+  <object class="GtkListStore" id="palette-liststore">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
   </object>
   <object class="GtkListStore" id="positions-liststore">
     <columns>
@@ -1250,29 +1262,49 @@
                     <property name="row_spacing">6</property>
                     <property name="column_spacing">6</property>
                     <property name="row_homogeneous">True</property>
+                    <property name="column_homogeneous">True</property>
                     <child>
-                      <object class="GtkLabel" id="label14">
+                      <object class="GtkCheckButton" id="system-colors-checkbox">
+                        <property name="label" translatable="yes">Use system colors</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;small&gt;Please do not ask for full color support: I want it as much as you do but &lt;b&gt;it can't be done yet&lt;/b&gt;. There are shortcomings with the JS bindings that make color support limited.&lt;/small&gt;</property>
-                        <property name="use_markup">True</property>
-                        <property name="wrap">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
                         <property name="xalign">0</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">2</property>
-                        <property name="width">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label18">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="draw_indicator">True</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">2</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Color sheme</property>
+                        <property name="xalign">0.89999997615814209</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Palette</property>
+                        <property name="xalign">0.89999997615814209</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
                       </packing>
                     </child>
                     <child>
@@ -1280,45 +1312,11 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Text color</property>
-                        <property name="xalign">0</property>
+                        <property name="xalign">0.89999997615814209</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkColorButton" id="foreground-color-button">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="halign">start</property>
-                        <property name="valign">center</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="foreground-color-reset-button">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="tooltip_text" translatable="yes">Reset the field to its default value</property>
-                        <property name="halign">start</property>
-                        <property name="xalign">0</property>
-                        <child>
-                          <object class="GtkImage" id="image3">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="stock">gtk-revert-to-saved</property>
-                          </object>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">0</property>
+                        <property name="top_attach">2</property>
                       </packing>
                     </child>
                     <child>
@@ -1326,20 +1324,18 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Background color</property>
-                        <property name="xalign">0</property>
+                        <property name="xalign">0.89999997615814209</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
+                        <property name="top_attach">3</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkColorButton" id="background-color-button">
+                      <object class="GtkComboBox" id="color-scheme-combobox">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="halign">start</property>
-                        <property name="valign">center</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">color-scheme-liststore</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -1347,47 +1343,134 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="background-color-reset-button">
+                      <object class="GtkComboBox" id="palette-combobox">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="tooltip_text" translatable="yes">Reset the field to its default value</property>
-                        <property name="halign">start</property>
-                        <property name="xalign">0</property>
-                        <child>
-                          <object class="GtkImage" id="image1">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="stock">gtk-revert-to-saved</property>
-                          </object>
-                        </child>
+                        <property name="can_focus">False</property>
+                        <property name="model">palette-liststore</property>
                       </object>
                       <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">1</property>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">4</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label15">
+                      <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="hexpand">True</property>
+                        <child>
+                          <object class="GtkColorButton" id="foreground-color-button">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="halign">start</property>
+                            <property name="valign">center</property>
+                            <property name="margin_right">5</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="foreground-color-reset-button">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Reset the field to its default value</property>
+                            <property name="halign">start</property>
+                            <property name="xalign">0</property>
+                            <child>
+                              <object class="GtkImage" id="image3">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="stock">gtk-revert-to-saved</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
                       </object>
                       <packing>
-                        <property name="left_attach">3</property>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkColorButton" id="background-color-button">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="halign">start</property>
+                            <property name="valign">center</property>
+                            <property name="margin_right">5</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="background-color-reset-button">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Reset the field to its default value</property>
+                            <property name="halign">start</property>
+                            <property name="xalign">0</property>
+                            <child>
+                              <object class="GtkImage" id="image1">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="stock">gtk-revert-to-saved</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
                         <property name="top_attach">0</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label16">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="hexpand">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">3</property>
-                        <property name="top_attach">1</property>
-                      </packing>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
                     </child>
                   </object>
                 </child>
@@ -1497,7 +1580,14 @@
                       </packing>
                     </child>
                     <child>
-                      <placeholder/>
+                      <object class="GtkComboBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
                     </child>
                   </object>
                 </child>
@@ -1643,7 +1733,7 @@
                     <property name="margin_bottom">6</property>
                     <property name="left_padding">12</property>
                     <child>
-                      <object class="GtkCheckButton" id="enable-open-new-terminal-in-current-directory-button">
+                      <object class="GtkCheckButton" id="enable-open-new-terminal-in-current-directory-checkbutton">
                         <property name="label" translatable="yes">Open new  terminal in current directory</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>

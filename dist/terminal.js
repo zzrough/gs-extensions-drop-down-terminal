@@ -68,7 +68,10 @@ const ENABLE_TABS_SETTING_KEY = 'enable-tabs';
 const HIDE_ON_UNFOCUS_SETTING_KEY = 'hide-on-unfocus';
 const HIDE_ON_ESCAPE_SETTING_KEY = 'hide-on-escape';
 const TABS_POSITION_SETTING_KEY = 'tabs-position';
-const MOTR_VERSION_SETTING_KEY = 'motr-version'; // gnome desktop wm settings
+const MOTR_VERSION_SETTING_KEY = 'motr-version';
+const USE_DEFAULT_COLORS_SETTING_KEY = 'use-default-colors';
+const COLOR_SCHEME_NAME_SETTING_KEY = 'color-scheme-name';
+const COLOR_PALETTE_NAME_SETTINGS_KEY = 'color-palette-name'; // gnome desktop wm settings
 
 const WM_PREFERENCES_SCHEMA = 'org.gnome.desktop.wm.preferences';
 const WM_FOCUS_MODE_SETTING_KEY = 'focus-mode';
@@ -78,7 +81,6 @@ const FOCUS_MODE_SLOPPY = 'sloppy'; // constants borrowed from gnome-terminal
 
 const ForegroundColor = Convenience.parseRgbaColor('#aaaaaaaaaaaa');
 const BackgroundColor = Convenience.parseRgbaColor('#000000000000');
-const TangoPalette = [Convenience.parseRgbaColor('#000000000000'), Convenience.parseRgbaColor('#cccc00000000'), Convenience.parseRgbaColor('#4e4e9a9a0606'), Convenience.parseRgbaColor('#c4c4a0a00000'), Convenience.parseRgbaColor('#34346565a4a4'), Convenience.parseRgbaColor('#757550507b7b'), Convenience.parseRgbaColor('#060698209a9a'), Convenience.parseRgbaColor('#d3d3d7d7cfcf'), Convenience.parseRgbaColor('#555557575353'), Convenience.parseRgbaColor('#efef29292929'), Convenience.parseRgbaColor('#8a8ae2e23434'), Convenience.parseRgbaColor('#fcfce9e94f4f'), Convenience.parseRgbaColor('#72729f9fcfcf'), Convenience.parseRgbaColor('#adad7f7fa8a8'), Convenience.parseRgbaColor('#3434e2e2e2e2'), Convenience.parseRgbaColor('#eeeeeeeeecec')];
 const UserCharsPattern = '-[:alnum:]';
 const UserCharsClassPattern = '[' + UserCharsPattern + ']';
 const PassCharsClassPattern = "[-[:alnum:]\\Q,?;.:/!%$^*&~\"#'\\E]";
@@ -122,6 +124,7 @@ const DropDownTerminalX = new Lang.Class({
     var _this = this;
 
     // initializes the state
+    this.detachedMode = Boolean(GLib.getenv('DETACHED'));
     this._customCommandArgs = [];
     this._visible = false;
     this._openNewTerminalInCurrentDirectory = false; // loads the custom CSS to mimick the shell style
@@ -226,7 +229,7 @@ const DropDownTerminalX = new Lang.Class({
       });
     };
 
-    [SCROLLBAR_VISIBLE_SETTING_KEY, SCROLL_ON_OUTPUT_SETTING_KEY, TRANSPARENCY_LEVEL_SETTING_KEY, TRANSPARENT_TERMINAL_SETTING_KEY, COLOR_FOREGROUND_SETTING_KEY, COLOR_BACKGROUND_SETTING_KEY].forEach(Lang.bind(this, function (key) {
+    [SCROLLBAR_VISIBLE_SETTING_KEY, SCROLL_ON_OUTPUT_SETTING_KEY, TRANSPARENCY_LEVEL_SETTING_KEY, TRANSPARENT_TERMINAL_SETTING_KEY, COLOR_FOREGROUND_SETTING_KEY, COLOR_BACKGROUND_SETTING_KEY, COLOR_PALETTE_NAME_SETTINGS_KEY, COLOR_SCHEME_NAME_SETTING_KEY, USE_DEFAULT_COLORS_SETTING_KEY].forEach(Lang.bind(this, function (key) {
       this._settings.connect('changed::' + key, reApplyPrefs);
     }));
     [RUN_CUSTOM_COMMAND_SETTING_KEY, CUSTOM_COMMAND_SETTING_KEY].forEach(Lang.bind(this, function (key) {
@@ -260,6 +263,10 @@ const DropDownTerminalX = new Lang.Class({
     this._bus.export(Gio.DBus.session, '/pro/bigbn/DropDownTerminalX');
 
     this.addTab();
+
+    if (this.detachedMode) {
+      this._window.show();
+    }
   },
 
   get Pid() {
@@ -422,7 +429,7 @@ const DropDownTerminalX = new Lang.Class({
 
       const host = row.data;
 
-      const tab = _this3.addTab(['ssh', host]);
+      const tab = _this3.addTab(['ssh', host, '-v']);
 
       _this3.Focus();
     });
@@ -765,9 +772,23 @@ const DropDownTerminalX = new Lang.Class({
       terminal.set_word_chars('-A-Za-z0-9_$.+!*(),;:@&=?/~#%');
     }
 
-    terminal.set_encoding('UTF-8'); // FIXME: we get weird colors when we apply tango colors
-    //
-    // terminal.set_colors(ForegroundColor, BackgroundColor, TangoPalette, TangoPalette.length);
+    terminal.set_encoding('UTF-8');
+
+    if (!this._settings.get_boolean(USE_DEFAULT_COLORS_SETTING_KEY)) {
+      const bgColor = this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY);
+
+      const fgColor = this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY);
+
+      const paletteName = this._settings.get_string(COLOR_PALETTE_NAME_SETTINGS_KEY);
+
+      const isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY);
+
+      const transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0;
+      const palette = Convenience.Palettes[paletteName];
+      const backgroundColor = Convenience.parseRgbaColor(bgColor);
+      backgroundColor.alpha = isTransparent ? transparencyLevel : backgroundColor.alpha;
+      terminal.set_colors(Convenience.parseRgbaColor(fgColor), backgroundColor, palette);
+    }
 
     return terminal;
   },
@@ -800,15 +821,19 @@ const DropDownTerminalX = new Lang.Class({
     window.set_title('Drop Down Terminal');
     window.set_icon_name('utilities-terminal');
     window.set_wmclass('Drop Down Terminal', 'DropDownTerminalXWindow');
-    window.set_decorated(false);
     window.set_skip_taskbar_hint(true);
     window.set_skip_pager_hint(true);
     window.set_resizable(true);
-    window.set_keep_above(true);
-    window.set_accept_focus(true);
-    window.set_deletable(false);
-    window.stick();
-    window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU);
+    window.set_accept_focus(true); // DETACHED=1 gjs -I . terminal.js      # to run in single mode
+
+    if (!this.detachedMode) {
+      window.set_keep_above(true);
+      window.set_deletable(false);
+      window.set_decorated(false);
+      window.stick();
+      window.set_type_hint(Gdk.WindowTypeHint.DROPDOWN_MENU);
+    }
+
     window.set_visual(screen.get_rgba_visual());
     window.connect('enter_notify_event', Lang.bind(this, this._windowMouseEnter));
     window.connect('delete-event', function () {
@@ -991,32 +1016,22 @@ const DropDownTerminalX = new Lang.Class({
 
     const hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY);
 
-    const scrollOnOutput = this._settings.get_boolean(SCROLL_ON_OUTPUT_SETTING_KEY); // updates the colors
-    //
-    // Note: to follow the deprecation scheme, we try first the _rgba variants as vte < 0.38
-    //       already has the non-rgba-suffixed one but it was working with GdkColor back then,
-    //       and passing a GdkRGBA would raise an exception
+    const scrollOnOutput = this._settings.get_boolean(SCROLL_ON_OUTPUT_SETTING_KEY); // updates the colors    
 
 
-    const fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY));
-    const bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY));
+    if (!this._settings.get_boolean(USE_DEFAULT_COLORS_SETTING_KEY)) {
+      const bgColor = this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY);
 
-    if (tab.terminal.set_color_foreground_rgba) {
-      // removed in vte 0.38
-      tab.terminal.set_color_foreground_rgba(fgColor);
+      const fgColor = this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY);
+
+      const paletteName = this._settings.get_string(COLOR_PALETTE_NAME_SETTINGS_KEY);
+
+      const palette = Convenience.Palettes[paletteName];
+      const backgroundColor = Convenience.parseRgbaColor(bgColor);
+      backgroundColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha;
+      tab.terminal.set_colors(Convenience.parseRgbaColor(fgColor), backgroundColor, palette);
     } else {
-      tab.terminal.set_color_foreground(fgColor);
-    } // Note: by applying the transparency only to the background colour of the terminal, the text stays
-    //       readable in any case
-
-
-    bgColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha;
-
-    if (tab.terminal.set_color_background_rgba) {
-      // removed in vte 0.38
-      tab.terminal.set_color_background_rgba(bgColor);
-    } else {
-      tab.terminal.set_color_background(bgColor);
+      tab.terminal.set_default_colors();
     }
 
     tab.terminal.set_scroll_on_output(scrollOnOutput);

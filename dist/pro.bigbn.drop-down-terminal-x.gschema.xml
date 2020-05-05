@@ -323,5 +323,28 @@
       </description>
     </key>
 
+    <key name="use-default-colors" type="b">
+      <default>false</default>
+      <summary>Disable custom color schemes and palettes</summary>
+      <description>
+        No description yet
+      </description>
+    </key>
+
+    <key name="color-scheme-name" type="s">
+      <default><![CDATA['GNOME dark']]></default>
+      <summary>Color scheme name to use</summary>
+      <description>
+        Will be ignored if system scheme is used
+      </description>
+    </key>
+
+    <key name="color-palette-name" type="s">
+      <default><![CDATA['Gnome']]></default>
+      <summary>Color palette name to use</summary>
+      <description>
+        Will be ignored if system scheme is used
+      </description>
+    </key>
   </schema>
 </schemalist>
