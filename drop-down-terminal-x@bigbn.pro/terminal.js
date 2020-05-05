@@ -256,7 +256,10 @@ const DropDownTerminalX = new Lang.Class({
       TRANSPARENCY_LEVEL_SETTING_KEY,
       TRANSPARENT_TERMINAL_SETTING_KEY,
       COLOR_FOREGROUND_SETTING_KEY,
-      COLOR_BACKGROUND_SETTING_KEY
+      COLOR_BACKGROUND_SETTING_KEY,
+      COLOR_PALETTE_NAME_SETTINGS_KEY,
+      COLOR_SCHEME_NAME_SETTING_KEY,
+      USE_DEFAULT_COLORS_SETTING_KEY
     ].forEach(Lang.bind(this, function (key) {
       this._settings.connect('changed::' + key, reApplyPrefs)
     }));
@@ -727,15 +730,18 @@ const DropDownTerminalX = new Lang.Class({
     }
 
     terminal.set_encoding('UTF-8')
-    // FIXME: we get weird colors when we apply tango colors
-    //
-
     if (!this._settings.get_boolean(USE_DEFAULT_COLORS_SETTING_KEY)) {
       const bgColor = this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY)
       const fgColor = this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY)
       const paletteName = this._settings.get_string(COLOR_PALETTE_NAME_SETTINGS_KEY)
+      const isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY)
+      const transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0
+
       const palette = Convenience.Palettes[paletteName]
-      terminal.set_colors(Convenience.parseRgbaColor(fgColor), Convenience.parseRgbaColor(bgColor), palette, palette.length);
+      const backgroundColor =  Convenience.parseRgbaColor(bgColor)
+      backgroundColor.alpha = isTransparent ? transparencyLevel : backgroundColor.alpha
+
+      terminal.set_colors(Convenience.parseRgbaColor(fgColor), backgroundColor, palette);
     }
     
     return terminal
@@ -945,42 +951,31 @@ const DropDownTerminalX = new Lang.Class({
     tab.terminal.set_font(fontDesc)
   },
 
-  _updateBehaviour: function (tab) {
+  _updateBehaviour (tab) {
     const isTransparent = this._settings.get_boolean(TRANSPARENT_TERMINAL_SETTING_KEY)
     const transparencyLevel = this._settings.get_uint(TRANSPARENCY_LEVEL_SETTING_KEY) / 100.0
     const hasScrollbar = this._settings.get_boolean(SCROLLBAR_VISIBLE_SETTING_KEY)
     const scrollOnOutput = this._settings.get_boolean(SCROLL_ON_OUTPUT_SETTING_KEY)
 
-    // updates the colors
-    //
-    // Note: to follow the deprecation scheme, we try first the _rgba variants as vte < 0.38
-    //       already has the non-rgba-suffixed one but it was working with GdkColor back then,
-    //       and passing a GdkRGBA would raise an exception
-    const fgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY))
-    const bgColor = Convenience.parseRgbaColor(this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY))
+    // updates the colors    
+    if (!this._settings.get_boolean(USE_DEFAULT_COLORS_SETTING_KEY)) {
+      const bgColor = this._settings.get_string(COLOR_BACKGROUND_SETTING_KEY)
+      const fgColor = this._settings.get_string(COLOR_FOREGROUND_SETTING_KEY)
+      const paletteName = this._settings.get_string(COLOR_PALETTE_NAME_SETTINGS_KEY)
+      const palette = Convenience.Palettes[paletteName]
 
-    // if (tab.terminal.set_color_foreground_rgba) { // removed in vte 0.38
-    //   tab.terminal.set_color_foreground_rgba(fgColor)
-    // } else {
-    //   tab.terminal.set_color_foreground(fgColor)
-    // }
-
-    // // Note: by applying the transparency only to the background colour of the terminal, the text stays
-    // //       readable in any case
-    // bgColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha
-
-    // if (tab.terminal.set_color_background_rgba) { // removed in vte 0.38
-    //   tab.terminal.set_color_background_rgba(bgColor)
-    // } else {
-    //   tab.terminal.set_color_background(bgColor)
-    // }
-
+      const backgroundColor =  Convenience.parseRgbaColor(bgColor)
+      backgroundColor.alpha = isTransparent ? transparencyLevel : bgColor.alpha
+      tab.terminal.set_colors(Convenience.parseRgbaColor(fgColor), backgroundColor, palette);
+    } else {
+      tab.terminal.set_default_colors ()
+    }
+    
     tab.terminal.set_scroll_on_output(scrollOnOutput)
-    tab.container.set_policy(Gtk.PolicyType.AUTOMATIC,
-      hasScrollbar ? Gtk.PolicyType.ALWAYS : Gtk.PolicyType.NEVER)
+    tab.container.set_policy(Gtk.PolicyType.AUTOMATIC, hasScrollbar ? Gtk.PolicyType.ALWAYS : Gtk.PolicyType.NEVER)
   },
 
-  _updateTabsSupport: function () {
+  _updateTabsSupport () {
     if (this._settings.get_boolean(ENABLE_TABS_SETTING_KEY)) {
       this._isTabsEnabled = true
       this.notebook.set_show_tabs(true)
