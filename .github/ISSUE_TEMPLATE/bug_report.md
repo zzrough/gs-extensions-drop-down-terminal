@@ -27,6 +27,7 @@ If applicable, add screenshots to help explain your problem.
  - Distro: [e.g. Ubuntu]
  - Gnome-version
  - Extension-version [e.g. 22]
+ - Xorg or wayland?
 
 **Additional context**
 Add any other context about the problem here.
