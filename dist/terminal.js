@@ -429,7 +429,7 @@ const DropDownTerminalX = new Lang.Class({
 
       const host = row.data;
 
-      const tab = _this3.addTab(['ssh', host, '-v']);
+      const tab = _this3.addTab(['ssh', host]);
 
       _this3.Focus();
     });
