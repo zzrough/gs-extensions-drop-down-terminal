@@ -423,7 +423,7 @@ const DropDownTerminalX = new Lang.Class({
     list.connect('row-activated', (widget, row) => {
       popover.popdown() // TODO: Dispose any related data
       const host = row.data
-      const tab = this.addTab(['ssh', host, '-v'])
+      const tab = this.addTab(['ssh', host])
       this.Focus()
     })
 
