@@ -18,6 +18,9 @@
 const Lang = imports.lang;
 const MainLoop = imports.mainloop;
 
+imports.gi.versions.Gdk = "3.0";
+imports.gi.versions.Gtk = "3.0";
+
 const Gdk = imports.gi.Gdk;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
