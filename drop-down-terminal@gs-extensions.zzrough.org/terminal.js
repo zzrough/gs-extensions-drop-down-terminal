@@ -317,7 +317,7 @@ const DropDownTerminal = new Lang.Class({
         }
 
         terminal.set_encoding("UTF-8");
-        terminal.connect("eof", Lang.bind(this, this._forkUserShell));
+        terminal.connect("eof", Lang.bind(this, this.Toggle));
         terminal.connect("child-exited", Lang.bind(this, this._forkUserShell));
         terminal.connect("button-release-event", Lang.bind(this, this._terminalButtonReleased));
         terminal.connect("button-press-event", Lang.bind(this, this._terminalButtonPressed));
