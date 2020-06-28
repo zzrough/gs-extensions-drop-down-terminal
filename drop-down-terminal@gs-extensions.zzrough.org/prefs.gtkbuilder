@@ -445,7 +445,8 @@
                             <property name="can_focus">True</property>
                             <property name="vexpand">True</property>
                             <property name="label" translatable="yes">&lt;small&gt;This key is the one above "Tab" on many keyboard layouts, like good old &lt;a href="https://en.wikipedia.org/wiki/Quake_%28video_game%29" title="A bit of history"&gt;Quake&lt;/a&gt;.
-Tip: Alt + this key allows to cycle between the windows of an application.&lt;/small&gt;</property>
+Tips: Alt + this key allows to cycle between the windows of an application.
+Press Ctrl+Shift+U, type '5e' and press enter to write a circumflex ('^').&lt;/small&gt;</property>
                             <property name="use_markup">True</property>
                             <property name="xalign">0</property>
                           </object>
