@@ -260,7 +260,7 @@ const DropDownTerminalSettingsWidget = new GObject.Class({
     },
 
     _updateOtherShortcutRow: function(accel) {
-        let [key, mods] = (accel !== null) ? Gtk.accelerator_parse(accel) : [0, 0];
+        let [key, mods] = (accel !== null && accel !== undefined) ? Gtk.accelerator_parse(accel) : [0, 0];
         this._otherShortcutListStore.set(this._otherShortcutRowIter, [SHORTCUT_COLUMN_KEY, SHORTCUT_COLUMN_MODS], [key, mods]);
     },
 
