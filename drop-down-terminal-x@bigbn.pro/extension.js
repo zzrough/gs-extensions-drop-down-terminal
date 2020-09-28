@@ -37,7 +37,6 @@ const Shell = imports.gi.Shell
 
 const Main = imports.ui.main
 const ModalDialog = imports.ui.modalDialog
-const Tweener = imports.ui.tweener
 
 const _ = Gettext.gettext
 const Config = imports.misc.config
@@ -505,10 +504,10 @@ const DropDownTerminalXExtension = new Lang.Class({
             break
         }
 
-        Tweener.addTween(this._windowActor, {
+        moveActor(this._windowActor, {
           x: targetX,
           y: targetY,
-          time: animationTime,
+          duration: animationTime,
           transition: 'easeInExpo',
           onUpdate: Lang.bind(this, this._updateClip),
           onComplete: Lang.bind(this, function () {
@@ -733,12 +732,12 @@ const DropDownTerminalXExtension = new Lang.Class({
             break
         }
         
-        Tweener.addTween(this._windowActor, {
+        moveActor(this._windowActor, {
           y: this._windowY,
           x: this._windowX,
           onUpdate: Lang.bind(this, this._updateClip),
           scale_y: 1.0,
-          time: this._openingAnimationTimeMillis / 1000.0,
+          duration: this._openingAnimationTimeMillis / 1000.0,
           transition: 'easeOutExpo',
           onComplete: completeOpening
         })
