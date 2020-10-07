@@ -33,7 +33,6 @@ const Shell = imports.gi.Shell;
 
 const Main = imports.ui.main;
 const ModalDialog = imports.ui.modalDialog;
-const Tweener = imports.ui.tweener;
 
 const _ = Gettext.gettext;
 const Config = imports.misc.config;
@@ -436,22 +435,23 @@ const DropDownTerminalExtension = new Lang.Class({
                         break;
                 }
 
-                Tweener.addTween(this._windowActor, {
+                this._windowActor.ease({
                     x: targetX,
                     y: targetY,
+                    opacity: 0,
                     time: animationTime,
-                    transition: "easeInExpo",
+                    transition: Clutter.AnimationMode.EASE_OUT_QUAD,
                     onUpdate: Lang.bind(this, this._updateClip),
                     onComplete: Lang.bind(this, function() {
-                                    // unregisters the ctrl-alt-tab group
-                                    Main.ctrlAltTabManager.removeGroup(this._windowActor);
+                        // unregisters the ctrl-alt-tab group
+                        Main.ctrlAltTabManager.removeGroup(this._windowActor);
 
-                                    // clears the window actor ref since we use it to know the window visibility
-                                    this._windowActor = null;
+                        // clears the window actor ref since we use it to know the window visibility
+                        this._windowActor = null;
 
-                                    // requests toggling asynchronously
-                                    this._busProxy.ToggleRemote();
-                                })
+                        // requests toggling asynchronously
+                        this._busProxy.ToggleRemote();
+                    })
                 });
             } else {
                 this._busProxy.ToggleRemote();
@@ -646,13 +646,14 @@ const DropDownTerminalExtension = new Lang.Class({
                         break;
                 }
 
-                Tweener.addTween(this._windowActor, {
+                this._windowActor.ease({
                     y: this._windowY,
                     x: this._windowX,
-                    onUpdate: Lang.bind(this, this._updateClip),
                     scale_y: 1.0,
+                    opacity: 255,
                     time: this._openingAnimationTimeMillis / 1000.0,
-                    transition: "easeOutExpo",
+                    transition: Clutter.AnimationMode.EASE_IN_QUAD,
+                    onUpdate: Lang.bind(this, this._updateClip),
                     onComplete: completeOpening
                 });
             }));
