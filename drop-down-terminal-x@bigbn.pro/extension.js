@@ -37,7 +37,6 @@ const Shell = imports.gi.Shell
 
 const Main = imports.ui.main
 const ModalDialog = imports.ui.modalDialog
-const Tweener = imports.ui.tweener
 
 const _ = Gettext.gettext
 const Config = imports.misc.config
@@ -46,6 +45,18 @@ const ExtensionUtils = imports.misc.extensionUtils
 const Me = imports.misc.extensionUtils.getCurrentExtension()
 const Util = imports.misc.util
 const Convenience = Me.imports.convenience
+
+let Tweener = null
+try {
+  Tweener = imports.ui.tweener
+} catch(e) {
+  log('Unable to load Tweener. Tweener has been deprecated since 3.38 using _windowActor.ease instead')
+}
+
+const TRANSITION = {
+  EASE_OUT: Symbol('transition'), 
+  EASE_IN: Symbol('transition')
+}
 
 // constants
 const ANIMATION_CONFLICT_EXTENSION_UUIDS = [
@@ -140,36 +151,6 @@ const DropDownTerminalXIface =
 // we should use a delegate to avoid the GType crashes (https://bugzilla.gnome.org/show_bug.cgi?id=688973)
 // but we can't since the Clutter.Effect is abstract, so let's add a crappy hack there
 if (window.__DDTInstance === undefined) window.__DDTInstance = 1
-
-const SouthBorderEffect = new Lang.Class({
-  Name: 'SouthBorderEffect-' + window.__DDTInstance++,
-  Extends: Clutter.Effect,
-
-  _init () {
-    this.parent()
-    this._color = new Cogl.Color()
-    this._color.init_from_4ub(0x1c, 0x1f, 0x1f, 0xff)
-    this._width = 1
-  },
-
-  vfunc_paint (paintContext) {
-    const actor = this.get_actor()
-    if (paintContext.get_framebuffer) {
-      const framebuffer = paintContext.get_framebuffer();
-      const coglContext = framebuffer.get_context();      
-      const alloc = actor.get_allocation_box()
-      actor.continue_paint(paintContext)
-      let pipeline = new Cogl.Pipeline(coglContext);
-      pipeline.set_color(this._color)
-      framebuffer.draw_rectangle(pipeline, 0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width)
-    } else {
-      const geom = actor.get_allocation_geometry();
-      actor.continue_paint();
-      Cogl.set_source_color(this._color);
-      Cogl.rectangle(0, geom.height, geom.width, geom.height - this._width);
-    }    
-  }
-})
 
 // missing dependencies dialog
 const MissingVteDialog = new Lang.Class({
@@ -505,26 +486,29 @@ const DropDownTerminalXExtension = new Lang.Class({
             break
         }
 
-        Tweener.addTween(this._windowActor, {
-          x: targetX,
-          y: targetY,
-          time: animationTime,
-          transition: 'easeInExpo',
-          onUpdate: Lang.bind(this, this._updateClip),
-          onComplete: Lang.bind(this, function () {
-            // unregisters the ctrl-alt-tab group
+        this._ease(this._windowActor, targetX, targetY, animationTime, TRANSITION.EASE_IN, {
+          opacity: 0,
+          onUpdate: () => this._updateClip(),
+          onComplete: () => {
             Main.ctrlAltTabManager.removeGroup(this._windowActor)
-
-            // clears the window actor ref since we use it to know the window visibility
             this._windowActor = null
-
-            // requests toggling asynchronously
             this._busProxy.ToggleRemote()
-          })
+          }
         })
       } else {
         this._busProxy.ToggleRemote()
       }
+    }
+  },
+
+
+  _ease (actor, x, y, time, transitionMode, { scaleY, opacity, onComplete, onUpdate}) {
+    if (Tweener) {
+      const transition = transitionMode === TRANSITION.EASE_IN ? 'easeInExpo' : 'easeOutExpo'
+      Tweener.addTween(actor, { x, y, time, transition, onComplete, onUpdate, scale_y: scaleY })
+    } else {
+      const transition = transitionMode === TRANSITION.EASE_IN ? Clutter.AnimationMode.EASE_IN_QUAD : Clutter.AnimationMode.EASE_OUT_QUAD
+      this._windowActor.ease({ x, y, transition, opacity, onUpdate, onComplete, scale_y: scaleY })
     }
   },
 
@@ -709,14 +693,12 @@ const DropDownTerminalXExtension = new Lang.Class({
       //         Tonic: I added a workaround by making sure at least one pixel is on the screen.
       this._windowActor.opacity = 0
 
-      Mainloop.idle_add(Lang.bind(this, function () {
+      Mainloop.idle_add(() => {
         const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY)
-
         this._windowActor.opacity = 255
 
         // Workaround animation bug by making sure the window is partially on screen.
         const workaround = 1
-
         switch (terminalPosition) {
           case LEFT_EDGE:
             this._windowActor.set_position(this._windowX - this._windowActor.width + workaround, this._windowY)
@@ -732,17 +714,15 @@ const DropDownTerminalXExtension = new Lang.Class({
             this._windowActor.set_position(this._windowX, this._windowY - this._windowActor.height + workaround)
             break
         }
-        
-        Tweener.addTween(this._windowActor, {
-          y: this._windowY,
-          x: this._windowX,
-          onUpdate: Lang.bind(this, this._updateClip),
-          scale_y: 1.0,
-          time: this._openingAnimationTimeMillis / 1000.0,
-          transition: 'easeOutExpo',
-          onComplete: completeOpening
-        })
-      }))
+
+        const time = this._openingAnimationTimeMillis / 1000.0
+        this._ease(this._windowActor, this._windowX, this._windowY, time, TRANSITION.EASE_OUT, {
+          scaleY: 1.0,
+          opacity: 255,
+          onUpdate: () => this._updateClip(),
+          onComplete: () => completeOpening()
+        })      
+      })
     } else {
       completeOpening()
     }
@@ -891,8 +871,7 @@ const DropDownTerminalXExtension = new Lang.Class({
 
   _setWindowActor (actor) {
     // adds a gray border on south of the actor to mimick the shell borders
-    actor.clear_effects()
-    actor.add_effect(new SouthBorderEffect())
+    actor.clear_effects()   
 
     // sets a distinctive name for the actor
     actor.set_name(TERMINAL_WINDOW_ACTOR_NAME)
