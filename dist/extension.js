@@ -45,15 +45,26 @@ const St = imports.gi.St;
 const Shell = imports.gi.Shell;
 const Main = imports.ui.main;
 const ModalDialog = imports.ui.modalDialog;
-const Tweener = imports.ui.tweener;
 const _ = Gettext.gettext;
 const Config = imports.misc.config;
 const ExtensionSystem = imports.ui.extensionSystem;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Util = imports.misc.util;
-const Convenience = Me.imports.convenience; // constants
+const Convenience = Me.imports.convenience;
+let Tweener = null;
 
+try {
+  Tweener = imports.ui.tweener;
+} catch (e) {
+  log('Unable to load Tweener. Tweener has been deprecated since 3.38 using _windowActor.ease instead');
+}
+
+const TRANSITION = {
+  EASE_OUT: Symbol('transition'),
+  EASE_IN: Symbol('transition') // constants
+
+};
 const ANIMATION_CONFLICT_EXTENSION_UUIDS = ['window-open-animation-rotate-in@mengzhuo.org', 'window-open-animation-slide-in@mengzhuo.org', 'window-open-animation-scale-in@mengzhuo.org'];
 const TERMINAL_WINDOW_ACTOR_NAME = 'dropDownTerminalXWindow';
 const TERMINAL_WINDOW_WM_CLASS = 'DropDownTerminalXWindow';
@@ -101,37 +112,7 @@ const DropDownTerminalXIface = "<node>                                          
 // we should use a delegate to avoid the GType crashes (https://bugzilla.gnome.org/show_bug.cgi?id=688973)
 // but we can't since the Clutter.Effect is abstract, so let's add a crappy hack there
 
-if (window.__DDTInstance === undefined) window.__DDTInstance = 1;
-const SouthBorderEffect = new Lang.Class({
-  Name: 'SouthBorderEffect-' + window.__DDTInstance++,
-  Extends: Clutter.Effect,
-  _init: function () {
-    this.parent();
-    this._color = new Cogl.Color();
-
-    this._color.init_from_4ub(0x1c, 0x1f, 0x1f, 0xff);
-
-    this._width = 1;
-  },
-  vfunc_paint: function (paintContext) {
-    const actor = this.get_actor();
-
-    if (paintContext.get_framebuffer) {
-      const framebuffer = paintContext.get_framebuffer();
-      const coglContext = framebuffer.get_context();
-      const alloc = actor.get_allocation_box();
-      actor.continue_paint(paintContext);
-      let pipeline = new Cogl.Pipeline(coglContext);
-      pipeline.set_color(this._color);
-      framebuffer.draw_rectangle(pipeline, 0, alloc.get_height(), alloc.get_width(), alloc.get_height() - this._width);
-    } else {
-      const geom = actor.get_allocation_geometry();
-      actor.continue_paint();
-      Cogl.set_source_color(this._color);
-      Cogl.rectangle(0, geom.height, geom.width, geom.height - this._width);
-    }
-  }
-}); // missing dependencies dialog
+if (window.__DDTInstance === undefined) window.__DDTInstance = 1; // missing dependencies dialog
 
 const MissingVteDialog = new Lang.Class({
   Name: 'MissingDepsDialog',
@@ -431,6 +412,8 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._display = null;
   },
   _toggle: function () {
+    var _this3 = this;
+
     console.log('Asked to toggle'); // checks if there is not an instance of a previous child, mainly because it survived a shell restart
     // (the shell reexec itself thus not letting the extensions a chance to properly shut down)
 
@@ -483,24 +466,52 @@ const DropDownTerminalXExtension = new Lang.Class({
             break;
         }
 
-        Tweener.addTween(this._windowActor, {
-          x: targetX,
-          y: targetY,
-          time: animationTime,
-          transition: 'easeInExpo',
-          onUpdate: Lang.bind(this, this._updateClip),
-          onComplete: Lang.bind(this, function () {
-            // unregisters the ctrl-alt-tab group
-            Main.ctrlAltTabManager.removeGroup(this._windowActor); // clears the window actor ref since we use it to know the window visibility
+        this._ease(this._windowActor, targetX, targetY, animationTime, TRANSITION.EASE_IN, {
+          opacity: 0,
+          onUpdate: function () {
+            return _this3._updateClip();
+          },
+          onComplete: function () {
+            Main.ctrlAltTabManager.removeGroup(_this3._windowActor);
+            _this3._windowActor = null;
 
-            this._windowActor = null; // requests toggling asynchronously
-
-            this._busProxy.ToggleRemote();
-          })
+            _this3._busProxy.ToggleRemote();
+          }
         });
       } else {
         this._busProxy.ToggleRemote();
       }
+    }
+  },
+  _ease: function (actor, x, y, time, transitionMode, _ref13) {
+    let scaleY = _ref13.scaleY,
+        opacity = _ref13.opacity,
+        onComplete = _ref13.onComplete,
+        onUpdate = _ref13.onUpdate;
+
+    if (Tweener) {
+      const transition = transitionMode === TRANSITION.EASE_IN ? 'easeInExpo' : 'easeOutExpo';
+      Tweener.addTween(actor, {
+        x: x,
+        y: y,
+        time: time,
+        transition: transition,
+        onComplete: onComplete,
+        onUpdate: onUpdate,
+        scale_y: scaleY
+      });
+    } else {
+      const transition = transitionMode === TRANSITION.EASE_IN ? Clutter.AnimationMode.EASE_IN_QUAD : Clutter.AnimationMode.EASE_OUT_QUAD;
+
+      this._windowActor.ease({
+        x: x,
+        y: y,
+        transition: transition,
+        opacity: opacity,
+        onUpdate: onUpdate,
+        onComplete: onComplete,
+        scale_y: scaleY
+      });
     }
   },
   _panelScrolled: function (actor, event) {
@@ -667,6 +678,8 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._setWindowActor(window.get_compositor_private());
   },
   _windowMapped: function (wm, actor) {
+    var _this4 = this;
+
     // filter out the actor using its name
     if (String(actor.get_name()) !== TERMINAL_WINDOW_ACTOR_NAME) {
       return;
@@ -701,46 +714,49 @@ const DropDownTerminalXExtension = new Lang.Class({
       //
       //         Tonic: I added a workaround by making sure at least one pixel is on the screen.
       this._windowActor.opacity = 0;
-      Mainloop.idle_add(Lang.bind(this, function () {
-        const terminalPosition = this._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
+      Mainloop.idle_add(function () {
+        const terminalPosition = _this4._settings.get_enum(TERMINAL_POSITION_SETTING_KEY);
 
-        this._windowActor.opacity = 255; // Workaround animation bug by making sure the window is partially on screen.
+        _this4._windowActor.opacity = 255; // Workaround animation bug by making sure the window is partially on screen.
 
         const workaround = 1;
 
         switch (terminalPosition) {
           case LEFT_EDGE:
-            this._windowActor.set_position(this._windowX - this._windowActor.width + workaround, this._windowY);
+            _this4._windowActor.set_position(_this4._windowX - _this4._windowActor.width + workaround, _this4._windowY);
 
             break;
 
           case RIGHT_EDGE:
-            this._windowActor.set_position(this._windowX + this._windowActor.width - workaround, this._windowY);
+            _this4._windowActor.set_position(_this4._windowX + _this4._windowActor.width - workaround, _this4._windowY);
 
             break;
 
           case BOTTOM_EDGE:
-            this._windowActor.set_position(this._windowX, this._windowY + this._windowActor.height - workaround);
+            _this4._windowActor.set_position(_this4._windowX, _this4._windowY + _this4._windowActor.height - workaround);
 
             break;
 
           default:
           case TOP_EDGE:
-            this._windowActor.set_position(this._windowX, this._windowY - this._windowActor.height + workaround);
+            _this4._windowActor.set_position(_this4._windowX, _this4._windowY - _this4._windowActor.height + workaround);
 
             break;
         }
 
-        Tweener.addTween(this._windowActor, {
-          y: this._windowY,
-          x: this._windowX,
-          onUpdate: Lang.bind(this, this._updateClip),
-          scale_y: 1.0,
-          time: this._openingAnimationTimeMillis / 1000.0,
-          transition: 'easeOutExpo',
-          onComplete: completeOpening
+        const time = _this4._openingAnimationTimeMillis / 1000.0;
+
+        _this4._ease(_this4._windowActor, _this4._windowX, _this4._windowY, time, TRANSITION.EASE_OUT, {
+          scaleY: 1.0,
+          opacity: 255,
+          onUpdate: function () {
+            return _this4._updateClip();
+          },
+          onComplete: function () {
+            return completeOpening();
+          }
         });
-      }));
+      });
     } else {
       completeOpening();
     }
@@ -814,16 +830,16 @@ const DropDownTerminalXExtension = new Lang.Class({
     this._forgetChild();
   },
   _busNameAppeared: function (connection, name, nameOwner) {
-    var _this3 = this;
+    var _this5 = this;
 
     // creates a dbus proxy on the interface exported by the child process
     const DropDownTerminalXDBusProxy = Gio.DBusProxy.makeProxyWrapper(DropDownTerminalXIface);
     this._busProxy = new DropDownTerminalXDBusProxy(Gio.DBus.session, 'pro.bigbn.DropDownTerminalX', '/pro/bigbn/DropDownTerminalX'); // connects to the Failure signal to report errors
 
-    this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, _ref13) {
-      let _ref14 = _slicedToArray(_ref13, 2),
-          name = _ref14[0],
-          cause = _ref14[1];
+    this._busProxy.connectSignal('Failure', Lang.bind(this, function (proxy, sender, _ref14) {
+      let _ref15 = _slicedToArray(_ref14, 2),
+          name = _ref15[0],
+          cause = _ref15[1];
 
       console.log('failure reported by the terminal: ' + cause);
 
@@ -834,36 +850,36 @@ const DropDownTerminalXExtension = new Lang.Class({
       }
     }));
 
-    this._busProxy.connectSignal('VisibilityStateChanged', function (proxy, sender, _ref15) {
-      let _ref16 = _slicedToArray(_ref15, 1),
-          visible = _ref16[0];
+    this._busProxy.connectSignal('VisibilityStateChanged', function (proxy, sender, _ref16) {
+      let _ref17 = _slicedToArray(_ref16, 1),
+          visible = _ref17[0];
 
-      _this3.visible = visible;
+      _this5.visible = visible;
 
       if (visible) {
-        _this3.temporaryBindings.forEach(function (_ref17) {
-          let _ref18 = _slicedToArray(_ref17, 2),
-              key = _ref18[0],
-              action = _ref18[1];
+        _this5.temporaryBindings.forEach(function (_ref18) {
+          let _ref19 = _slicedToArray(_ref18, 2),
+              key = _ref19[0],
+              action = _ref19[1];
 
-          return _this3._bindShortcut(key, action);
+          return _this5._bindShortcut(key, action);
         });
 
-        _this3._busProxy && _this3._busProxy.ToggleFullscreenRemote(_this3.fullscreenEnabled);
+        _this5._busProxy && _this5._busProxy.ToggleFullscreenRemote(_this5.fullscreenEnabled);
       } else {
-        _this3.temporaryBindings.forEach(function (_ref19) {
-          let _ref20 = _slicedToArray(_ref19, 2),
-              key = _ref20[0],
-              action = _ref20[1];
+        _this5.temporaryBindings.forEach(function (_ref20) {
+          let _ref21 = _slicedToArray(_ref20, 2),
+              key = _ref21[0],
+              action = _ref21[1];
 
-          return _this3._unbindShortcut(key);
+          return _this5._unbindShortcut(key);
         });
       }
     });
 
-    this._busProxy.connectSignal('SettingsRequested', function (proxy, sender, _ref21) {
-      let _ref22 = _slicedToArray(_ref21, 1),
-          visible = _ref22[0];
+    this._busProxy.connectSignal('SettingsRequested', function (proxy, sender, _ref22) {
+      let _ref23 = _slicedToArray(_ref22, 1),
+          visible = _ref23[0];
 
       Util.spawn(['gnome-shell-extension-prefs', Me.metadata.uuid]);
     }); // applies the geometry if applicable
@@ -896,8 +912,7 @@ const DropDownTerminalXExtension = new Lang.Class({
   },
   _setWindowActor: function (actor) {
     // adds a gray border on south of the actor to mimick the shell borders
-    actor.clear_effects();
-    actor.add_effect(new SouthBorderEffect()); // sets a distinctive name for the actor
+    actor.clear_effects(); // sets a distinctive name for the actor
 
     actor.set_name(TERMINAL_WINDOW_ACTOR_NAME); // keeps the ref
 
