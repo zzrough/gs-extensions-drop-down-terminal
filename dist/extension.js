@@ -502,8 +502,7 @@ const DropDownTerminalXExtension = new Lang.Class({
       });
     } else {
       const transition = transitionMode === TRANSITION.EASE_IN ? Clutter.AnimationMode.EASE_IN_QUAD : Clutter.AnimationMode.EASE_OUT_QUAD;
-
-      this._windowActor.ease({
+      actor.ease({
         x: x,
         y: y,
         transition: transition,
