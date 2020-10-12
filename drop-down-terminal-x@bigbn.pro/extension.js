@@ -508,7 +508,7 @@ const DropDownTerminalXExtension = new Lang.Class({
       Tweener.addTween(actor, { x, y, time, transition, onComplete, onUpdate, scale_y: scaleY })
     } else {
       const transition = transitionMode === TRANSITION.EASE_IN ? Clutter.AnimationMode.EASE_IN_QUAD : Clutter.AnimationMode.EASE_OUT_QUAD
-      this._windowActor.ease({ x, y, transition, opacity, onUpdate, onComplete, scale_y: scaleY })
+      actor.ease({ x, y, transition, opacity, onUpdate, onComplete, scale_y: scaleY })
     }
   },
 
