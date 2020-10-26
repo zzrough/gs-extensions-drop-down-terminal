@@ -33,7 +33,7 @@ const Shell = imports.gi.Shell;
 
 const Main = imports.ui.main;
 const ModalDialog = imports.ui.modalDialog;
-const Tweener = imports.ui.tweener;
+const Tweener = imports.tweener.tweener;
 
 const _ = Gettext.gettext;
 const Config = imports.misc.config;
