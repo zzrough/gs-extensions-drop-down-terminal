@@ -446,14 +446,16 @@ const DropDownTerminalX = new Lang.Class({
     this.tabs.forEach(Lang.bind(this, cb));
   },
   _addUriMatchers: function (tab) {
+    var _this4 = this;
+
     // adds the uri matchers
     this._uriHandlingPropertiesbyTag = {};
-    UriHandlingProperties.forEach(Lang.bind(this, function (hp) {
-      const regex = GLib.Regex.new(hp.pattern, GLib.RegexCompileFlags.CASELESS | GLib.RegexCompileFlags.OPTIMIZE, 0);
-      const tag = tab.terminal.match_add_gregex(regex, 0);
+    UriHandlingProperties.forEach(function (hp) {
+      const regex = new Vte.Regex(hp.pattern, hp.pattern.length, Vte.REGEX_FLAGS_DEFAULT);
+      const tag = tab.terminal.match_add_regex(regex, 0);
       tab.terminal.match_set_cursor_type(tag, Gdk.CursorType.HAND2);
-      this._uriHandlingPropertiesbyTag[tag] = hp;
-    }));
+      _this4._uriHandlingPropertiesbyTag[tag] = hp;
+    });
   },
   _getTabName: function (tabNumber) {
     let tabLabel = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'shell';
@@ -496,7 +498,7 @@ const DropDownTerminalX = new Lang.Class({
     }).join(' ')));
   },
   addTab: function () {
-    var _this4 = this;
+    var _this5 = this;
 
     let commandArgs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 
@@ -519,7 +521,7 @@ const DropDownTerminalX = new Lang.Class({
     const form = this._buildRenameForm(function (newName) {
       tab.name = newName;
 
-      _this4._changeTabLabel(tab);
+      _this5._changeTabLabel(tab);
 
       tab.popover.popdown();
     });
@@ -533,7 +535,7 @@ const DropDownTerminalX = new Lang.Class({
     this.notebook.append_page(tab.container, eventBox);
     this.notebook.set_tab_reorderable(tab.container, true);
     tab.terminal.connect('window-title-changed', function () {
-      return _this4._changeTabLabel(tab);
+      return _this5._changeTabLabel(tab);
     }); // CLose tab on middle mouse button click
 
     eventBox.connect('button-press-event', function (widget, event) {
@@ -543,11 +545,11 @@ const DropDownTerminalX = new Lang.Class({
             button = _event$get_button2[1];
 
       if (button === Gdk.BUTTON_MIDDLE) {
-        if (_this4.notebook.get_n_pages() === 1) return _this4._forkUserShell(tab.terminal);
+        if (_this5.notebook.get_n_pages() === 1) return _this5._forkUserShell(tab.terminal);
 
-        const pageNum = _this4.notebook.page_num(tab.container);
+        const pageNum = _this5.notebook.page_num(tab.container);
 
-        _this4._removeTab(pageNum);
+        _this5._removeTab(pageNum);
       }
 
       if (event.get_event_type() === Gdk.EventType.DOUBLE_BUTTON_PRESS || button === Gdk.BUTTON_SECONDARY) {
@@ -590,16 +592,16 @@ const DropDownTerminalX = new Lang.Class({
     return workingDir.replace(new RegExp(/file:\/\/.*?\/(.*)/g), '/$1');
   },
   _createTerminalTab: function () {
-    var _this5 = this;
+    var _this6 = this;
 
     const terminal = this._createTerminalView();
 
     const onExit = terminal.connect('child-exited', function () {
-      if (_this5.notebook.get_n_pages() === 1) return _this5._forkUserShell(terminal);
+      if (_this6.notebook.get_n_pages() === 1) return _this6._forkUserShell(terminal);
 
-      const pageNum = _this5.notebook.get_current_page();
+      const pageNum = _this6.notebook.get_current_page();
 
-      _this5._removeTab(pageNum);
+      _this6._removeTab(pageNum);
     });
     const onRelease = terminal.connect('button-release-event', this._terminalButtonReleased.bind(this));
     const onPress = terminal.connect('button-press-event', this._terminalButtonPressed.bind(this));
@@ -625,7 +627,7 @@ const DropDownTerminalX = new Lang.Class({
     };
   },
   SetGeometry: function (x, y, width, height) {
-    var _this6 = this;
+    var _this7 = this;
 
     const _this$_window$get_pos = this._window.get_position(),
           _this$_window$get_pos2 = _slicedToArray(_this$_window$get_pos, 2),
@@ -638,8 +640,8 @@ const DropDownTerminalX = new Lang.Class({
           currentHeight = _this$_window$get_siz6[1];
 
     Convenience.runInGdk(function () {
-      if (x !== currentX || y !== currentY) _this6._window.move(x, y);
-      if (width !== currentWidth || height !== currentHeight) _this6._window.resize(width, height);
+      if (x !== currentX || y !== currentY) _this7._window.move(x, y);
+      if (width !== currentWidth || height !== currentHeight) _this7._window.resize(width, height);
     });
   },
   NewTab: function () {
@@ -679,20 +681,20 @@ const DropDownTerminalX = new Lang.Class({
     terminal.set_font_scale(terminal.get_font_scale() - 0.1);
   },
   Toggle: function () {
-    var _this7 = this;
+    var _this8 = this;
 
     // update the window visibility in the UI thread since this callback happens in the gdbus thread
     Convenience.runInGdk(function () {
-      if (_this7._window.visible) {
-        _this7._window.hide();
+      if (_this8._window.visible) {
+        _this8._window.hide();
 
-        _this7._window.unfullscreen();
+        _this8._window.unfullscreen();
 
-        _this7._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this7._window.visible]));
+        _this8._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this8._window.visible]));
       } else {
-        _this7._window.show();
+        _this8._window.show();
 
-        _this7._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this7._window.visible]));
+        _this8._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [_this8._window.visible]));
       }
 
       return false;
@@ -701,11 +703,11 @@ const DropDownTerminalX = new Lang.Class({
   // I'm unable to implement fullscreen without issues, so this option called 'maximize' in UI
   // This is not full screen but anyway better than nothing
   ToggleFullscreen: function (enable) {
-    var _this8 = this;
+    var _this9 = this;
 
     if (this._window.visible) {
       Convenience.runInGdk(function () {
-        if (enable) _this8._window.fullscreen();else _this8._window.unfullscreen();
+        if (enable) _this9._window.fullscreen();else _this9._window.unfullscreen();
       });
     }
   },
@@ -812,7 +814,7 @@ const DropDownTerminalX = new Lang.Class({
     return removedTab;
   },
   _createWindow: function () {
-    var _this9 = this;
+    var _this10 = this;
 
     const screen = Gdk.Screen.get_default();
     const window = new Gtk.Window({
@@ -839,13 +841,13 @@ const DropDownTerminalX = new Lang.Class({
     window.connect('delete-event', function () {
       window.hide();
 
-      _this9._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
+      _this10._bus.emit_signal('VisibilityStateChanged', GLib.Variant.new('(b)', [window.visible]));
 
       return true;
     });
     window.connect('destroy', Gtk.main_quit);
     window.connect('focus-out-event', function () {
-      if (_this9._isHideOnUnfocusEnabled) _this9._jentlyHide();
+      if (_this10._isHideOnUnfocusEnabled) _this10._jentlyHide();
       return true;
     }); // window.connect('window-state-event', (widget, event) => {
     //   log('-------')
@@ -860,7 +862,7 @@ const DropDownTerminalX = new Lang.Class({
     // })
 
     window.connect('key-press-event', function (widget, event, user_data) {
-      if (_this9._isHideOnEscapeEnabled) {
+      if (_this10._isHideOnEscapeEnabled) {
         const _event$get_keyval = event.get_keyval(),
               _event$get_keyval2 = _slicedToArray(_event$get_keyval, 2),
               success = _event$get_keyval2[0],
@@ -869,35 +871,35 @@ const DropDownTerminalX = new Lang.Class({
 
         const keyname = Gdk.keyval_name(keyval); // string keyname
 
-        if (keyname === 'Escape') _this9._jentlyHide();
+        if (keyname === 'Escape') _this10._jentlyHide();
       }
     });
     return window;
   },
   _createPopupAndActions: function (tab) {
-    var _this10 = this;
+    var _this11 = this;
 
     // get some shortcuts
     const group = tab.actionGroup; // creates the actions and fills the action group
 
     this._createAction('Copy', 'Copy', Gtk.STOCK_COPY, '<shift><control>C', group, function () {
-      const terminal = _this10._getCurrentTerminal();
+      const terminal = _this11._getCurrentTerminal();
 
       terminal.copy_clipboard();
     });
 
     this._createAction('Paste', 'Paste', Gtk.STOCK_PASTE, '<shift><control>V', group, function () {
-      const terminal = _this10._getCurrentTerminal();
+      const terminal = _this11._getCurrentTerminal();
 
       terminal.paste_clipboard();
     });
 
     this._createAction('Close', 'Close', Gtk.STOCK_STOP, '<shift><control>D', group, function () {
-      if (_this10.notebook.get_n_pages() === 1) return _this10._forkUserShell(tab.terminal);
+      if (_this11.notebook.get_n_pages() === 1) return _this11._forkUserShell(tab.terminal);
 
-      const pageNum = _this10.notebook.page_num(tab.container);
+      const pageNum = _this11.notebook.page_num(tab.container);
 
-      _this10._removeTab(pageNum);
+      _this11._removeTab(pageNum);
     }); // creates the UI manager
 
 
@@ -1123,18 +1125,7 @@ const DropDownTerminalX = new Lang.Class({
 
 
     if (is_button && button == Gdk.BUTTON_PRIMARY && state & Gdk.ModifierType.CONTROL_MASK) {
-      const _event$get_coords = event.get_coords(),
-            _event$get_coords2 = _slicedToArray(_event$get_coords, 3),
-            preserved = _event$get_coords2[0],
-            x = _event$get_coords2[1],
-            y = _event$get_coords2[2];
-
-      const border = new Gtk.Border();
-      terminal.style_get_property('inner-border', border);
-      const column = (x - border.left) / terminal.get_char_width();
-      const row = (y - border.top) / terminal.get_char_height();
-
-      const _terminal$match_check = terminal.match_check(column, row),
+      const _terminal$match_check = terminal.match_check_event(event),
             _terminal$match_check2 = _slicedToArray(_terminal$match_check, 2),
             match = _terminal$match_check2[0],
             tag = _terminal$match_check2[1];
@@ -1167,7 +1158,7 @@ const DropDownTerminalX = new Lang.Class({
       uri = 'mailto:' + uri;
     }
 
-    Gtk.show_uri(screen, uri, time);
+    Gtk.show_uri_on_window(this._window, uri, time); // Gtk.show_uri(screen, uri, time)
   },
   _getCommandArgs: function () {
     // custom command
