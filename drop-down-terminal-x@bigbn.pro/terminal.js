@@ -445,12 +445,12 @@ const DropDownTerminalX = new Lang.Class({
   _addUriMatchers: function (tab) {
     // adds the uri matchers
     this._uriHandlingPropertiesbyTag = {}
-    UriHandlingProperties.forEach(Lang.bind(this, function (hp) {
-      const regex = GLib.Regex.new(hp.pattern, GLib.RegexCompileFlags.CASELESS | GLib.RegexCompileFlags.OPTIMIZE, 0)
-      const tag = tab.terminal.match_add_gregex(regex, 0)
+    UriHandlingProperties.forEach((hp) => {
+      const regex = new Vte.Regex(hp.pattern, hp.pattern.length, Vte.REGEX_FLAGS_DEFAULT)
+      const tag = tab.terminal.match_add_regex(regex, 0)
       tab.terminal.match_set_cursor_type(tag, Gdk.CursorType.HAND2)
       this._uriHandlingPropertiesbyTag[tag] = hp
-    }))
+    })
   },
 
   _getTabName (tabNumber, tabLabel = 'shell') {
@@ -557,7 +557,7 @@ const DropDownTerminalX = new Lang.Class({
     return workingDir.replace(new RegExp(/file:\/\/.*?\/(.*)/g), '/$1')
   },
 
-  _createTerminalTab () {
+  _createTerminalTab () {    
     const terminal = this._createTerminalView()
 
     const onExit = terminal.connect('child-exited', () => {
@@ -1064,22 +1064,12 @@ const DropDownTerminalX = new Lang.Class({
     const [is_button, button] = event.get_button()
 
     // opens hovered link on ctrl+left-click
-    if (is_button && button == Gdk.BUTTON_PRIMARY && (state & Gdk.ModifierType.CONTROL_MASK)) {
-      const [preserved, x, y] = event.get_coords()
-
-      const border = new Gtk.Border()
-      terminal.style_get_property('inner-border', border)
-
-      const column = (x - border.left) / terminal.get_char_width()
-      const row = (y - border.top) / terminal.get_char_height()
-
-      const [match, tag] = terminal.match_check(column, row)
-
+    if (is_button && button == Gdk.BUTTON_PRIMARY && (state & Gdk.ModifierType.CONTROL_MASK)) {      
+      const [match, tag] = terminal.match_check_event(event)
       if (match) {
         const properties = this._uriHandlingPropertiesbyTag[tag]
         this._openUri(match, properties.flavor, event.get_screen(), event.get_time())
       }
-
       return true
     }
 
@@ -1103,7 +1093,8 @@ const DropDownTerminalX = new Lang.Class({
       uri = 'mailto:' + uri
     }
 
-    Gtk.show_uri(screen, uri, time)
+    Gtk.show_uri_on_window(this._window, uri, time)
+    // Gtk.show_uri(screen, uri, time)
   },
 
   _getCommandArgs () {
